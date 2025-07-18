@@ -1,0 +1,32 @@
+.tableWrap {
+  margin-top: 10px;
+  border: 1px solid var(--langhuan-color-border);
+  border-radius: 5px;
+}
+
+.table {
+  border-collapse: collapse;
+  width: 100%;
+
+  .td {
+    border-right: 1px solid var(--langhuan-color-border);
+    border-bottom: 1px solid var(--langhuan-color-border);
+  }
+
+  .tr:last-child .td{
+    border-bottom: none;
+  }
+  
+  .delete {
+    width: 14px;
+    padding-left: 10px;
+    padding-right: 10px;
+    border-right: none;
+  }
+}
+
+.add {
+  text-align: right;
+  padding-right: 10px;
+  margin-top: 10px;
+}
