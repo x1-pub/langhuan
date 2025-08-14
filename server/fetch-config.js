@@ -2,18 +2,25 @@ const Doraemon = require('@x1.pub/doraemon')
 const fs = require('fs')
 const { app, secret } = require('./sensitive-config.json')
 
-const service = new Doraemon({ app, secret })
+const testService = new Doraemon({ app, secret, env: 'test' })
+const prodService = new Doraemon({ app, secret, env: 'prod' })
 
 async function main() {
-  const res = await service.GetDataByGroupName('sensitive')
-  if (res.code !== 0) {
-    throw new Error(res.message || '获取 Doraemon 敏感配置失败')
+  const testRes = await testService.GetData('server', 'sensitive')
+  const prodRes = await prodService.GetData('server', 'sensitive')
+
+  if (testRes.code !== 0 || testRes.data?.length !== 1) {
+    throw new Error(testRes.message || '获取 Test Doraemon 敏感配置失败')
   }
-  const config = res.data.find(item => item.name === 'server')
-  if (!config) {
-    throw new Error('请检查 Doraemon 配置是否存在')
+  if (prodRes.code !== 0 || prodRes.data?.length !== 1) {
+    throw new Error(prodRes.message || '获取 Prod Doraemon 敏感配置失败')
   }
-  fs.writeFileSync('./doraemon.json', config.content)
+
+  const config = {
+    test: JSON.parse(testRes.data[0].content),
+    prod: JSON.parse(prodRes.data[0].content),
+  }
+  fs.writeFileSync('./doraemon.json', JSON.stringify(config))
 }
 
 main()
