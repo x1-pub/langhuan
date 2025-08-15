@@ -4,7 +4,7 @@ import { Spin } from 'antd';
 
 import TerminalBox from './terminal'
 import { executeSql } from "@/api/mysql";
-import { type ConnectionDetails, getConnectionDetails } from "@/api/connection";
+import { type ConnectionDetails, ConnectionType, getConnectionDetails } from "@/api/connection";
 import useNotification from "@/utils/use-notifition";
 
 const Shell: React.FC = () => {
@@ -23,72 +23,14 @@ const Shell: React.FC = () => {
     }
 
     if (connection.type === 'mysql') {
-      const res = await executeSql({ connectionId: connection?.id, dbName: dbName.current, sql })
-      if (res.results.changedDatabase) {
-        dbName.current = res.results.changedDatabase
-        return 'Database changed'
+      if (sql.trim().endsWith(';')) {
+        return executeSql({ connectionId: connection?.id, dbName: dbName.current, sql })
       }
-      return formatResult(res)
+      return '\n\r'
     }
 
-    throw new Error(`${title} is under development, so stay tuned!\n\r${title} 正在开发中, 敬请期待!`)
+    return ''
   }
-
-  const formatResult = (data: any) => {
-    switch (data.type) {
-      case 'SELECT':
-        return formatTable(data.results);
-      case 'UPDATE':
-        return `Query OK, ${data.results.affectedRows} rows affected`;
-      default:
-        return JSON.stringify(data.results);
-    }
-  };
-  
-  const formatTable = (result: any) => {
-    // 生成类似 MySQL 命令行表格输出
-    const maxWidth = 300;
-    const fields = result.fields;
-    const rows = result.rows;
-    
-    // 计算列宽
-    const colWidths = fields.map((field: string) => {
-      const maxContentLength = Math.max(
-        field.length,
-        ...rows.map((row: any) => String(row[field]).length)
-      );
-      return Math.min(maxContentLength, maxWidth);
-    });
-  
-    // 生成分隔线
-    const separator = '+' + colWidths.map((w: number) => '-'.repeat(w + 2)).join('+') + '+';
-  
-    // 构建表头
-    let output = separator + '\n\r|';
-    fields.forEach((field: string, i: number) => {
-      output += ` ${field.padEnd(colWidths[i])} |`;
-    });
-    
-    output += '\n\r' + separator;
-  
-    // 构建数据行
-    rows.forEach((row: any) => { // 限制显示行数
-    // rows.slice(0, 5).forEach((row: any) => { // 限制显示行数
-      output += '\n\r|';
-      fields.forEach((field: string, i: number) => {
-        let content = String(row[field]);
-        if (content.length > maxWidth) {
-          content = content.substring(0, maxWidth - 3) + '...';
-        }
-        output += ` ${content.padEnd(colWidths[i])} |`;
-      });
-    });
-  
-    // if (rows.length > 5) {
-    //   output += `\n\r(+ ${rows.length - 5} more rows)`;
-    // }
-    return output + '\n\r' + separator;
-  };
 
   const authUrl = async () => {
     const connection = await getConnectionDetails(connectionId!)
@@ -113,7 +55,12 @@ const Shell: React.FC = () => {
   
   return (
     <div style={{ height: '100vh' }}>
-      <TerminalBox onCommand={handleCommand} title={`${title} (${connection?.name})`} prompt={`${connectionType}>`} />
+      <TerminalBox
+        type={connectionType as ConnectionType}
+        onCommand={handleCommand}
+        title={`${title} (${connection?.name})`}
+        prompt={`${connectionType}>`}
+      />
     </div>
   )
 }

@@ -1,6 +1,7 @@
 import { Context } from 'koa';
-import { QueryTypes, type Sequelize } from 'sequelize';
+import { DatabaseError, QueryTypes, type Sequelize } from 'sequelize';
 import XLSX from 'xlsx'
+import Table from 'cli-table3'
 
 import Connection from '@/model/connection';
 import {
@@ -20,6 +21,7 @@ import {
 import { ResourceNotFound } from '@/utils/error';
 import mysql from '@/pools/mysql'
 import spatialToString from '@/utils/spatial-to-string';
+import { formatNonQueryResult, formatQueryResult, getStatementType } from '@/utils/format-sql-result';
 
 interface GetInstanceParams {
   uid: number;
@@ -445,31 +447,23 @@ class MysqlController {
     const { connectionId, dbName, sql } = await new ExecuteSQLDTO().v(ctx)
     const sequelize = await this.getInstance({ connectionId, dbName, uid: ctx.user.id })
 
-    const [results, metadata] = await sequelize.query(sql)
-
-    const response: any = {
-      type: 'UNKNOWN'
-    };
-
-    if (Array.isArray(results)) {
-      response.type = 'SELECT';
-      response.results = {
-        fields: Object.keys(results[0] || {}),
-        rows: results,
-        rowCount: results.length
-      };
-    } else {
-      response.type = 'UPDATE';
-      response.results = {
-        affectedRows: (metadata as any).affectedRows,
-        changedRows: (metadata as any).changedRows,
-        changedDatabase: (metadata as any).stateChanges?.schema,
-      };
+    try {
+      let data;
+      const [results, metadata] = await sequelize.query(sql)
+      const type = getStatementType(sql);
+  
+      if (type === 'query') {
+        data = formatQueryResult(results);
+      } else {
+        data = formatNonQueryResult(type, metadata);
+      }
+      ctx.r({ data })
+    } catch (error) {
+      if (error instanceof DatabaseError) {
+        throw new Error(error.message)
+      }
+      throw new Error(String(error))
     }
-
-    ctx.r({
-      data: response
-    })
   }
 
   /**

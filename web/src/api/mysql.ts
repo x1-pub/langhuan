@@ -194,7 +194,7 @@ interface ExecuteSQLParams {
   dbName?: string;
   sql: string;
 }
-export const executeSql = (data: ExecuteSQLParams) => request<any>({
+export const executeSql = (data: ExecuteSQLParams) => request<string>({
   method: 'POST',
   data,
   url: '/api/mysql/mysql_execute',

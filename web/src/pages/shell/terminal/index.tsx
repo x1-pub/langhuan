@@ -5,14 +5,16 @@ import '@xterm/xterm/css/xterm.css'
 
 import { LANG_HUAN, COLORS } from './constants'
 import styles from './index.module.less'
+import { ConnectionType } from '@/api/connection';
 
 interface SqlTerminalProps {
   onCommand: (command: string) => Promise<string>;
   prompt?: string;
   title?: string;
+  type: ConnectionType;
 }
 
-const TerminalBox: React.FC<SqlTerminalProps> = ({ onCommand, prompt = '>', title = 'Terminal v1.0' }) => {
+const TerminalBox: React.FC<SqlTerminalProps> = ({ onCommand, type, prompt = '>', title = 'Terminal v1.0' }) => {
   const terminalRef = useRef<HTMLDivElement>(null);
   const terminal = useRef<Terminal>(null);
 
@@ -22,6 +24,22 @@ const TerminalBox: React.FC<SqlTerminalProps> = ({ onCommand, prompt = '>', titl
   const tempInput = useRef<string>(''); // 临时保存未提交的输入
   const cursorPosition = useRef<number>(0); // 当前光标位置（相对于输入内容）
 
+  const verifyCommand = (command: string) => {
+    if (!command) {
+      currentInput.current = '';
+      tempInput.current = '';
+      cursorPosition.current = 0;
+      writelnColorText('')
+      // redrawInputLine();
+      throw new Error('empty')
+    }
+
+    if (type === 'mysql' && !command.endsWith(';')) {
+      writelnColorText('')
+      throw new Error('end with')
+    }
+  }
+
   // 处理回车
   const handleEnter = async () => {
     if (!terminal.current) {
@@ -29,20 +47,19 @@ const TerminalBox: React.FC<SqlTerminalProps> = ({ onCommand, prompt = '>', titl
     }
 
     const command = currentInput.current.trim();
+
+    verifyCommand(command)
     writelnColorText('')
 
-    if (command) {
-      // 添加到历史记录
-      const newHistory = [...commandHistory.current, command];
-      commandHistory.current = newHistory
-      historyIndex.current = -1
+    const newHistory = [...commandHistory.current, command];
+    commandHistory.current = newHistory
+    historyIndex.current = -1
 
-      try {
-        const result = await onCommand(command);
-        writelnColorText(result)
-      } catch (error) {
-        writelnColorText(String(error).replace(/\n/g, '\n\r'), COLORS.RED)
-      }
+    try {
+      const result = await onCommand(command);
+      writelnColorText(result)
+    } catch (error) {
+      writelnColorText(String(error).replace(/\n/g, '\n\r'), COLORS.RED)
     }
 
     currentInput.current = '';
@@ -54,11 +71,11 @@ const TerminalBox: React.FC<SqlTerminalProps> = ({ onCommand, prompt = '>', titl
   // 处理退格
   const handleBackspace = () => {
     if (cursorPosition.current > 0) {
-      currentInput.current = 
+      currentInput.current =
         currentInput.current.slice(0, cursorPosition.current - 1) +
         currentInput.current.slice(cursorPosition.current);
-      
-      cursorPosition.current --;
+
+      cursorPosition.current--;
 
       redrawInputLine();
     }
@@ -112,7 +129,7 @@ const TerminalBox: React.FC<SqlTerminalProps> = ({ onCommand, prompt = '>', titl
       terminal.current.write('\x1b[D'); // 左移光标
     }
   };
-  
+
   // 处理右箭头
   const handleArrowRight = () => {
     if (!terminal.current) {
@@ -135,7 +152,7 @@ const TerminalBox: React.FC<SqlTerminalProps> = ({ onCommand, prompt = '>', titl
   // 处理可打印字符
   const handlePrintableChar = (char: string) => {
     // 在光标位置插入字符
-    currentInput.current = 
+    currentInput.current =
       currentInput.current.slice(0, cursorPosition.current) +
       char +
       currentInput.current.slice(cursorPosition.current);
