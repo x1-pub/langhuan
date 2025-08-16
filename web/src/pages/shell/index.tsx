@@ -2,10 +2,10 @@ import React, { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router";
 import { Spin } from 'antd';
 
-import TerminalBox from './terminal'
 import { executeSql } from "@/api/mysql";
-import { type ConnectionDetails, ConnectionType, getConnectionDetails } from "@/api/connection";
+import { type ConnectionDetails, getConnectionDetails } from "@/api/connection";
 import useNotification from "@/utils/use-notifition";
+import MySQLShell from "./mysql-shell";
 
 const Shell: React.FC = () => {
   const notify = useNotification()
@@ -55,11 +55,9 @@ const Shell: React.FC = () => {
   
   return (
     <div style={{ height: '100vh' }}>
-      <TerminalBox
-        type={connectionType as ConnectionType}
+      <MySQLShell
         onCommand={handleCommand}
         title={`${title} (${connection?.name})`}
-        prompt={`${connectionType}>`}
       />
     </div>
   )
