@@ -8,6 +8,9 @@ import TableSQL from "./components/table-sql";
 import TableSatus from "./components/table-status";
 import styles from './index.module.less'
 import { useTranslation } from "react-i18next";
+import { preloadMonacoEditor } from "@/components/code-editor/preload";
+
+preloadMonacoEditor()
 
 const MysqlViewer: React.FC = () => {
   const { t } = useTranslation()

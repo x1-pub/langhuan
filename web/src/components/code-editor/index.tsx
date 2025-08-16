@@ -1,69 +1,50 @@
-import { Monaco } from "@/vite-env";
-import React, { useEffect, useRef } from "react";
+import React from "react";
+import Editor, { loader } from "@monaco-editor/react"
+
+import { loadPath } from "./preload";
+
+loader.config({
+  paths: {
+    vs: loadPath,
+  },
+})
 
 interface CodeEditorProps {
   theme?: 'vs' | 'vs-dark' | 'hc-black' | 'hc-light';
   language?: string;
   value?: string;
   readOnly?: boolean;
-  onChange?: (value: string) => void;
+  onChange?: (value?: string) => void;
 }
 
 const CodeEditor: React.FC<CodeEditorProps> = (props) => {
   const { theme = 'vs', language = 'sql', value = '', readOnly = false, onChange } = props
-  const editorRef = useRef<HTMLDivElement>(null);
-  const monacoEditorRef = useRef<Monaco.IStandaloneCodeEditor | null>(null);
 
-  useEffect(() => {
-    monacoEditorRef.current?.setValue(value)
-  }, [value])
-
-  useEffect(() => {
-    if (!monacoEditorRef.current) {
-      return
-    }
-
-    const model = monacoEditorRef.current.getModel();
-    if (model) {
-      window.monaco.editor.setModelLanguage(model, language);
-    }
-  }, [language])
-
-  useEffect(() => {
-    if (monacoEditorRef.current) {
-      monacoEditorRef.current.updateOptions({ readOnly, theme });
-    }
-  }, [readOnly, theme]);
-
-  useEffect(() => {
-    if (!editorRef.current || !window?.monaco) {
-      return
-    }
-
-    monacoEditorRef.current = window.monaco.editor.create(editorRef.current, {
-      value,
-      theme,
-      language,
-      readOnly,
-      scrollbar: {
-        verticalScrollbarSize: 8,
-        horizontalSliderSize: 5,
-      },
-    })
-
-    const changeListener = monacoEditorRef.current.onDidChangeModelContent(() => {
-      const value = monacoEditorRef.current?.getValue() || '';
-      onChange?.(value);
-    });
-
-    return () => {
-      changeListener.dispose();
-      monacoEditorRef.current?.dispose()
-    };
-  }, [editorRef.current])
-  
   return (
-    <div style={{ height: '100%' }} ref={editorRef}></div>
+    <Editor
+      language={language}
+      value={value}
+      onChange={onChange}
+      theme={theme}
+      options={{
+        readOnly,
+        minimap: { enabled: false },
+        scrollBeyondLastLine: false,
+        fontSize: 14,
+        lineNumbers: "on",
+        glyphMargin: false,
+        folding: true,
+        lineDecorationsWidth: 0,
+        lineNumbersMinChars: 3,
+        renderLineHighlight: "line",
+        automaticLayout: true,
+        wordWrap: "on",
+        formatOnPaste: true,
+        formatOnType: true,
+        tabSize: 2,
+        insertSpaces: true,
+      }}
+    />
   )
 }
 
