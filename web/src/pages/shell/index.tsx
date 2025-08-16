@@ -5,8 +5,9 @@ import { Spin } from 'antd';
 import { executeSql } from "@/api/mysql";
 import { type ConnectionDetails, ConnectionType, getConnectionDetails } from "@/api/connection";
 import useNotification from "@/utils/use-notifition";
-import MySQLShell from "./mysql-shell";
+import Terminal from "./terminal";
 import { executeRedisCommand } from "@/api/redis";
+import { executeMongoCommand } from "@/api/mongodb";
 
 const Shell: React.FC = () => {
   const notify = useNotification()
@@ -24,6 +25,10 @@ const Shell: React.FC = () => {
 
     if (connection.type === 'redis') {
       return executeRedisCommand({ connectionId: connection?.id, command  })
+    }
+
+    if (connection.type === 'mongodb') {
+      return executeMongoCommand({ connectionId: connection?.id, command  })
     }
 
     return {
@@ -54,7 +59,7 @@ const Shell: React.FC = () => {
   
   return (
     <div style={{ height: '100vh' }}>
-      <MySQLShell
+      <Terminal
         onCommand={handleCommand}
         name={connection.name}
         type={connectionType as ConnectionType}

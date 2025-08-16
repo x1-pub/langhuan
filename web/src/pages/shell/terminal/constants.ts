@@ -26,7 +26,20 @@ export const WELCOME: Record<ConnectionType, string[]> = {
   ],
   mongodb: [
     'Welcome to MongoDB Shell',
-    'Type your MongoDB commands and press Enter to execute'
+    'Type your MongoDB commands and press Enter to execute',
+    '',
+    '⚠️ 由于服务器资源有限，您输入的Shell命令将通过如下流程执行：',
+    '   1. 接收您提供的MongoDB Shell命令字符串',
+    '   2. 解析命令结构和参数',
+    '   3. 将命令转换为对应的Mongoose API调用',
+    '   4. 使用Mongoose安全地执行操作',
+    '   5. 返回执行结果',
+    '',
+    '🔒 所以请您注意：',
+    '   1. 某些MongoDB Shell特有的功能可能不被支持',
+    '   2. 复杂的嵌套命令可能需要简化后使用',
+    '   3. 本服务暂时不支持JavaScript函数执行或eval操作',
+    '   4. 管理命令受限于连接用户的权限',
   ],
 }
 
@@ -89,8 +102,3 @@ export const TITLE_PREFIX: Record<ConnectionType, string> = {
   mongodb: 'MongoDB shell',
 }
 
-// export const PROMPT_MAP: Record<ConnectionType, string> = {
-//   mysql: 'mysql> ',
-//   redis: 'redis> ',
-//   mongodb: 'mongo> ',
-// }

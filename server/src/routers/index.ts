@@ -6,6 +6,7 @@ import DatabaseController from '../controller/database';
 import TableController from '../controller/table';
 import RedisController from '../controller/redis';
 import MysqlController from '../controller/mysql';
+import MongoDBController from '../controller/mongodb';
 import AuthController from '@/controller/auth';
 
 const router = new Router({
@@ -53,5 +54,7 @@ router.post('/mysql/mysql_delete_column', MysqlController.deleteColumn)
 router.post('/mysql/mysql_execute', MysqlController.execute)
 router.post('/mysql/mysql_export', MysqlController.exportData)
 router.post('/mysql/mysql_column_order', MysqlController.columnOrder)
+
+router.post('/mongo/mongo_execute', MongoDBController.execute)
 
 export default router

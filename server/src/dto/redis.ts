@@ -1,6 +1,5 @@
 import { isInt, isIn, isLength } from 'validator'
 import { Rule, Validator } from '@/utils/validator'
-import { ParameterError } from '@/utils/error';
 
 export interface RedisBaseParams {
   connectionId: number;
@@ -82,12 +81,12 @@ export class RedisDeleteValueDTO extends Validator<DeleteValueParams> {
   }
 }
 
-interface ExecuteCommand {
+interface ExecuteRedisCommand {
   connectionId: number;
   command: string;
 }
 
-export class ExecuteCommandDTO extends Validator<ExecuteCommand> {
+export class ExecuteRedisCommandDTO extends Validator<ExecuteRedisCommand> {
   useRules() {
     return [
       new Rule(isInt, 'connectionId'),

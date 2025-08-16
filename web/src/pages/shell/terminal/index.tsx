@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react"
-import { Terminal } from '@xterm/xterm';
+import { Terminal as XtermTerminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import '@xterm/xterm/css/xterm.css'
 
@@ -7,15 +7,15 @@ import styles from "./index.module.less"
 import { COLORS, LANG_HUAN, WELCOME, KEYWORDS, TITLE_PREFIX } from "./constants";
 import { ConnectionType } from "@/api/connection";
 
-interface MySQLShellProps {
+interface TerminalProps {
   onCommand: (command: string) => Promise<{ result: string; changeDatabase?: string; }>;
   name: string;
   type: ConnectionType;
 }
 
-const MySQLShell: React.FC<MySQLShellProps> = ({ onCommand, name, type }) => {
+const Terminal: React.FC<TerminalProps> = ({ onCommand, name, type }) => {
   const terminalRef = useRef<HTMLDivElement>(null)
-  const terminalInstance = useRef<Terminal | null>(null)
+  const terminalInstance = useRef<XtermTerminal | null>(null)
   const fitAddon = useRef<FitAddon | null>(null)
 
   const currentInputRef = useRef("")
@@ -26,7 +26,7 @@ const MySQLShell: React.FC<MySQLShellProps> = ({ onCommand, name, type }) => {
   const historyIndexRef = useRef<number>(-1)
   const currentSuggestionRef = useRef("")
   const suggestionsRef = useRef<string[]>([])
-  const promptRef = useRef<string>(`${type}> `)
+  const promptRef = useRef<string>('> ')
 
   const generateContinuationPrompt = (prompt: string) => {
     return `${''.padStart(prompt.length - 3, ' ')}-> `; // for mysql, end without ;
@@ -78,7 +78,7 @@ const MySQLShell: React.FC<MySQLShellProps> = ({ onCommand, name, type }) => {
   useEffect(() => {
     if (!terminalRef.current) return
 
-    const terminal = new Terminal({
+    const terminal = new XtermTerminal({
       theme: {
         background: "#1a1a1a",
         foreground: "#ffffff",
@@ -415,4 +415,4 @@ const MySQLShell: React.FC<MySQLShellProps> = ({ onCommand, name, type }) => {
   );
 }
 
-export default MySQLShell
+export default Terminal

@@ -139,7 +139,7 @@ const MenuLayout: React.FC = () => {
       charset: '',
       collation: '',
     })
-    
+
     setVisible(true)
   }
 
@@ -205,9 +205,10 @@ const MenuLayout: React.FC = () => {
         duration: null,
       })
       return []
+    }).finally(() => {
+      setSpinning(false)
     })
     setList(data)
-    setSpinning(false)
   }
 
   const handleOpen = (dbName: string, tableName?: string) => {
@@ -236,12 +237,21 @@ const MenuLayout: React.FC = () => {
 
   const fetchTableList = async (dbName: string) => {
     setSpinning(true)
-    const data = await getTableList({ connectionId, dbName })
+    const data = await getTableList({ connectionId, dbName }).catch((err) => {
+      notify.error({
+        message: t('connection.fail'),
+        description: <span style={{ whiteSpace: 'pre-wrap' }}>{String(err)}</span>,
+        duration: null,
+      })
+      return []
+    }).finally(() => {
+      setSpinning(false)
+    })
+
     setTable(t => ({
       ...t,
       [dbName]: data
     }))
-    setSpinning(false)
   }
 
   useEffect(() => {
@@ -250,33 +260,33 @@ const MenuLayout: React.FC = () => {
 
   return (
     <div className={styles.wrap}>
-      <DatabaseContext.Provider value={{ connectionId, connectionType, wind, setWind,active, setActive }}>
+      <DatabaseContext.Provider value={{ connectionId, connectionType, wind, setWind, active, setActive }}>
         <div className={styles.menu}>
-            <div className={styles.buttonGroup}>      
-              {connectionType !== 'redis' && (
-                <Button
-                  type="dashed"
-                  shape="round"
-                  icon={<PlusOutlined />}
-                  onClick={handleCreateDatabase}
-                >
-                  {t('mysql.createDb')}
-                </Button>
-              )}
+          <div className={styles.buttonGroup}>
+            {connectionType !== 'redis' && (
               <Button
-                className={styles.shellBtn}
-                block={connectionType === 'redis'}
                 type="dashed"
                 shape="round"
-                icon={<ShellIcon className={styles.shell} />}
-                onClick={handleOpenShell}
+                icon={<PlusOutlined />}
+                onClick={handleCreateDatabase}
               >
-                Shell
+                {t('mysql.createDb')}
               </Button>
-            </div>
+            )}
+            <Button
+              className={styles.shellBtn}
+              block={connectionType === 'redis'}
+              type="dashed"
+              shape="round"
+              icon={<ShellIcon className={styles.shell} />}
+              onClick={handleOpenShell}
+            >
+              Shell
+            </Button>
+          </div>
           {
             connectionType === 'redis'
-            ? <List
+              ? <List
                 split={false}
                 dataSource={list}
                 renderItem={(item) => (
@@ -294,7 +304,7 @@ const MenuLayout: React.FC = () => {
                   </List.Item>
                 )}
               />
-            : <Collapse
+              : <Collapse
                 ghost={true}
                 activeKey={collapseActiveKey}
                 onChange={handleCollapse}

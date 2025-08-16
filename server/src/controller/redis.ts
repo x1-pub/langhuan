@@ -3,7 +3,7 @@ import { Context } from 'koa';
 import redis from '@/pools/redis';
 import Connection from '@/model/connection';
 import { ResourceNotFound } from '@/utils/error';
-import { RedisSearchDTO, RedisGetValueDTO, RedisType, type RedisBaseParams, RedisAddValueDTO, RedisDeleteValueDTO, ExecuteCommandDTO } from '@/dto/redis';
+import { RedisSearchDTO, RedisGetValueDTO, RedisType, type RedisBaseParams, RedisAddValueDTO, RedisDeleteValueDTO, ExecuteRedisCommandDTO } from '@/dto/redis';
 import { formatRedisResult, parseRedisCommand } from '@/utils/format-redis-command';
 
 type GetInstanceParams = RedisBaseParams & { uid: number; }
@@ -190,7 +190,7 @@ class RedisController {
   }
 
   execute = async (ctx: Context) => {
-    const { connectionId, command } = await new ExecuteCommandDTO().v(ctx)
+    const { connectionId, command } = await new ExecuteRedisCommandDTO().v(ctx)
     const ioredis = await RedisController.getInstance({ connectionId, uid: ctx.user.id })
 
     const parts = parseRedisCommand(command)
