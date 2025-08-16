@@ -308,3 +308,26 @@ export class ExportDTO extends Validator<ExportParams> {
     }
   }
 }
+export class ColumnOrderDTO extends Validator<{ fields: string[] } & MySQLBaseParams> {
+  useRules() {
+    return [
+      new Rule(isInt, 'connectionId'),
+      new Rule(isLength, 'dbName', { min: 1 }),
+      new Rule(isLength, 'tableName', { min: 1 }),
+    ]
+  }
+
+  useValidate(form: { fields: string[] }) {
+    const { fields } = form
+
+    if (!Array.isArray(fields) || !fields.length) {
+      throw new ParameterError('fields类型错误1')
+    }
+
+    fields.forEach(field => {
+      if (typeof field !== 'string') {
+        throw new ParameterError('fields类型错误2')
+      }
+    })
+  }
+}

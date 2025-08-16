@@ -60,7 +60,7 @@ const zh = {
   mysqlTab: {
     data: '表数据',
     design: '表设计',
-    sql: '表SQL',
+    ddl: '表DDL',
     status: '表状态',
   },
   mysql: {

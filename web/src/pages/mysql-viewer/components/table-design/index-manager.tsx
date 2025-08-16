@@ -58,7 +58,7 @@ const IndexManager: React.FC<IndexManagerProps> = (props) => {
   const notify = useNotification()
   const { connectionId, dbName, tableName } = useMain()
   const [open, setOpen] = useState<boolean>(false)
-  const [loading, _setLoading] = useState<boolean>(false)
+  const [loading, setLoading] = useState<boolean>(false)
   const [editIndex, setEditIndex] = useState<TableIndex>()
   const [fieldExtra, setFieldExtra] = useState<FieldExtraType>({})
   const [form] = Form.useForm<FormType>();
@@ -136,7 +136,7 @@ const IndexManager: React.FC<IndexManagerProps> = (props) => {
         comment,
       }
     }
-
+    setLoading(true)
     try {
       if (editIndex) {
         await updateTableIndex({ ...payload, name: editIndex.Key_name })
@@ -151,6 +151,8 @@ const IndexManager: React.FC<IndexManagerProps> = (props) => {
         description: <span style={{ whiteSpace: 'pre-wrap' }}>{String(err)}</span>,
         duration: null,
       })
+    } finally {
+      setLoading(false)
     }
   }
 

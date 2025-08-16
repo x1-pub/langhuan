@@ -60,7 +60,7 @@ const en = {
   mysqlTab: {
     data: 'DATA',
     design: 'Design',
-    sql: 'SQL',
+    ddl: 'DDL',
     status: 'Status',
   },
   mysql: {

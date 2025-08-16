@@ -117,10 +117,10 @@ export const batchDelete = (data: BatchDeleteParams) => request<number>({
   url: '/api/mysql/mysql_batch_delete',
 })
 
-export const tableSQL = (data: MysqlBaseParams) => request<string>({
+export const tableDDL = (data: MysqlBaseParams) => request<string>({
   method: 'POST',
   data,
-  url: '/api/mysql/mysql_table_sql',
+  url: '/api/mysql/mysql_table_ddl',
 })
 
 export const tableColumns = (data: MysqlBaseParams) => request<Column[]>({
@@ -209,4 +209,10 @@ export const exportData = (data: ExportSqlParams) => request<string>({
   data,
   url: '/api/mysql/mysql_export',
   responseType: 'blob',
+})
+
+export const columnOrder = (data: { fields: string[] } & MysqlBaseParams) => request<void>({
+  method: 'POST',
+  data,
+  url: '/api/mysql/mysql_column_order',
 })

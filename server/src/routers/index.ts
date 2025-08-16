@@ -40,7 +40,7 @@ router.get('/mysql/mysql_data', MysqlController.list)
 router.post('/mysql/mysql_update', MysqlController.update)
 router.post('/mysql/mysql_insert_one', MysqlController.insertOne)
 router.post('/mysql/mysql_batch_delete', MysqlController.batchDelete)
-router.post('/mysql/mysql_table_sql', MysqlController.tableSQL)
+router.post('/mysql/mysql_table_ddl', MysqlController.tableDDL)
 router.post('/mysql/mysql_table_columns', MysqlController.showColumns)
 router.post('/mysql/mysql_table_index', MysqlController.showIndex)
 router.post('/mysql/mysql_table_status', MysqlController.status)
@@ -51,5 +51,6 @@ router.post('/mysql/mysql_add_or_update_column', MysqlController.addOrUpdateColu
 router.post('/mysql/mysql_delete_column', MysqlController.deleteColumn)
 router.post('/mysql/mysql_execute', MysqlController.execute)
 router.post('/mysql/mysql_export', MysqlController.exportData)
+router.post('/mysql/mysql_column_order', MysqlController.columnOrder)
 
 export default router

@@ -1,7 +1,6 @@
 import { Context } from 'koa';
 import { DatabaseError, QueryTypes, type Sequelize } from 'sequelize';
 import XLSX from 'xlsx'
-import Table from 'cli-table3'
 
 import Connection from '@/model/connection';
 import {
@@ -17,11 +16,13 @@ import {
   ExecuteSQLDTO,
   ExportDTO,
   Format,
+  ColumnOrderDTO,
 } from '@/dto/mysql';
 import { ResourceNotFound } from '@/utils/error';
 import mysql from '@/pools/mysql'
 import spatialToString from '@/utils/spatial-to-string';
 import { formatNonQueryResult, formatQueryResult, getStatementType } from '@/utils/format-sql-result';
+import { getReorderTableColumnsSql } from '@/utils/sql-cloumn-order';
 
 interface GetInstanceParams {
   uid: number;
@@ -210,7 +211,7 @@ class MysqlController {
   /**
    * SHOW CREATE TABLE
    */
-  tableSQL = async (ctx: Context) => {
+  tableDDL = async (ctx: Context) => {
     const { connectionId, dbName, tableName } = await new MySQLBaseDTO().v(ctx)
     const sequelize = await this.getInstance({ connectionId, dbName, uid: ctx.user.id })
 
@@ -451,7 +452,7 @@ class MysqlController {
       let data;
       const [results, metadata] = await sequelize.query(sql)
       const type = getStatementType(sql);
-  
+
       if (type === 'query') {
         data = formatQueryResult(results);
       } else {
@@ -588,6 +589,21 @@ class MysqlController {
     const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'buffer' });
 
     ctx.body = excelBuffer
+  }
+
+  columnOrder = async (ctx: Context) => {
+    const { connectionId, dbName, tableName, fields } = await new ColumnOrderDTO().v(ctx)
+    const sequelize = await this.getInstance({ connectionId, dbName, uid: ctx.user.id })
+
+    const escapedTableName = this.escapedName(tableName, sequelize)
+    const sql = `SHOW CREATE TABLE ${escapedTableName}`
+    const ddlResult = await sequelize.query(sql, { type: QueryTypes.SHOWTABLES })
+    const ddl = ddlResult[1]
+
+    const orderSql = getReorderTableColumnsSql(ddl, tableName, fields)
+    await sequelize.query(orderSql)
+
+    ctx.r()
   }
 }
 

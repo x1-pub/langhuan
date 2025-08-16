@@ -83,9 +83,9 @@ const FieldEnter: React.FC<FieldEnterProps> = (props) => {
         }}
         style={{ width: '100%', ...style }}
         showTime={isFullDateTime}
-        // @ts-ignore
+        // @ts-expect-error sure
         format={formatMap[type]}
-        // @ts-ignore
+        // @ts-expect-error sure
         picker={pickerMap[type]}
       />
     )

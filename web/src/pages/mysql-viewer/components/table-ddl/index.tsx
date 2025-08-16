@@ -1,19 +1,19 @@
 import React, { useEffect, useState } from "react";
 
-import { tableSQL } from "@/api/mysql";
+import { tableDDL } from "@/api/mysql";
 import useMain from "@/utils/use-main"
 import { useThemeMode } from "antd-style";
 import CodeEditor from "@/components/code-editor";
 import styles from './index.module.less'
 
-const TableSQL: React.FC = () => {
+const TableDDL: React.FC = () => {
   const { isDarkMode } = useThemeMode();
-  const [sql, setSql] = useState('')
+  const [ddl, setDDL] = useState('')
   const { connectionId, dbName, tableName } = useMain()
 
   const getData = async () => {
-    const data = await tableSQL({ connectionId, dbName, tableName });
-    setSql(data)
+    const data = await tableDDL({ connectionId, dbName, tableName });
+    setDDL(data)
   }
 
   useEffect(() => {
@@ -21,10 +21,10 @@ const TableSQL: React.FC = () => {
   }, [])
 
   return (
-    <div className={styles.tableSql}>
-      <CodeEditor value={sql} theme={isDarkMode ? 'vs-dark' : 'vs'} readOnly={true} language="sql" />
+    <div className={styles.tableDdl}>
+      <CodeEditor value={ddl} theme={isDarkMode ? 'vs-dark' : 'vs'} readOnly={true} language="sql" />
     </div>
   )
 }
 
-export default TableSQL
+export default TableDDL

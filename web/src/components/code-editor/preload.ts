@@ -18,9 +18,9 @@ export const preloadMonacoEditor = async (): Promise<void> => {
 
     await loader.init()
     isPreloaded = true
-    console.log("Monaco Editor预加载完成")
+    console.log("Monaco Editor preload completed.")
   } catch (error) {
-    console.error("Monaco Editor预加载失败:", error)
+    console.error("Monaco Editor preload failed.")
     throw error
   }
 }

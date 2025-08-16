@@ -206,7 +206,7 @@ const FieldEditor: React.FC<FieldEditorProps> = ({
         if (rest.includes('zerofill')) {
           defaultForm.zerofill = true
         }
-        const [_all, type = '', extra] = allType.match(/(.+)\((.+)\)/) || []
+        const [, type = '', extra] = allType.match(/(.+)\((.+)\)/) || []
         defaultForm.fieldType = (type || Type).toLocaleUpperCase()
         if (extra) {
           defaultForm.fieldExtra = extra
