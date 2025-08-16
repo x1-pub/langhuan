@@ -84,3 +84,15 @@ export const deleteRedisValue = (data: DeleteRedisValueParams) => request<void>(
   data,
   url: '/api/redis/redis_delete_value',
 })
+
+
+interface ExecuteRedisCommandParams {
+  connectionId: number;
+  command: string;
+}
+
+export const executeRedisCommand = (data: ExecuteRedisCommandParams) => request<{ result: string, changeDatabase?: string; }>({
+  method: 'POST',
+  data,
+  url: '/api/redis/redis_execute',
+})

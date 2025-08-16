@@ -3,8 +3,8 @@ import { Rule, Validator } from '@/utils/validator'
 import { ParameterError } from '@/utils/error';
 
 export interface RedisBaseParams {
-  connectionId: string;
-  dbName: string;
+  connectionId: number;
+  dbName?: string;
 }
 
 export enum RedisType {
@@ -78,6 +78,20 @@ export class RedisDeleteValueDTO extends Validator<DeleteValueParams> {
       new Rule(isInt, 'connectionId'),
       new Rule(isInt, 'dbName', { min: 0 }),
       new Rule(isLength, 'key', { min: 1 }),
+    ]
+  }
+}
+
+interface ExecuteCommand {
+  connectionId: number;
+  command: string;
+}
+
+export class ExecuteCommandDTO extends Validator<ExecuteCommand> {
+  useRules() {
+    return [
+      new Rule(isInt, 'connectionId'),
+      new Rule(isLength, 'command', { min: 1 }),
     ]
   }
 }

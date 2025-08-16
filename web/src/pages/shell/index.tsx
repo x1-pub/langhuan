@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import { Spin } from 'antd';
 
@@ -6,20 +6,24 @@ import { executeSql } from "@/api/mysql";
 import { type ConnectionDetails, ConnectionType, getConnectionDetails } from "@/api/connection";
 import useNotification from "@/utils/use-notifition";
 import MySQLShell from "./mysql-shell";
+import { executeRedisCommand } from "@/api/redis";
 
 const Shell: React.FC = () => {
   const notify = useNotification()
   const { connectionType, connectionId } = useParams()
   const [connection, setConnection] = useState<ConnectionDetails>()
-  const dbName = useRef<string>(undefined)
 
-  const handleCommand = async (sql: string) => {
+  const handleCommand = async (command: string) => {
     if (!connection) {
       throw new Error('Database Disconnected')
     }
 
     if (connection.type === 'mysql') {
-      return executeSql({ connectionId: connection?.id, dbName: dbName.current, sql })
+      return executeSql({ connectionId: connection?.id, sql: command })
+    }
+
+    if (connection.type === 'redis') {
+      return executeRedisCommand({ connectionId: connection?.id, command  })
     }
 
     return {

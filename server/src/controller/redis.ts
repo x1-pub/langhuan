@@ -3,9 +3,10 @@ import { Context } from 'koa';
 import redis from '@/pools/redis';
 import Connection from '@/model/connection';
 import { ResourceNotFound } from '@/utils/error';
-import { RedisSearchDTO, RedisGetValueDTO, RedisType, type RedisBaseParams, RedisAddValueDTO, RedisDeleteValueDTO } from '@/dto/redis';
+import { RedisSearchDTO, RedisGetValueDTO, RedisType, type RedisBaseParams, RedisAddValueDTO, RedisDeleteValueDTO, ExecuteCommandDTO } from '@/dto/redis';
+import { formatRedisResult, parseRedisCommand } from '@/utils/format-redis-command';
 
-type GetInstanceParams = RedisBaseParams & { uid: number }
+type GetInstanceParams = RedisBaseParams & { uid: number; }
 
 class RedisController {
   /**
@@ -36,7 +37,7 @@ class RedisController {
     let scanCount = 0;
     let scanCursor;
     const resultKeys = []
-    while(scanCount < 10000 && scanCursor !== '0' && resultKeys.length < Number(count)) {
+    while (scanCount < 10000 && scanCursor !== '0' && resultKeys.length < Number(count)) {
       const args = [scanCursor || cursor, 'MATCH', match || '*', "COUNT", count]
       if (type) {
         args.push('TYPE', type)
@@ -47,7 +48,7 @@ class RedisController {
       scanCount += Number(count)
       resultKeys.push(...keys)
     }
-    
+
     const pipe = ioredis.pipeline()
     resultKeys.forEach(key => {
       pipe.type(key).ttl(key).memory('USAGE', key)
@@ -81,7 +82,7 @@ class RedisController {
   async getValue(ctx: Context) {
     const { connectionId, dbName, key, type } = await new RedisGetValueDTO().v(ctx)
     const ioredis = await RedisController.getInstance({ connectionId, dbName, uid: ctx.user.id })
- 
+
     const k = type || await ioredis.type(key)
     const pipe = ioredis.pipeline()
     switch (k) {
@@ -170,7 +171,7 @@ class RedisController {
     }
     const [res] = await pipe.exec() || [[]]
 
-    if(res[0]) {
+    if (res[0]) {
       throw res[0]
     }
 
@@ -186,6 +187,24 @@ class RedisController {
     const data = await ioredis.del(key)
 
     ctx.r({ data })
+  }
+
+  execute = async (ctx: Context) => {
+    const { connectionId, command } = await new ExecuteCommandDTO().v(ctx)
+    const ioredis = await RedisController.getInstance({ connectionId, uid: ctx.user.id })
+
+    const parts = parseRedisCommand(command)
+    const [cmd, ...args] = parts;
+
+    const res = await ioredis.call(cmd, ...args)
+    const result = formatRedisResult(res)
+
+    ctx.r({
+      data: {
+        result,
+        changeDatabase: cmd.toLowerCase() === 'select' ? `[db${args[0]}]` : undefined
+      }
+    })
   }
 }
 

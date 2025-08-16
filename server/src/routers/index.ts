@@ -35,6 +35,7 @@ router.get('/redis/redis_keys', RedisController.onlyKeys)
 router.get('/redis/redis_value', RedisController.getValue)
 router.post('/redis/redis_add_value', RedisController.addValue)
 router.post('/redis/redis_delete_value', RedisController.delete)
+router.post('/redis/redis_execute', RedisController.execute)
 
 router.get('/mysql/mysql_data', MysqlController.list)
 router.post('/mysql/mysql_update', MysqlController.update)

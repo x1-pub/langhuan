@@ -191,7 +191,6 @@ export const deleteColumn = (data: { name: string } & MysqlBaseParams) => reques
 
 interface ExecuteSQLParams {
   connectionId: string | number;
-  dbName?: string;
   sql: string;
 }
 export const executeSql = (data: ExecuteSQLParams) => request<{ result: string, changeDatabase?: string; }>({
