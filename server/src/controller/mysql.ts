@@ -449,16 +449,26 @@ class MysqlController {
     const sequelize = await this.getInstance({ connectionId, dbName, uid: ctx.user.id })
 
     try {
-      let data;
+      let result;
+      let changeDatabase;
       const [results, metadata] = await sequelize.query(sql)
       const type = getStatementType(sql);
 
       if (type === 'query') {
-        data = formatQueryResult(results);
+        result = formatQueryResult(results);
       } else {
-        data = formatNonQueryResult(type, metadata);
+        result = formatNonQueryResult(type, metadata);
+        const db = (metadata as any).stateChanges.schema
+        if (type === 'use' && db) {
+          changeDatabase = db
+        }
       }
-      ctx.r({ data })
+      ctx.r({
+        data: {
+          result,
+          changeDatabase,
+        },
+      })
     } catch (error) {
       if (error instanceof DatabaseError) {
         throw new Error(error.message)

@@ -8,8 +8,8 @@ import { COLORS, LANG_HUAN, WELCOME, KEYWORDS, TITLE_PREFIX } from "./constants"
 import { ConnectionType } from "@/api/connection";
 
 interface MySQLShellProps {
-  onCommand: (command: string) => Promise<string>;
-  name?: string;
+  onCommand: (command: string) => Promise<{ result: string; changeDatabase?: string; }>;
+  name: string;
   type: ConnectionType;
 }
 
@@ -26,12 +26,11 @@ const MySQLShell: React.FC<MySQLShellProps> = ({ onCommand, name, type }) => {
   const historyIndexRef = useRef<number>(-1)
   const currentSuggestionRef = useRef("")
   const suggestionsRef = useRef<string[]>([])
-  // const [prompt, setPrompt] = useState<string>(type)
-  // const suggestionIndexRef = useRef(-1) // 后续支持多个提示
+  const promptRef = useRef<string>(`${type}> `)
 
-  console.log('prompt...', prompt)
-  const PROMPT = `${type}> `
-  const CONTINUATION_PROMPT = `${''.padStart(PROMPT.length - 3, ' ')}-> `
+  const generateContinuationPrompt = (prompt: string) => {
+    return `${''.padStart(prompt.length - 3, ' ')}-> `; // for mysql, end without ;
+  }
 
   const getDisplayWidth = (str: string): number => {
     let width = 0
@@ -101,7 +100,7 @@ const MySQLShell: React.FC<MySQLShellProps> = ({ onCommand, name, type }) => {
 
     writeWelcome()
     terminal.writeln("")
-    terminal.write(PROMPT)
+    terminal.write(promptRef.current)
 
     terminal.onData((data) => {
       handleInput(data)
@@ -184,7 +183,7 @@ const MySQLShell: React.FC<MySQLShellProps> = ({ onCommand, name, type }) => {
     currentSuggestionRef.current = ""
     suggestionsRef.current = []
 
-    const currentPrompt = isMultilineRef.current ? CONTINUATION_PROMPT : PROMPT
+    const currentPrompt = isMultilineRef.current ? generateContinuationPrompt(promptRef.current) : promptRef.current
     terminal.write("\r\x1b[K")
     terminal.write(currentPrompt + newInput)
   }
@@ -208,7 +207,7 @@ const MySQLShell: React.FC<MySQLShellProps> = ({ onCommand, name, type }) => {
     suggestionsRef.current = suggestions
     currentSuggestionRef.current = suggestions.length > 0 ? suggestions[0] : ""
 
-    const currentPrompt = isMultilineRef.current ? CONTINUATION_PROMPT : PROMPT
+    const currentPrompt = isMultilineRef.current ? generateContinuationPrompt(promptRef.current) : promptRef.current
     terminal.write("\r\x1b[K")
     terminal.write(currentPrompt + newInput)
 
@@ -259,7 +258,7 @@ const MySQLShell: React.FC<MySQLShellProps> = ({ onCommand, name, type }) => {
     suggestionsRef.current = suggestions
     currentSuggestionRef.current = suggestions.length > 0 ? suggestions[0] : ""
 
-    const currentPrompt = isMultilineRef.current ? CONTINUATION_PROMPT : PROMPT
+    const currentPrompt = isMultilineRef.current ? generateContinuationPrompt(promptRef.current) : promptRef.current
     terminal.write("\r\x1b[K")
     terminal.write(currentPrompt + newInput)
 
@@ -332,7 +331,7 @@ const MySQLShell: React.FC<MySQLShellProps> = ({ onCommand, name, type }) => {
     const terminal = terminalInstance.current
     if (terminal) {
       terminal.write("\r\x1b[K")
-      terminal.write(PROMPT + command)
+      terminal.write(promptRef.current + command)
     }
   }
 
@@ -344,7 +343,7 @@ const MySQLShell: React.FC<MySQLShellProps> = ({ onCommand, name, type }) => {
       historyIndexRef.current = -1
       currentInputRef.current = ""
       cursorPositionRef.current = 0
-      terminalInstance.current?.write("\r\x1b[K" + PROMPT)
+      terminalInstance.current?.write("\r\x1b[K" + promptRef.current)
     } else {
       historyIndexRef.current = newIndex
       const command = commandHistoryRef.current[newIndex]
@@ -354,7 +353,7 @@ const MySQLShell: React.FC<MySQLShellProps> = ({ onCommand, name, type }) => {
       const terminal = terminalInstance.current
       if (terminal) {
         terminal.write("\r\x1b[K")
-        terminal.write(PROMPT + command)
+        terminal.write(promptRef.current + command)
       }
     }
   }
@@ -368,7 +367,7 @@ const MySQLShell: React.FC<MySQLShellProps> = ({ onCommand, name, type }) => {
     const trimmedInput = currentInputRef.current.trim()
 
     if (!trimmedInput && !isMultilineRef.current) {
-      terminal.write(PROMPT)
+      terminal.write(promptRef.current)
       return
     }
 
@@ -382,7 +381,7 @@ const MySQLShell: React.FC<MySQLShellProps> = ({ onCommand, name, type }) => {
       isMultilineRef.current = true
       currentInputRef.current = ""
       cursorPositionRef.current = 0
-      terminal.write(CONTINUATION_PROMPT)
+      terminal.write(generateContinuationPrompt(promptRef.current))
       return
     }
 
@@ -392,8 +391,11 @@ const MySQLShell: React.FC<MySQLShellProps> = ({ onCommand, name, type }) => {
     historyIndexRef.current = -1
 
     try {
-      const result = await onCommand(completeCommand)
+      const { result, changeDatabase } = await onCommand(completeCommand)
       terminal.writeln(result)
+      if (changeDatabase) {
+        promptRef.current = `${changeDatabase}> `
+      }
     } catch (error) {
       terminal.writeln(`${COLORS.RED}${String(error)}${COLORS.RESET}`)
     }
@@ -402,7 +404,7 @@ const MySQLShell: React.FC<MySQLShellProps> = ({ onCommand, name, type }) => {
     cursorPositionRef.current = 0
     multilineInputRef.current = ""
     isMultilineRef.current = false
-    terminal.write(PROMPT)
+    terminal.write(promptRef.current)
   }
 
   return (

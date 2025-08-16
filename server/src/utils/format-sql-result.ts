@@ -1,5 +1,16 @@
 import Table from 'cli-table3'
 
+const colors = {
+  reset: '\x1b[0m',
+  red: '\x1b[31m',
+  green: '\x1b[32m',
+  yellow: '\x1b[33m',
+  blue: '\x1b[34m',
+  magenta: '\x1b[35m',
+  cyan: '\x1b[36m',
+  white: '\x1b[37m'
+};
+
 export function getStatementType(sql: string) {
   const lowerSql = sql.trim().toLowerCase();
   if (lowerSql.startsWith('select') || lowerSql.startsWith('show') || lowerSql.startsWith('desc')) {
@@ -15,7 +26,7 @@ export function getStatementType(sql: string) {
 export function formatQueryResult(results: unknown[]) {
   if (results.length === 0) return 'Empty result set';
 
-  const headers = Object.keys(results[0] || {});
+  const headers = Object.keys(results[0] || {}).map(head => `${colors.green}${head}${colors.reset}`);
   const table = new Table({ head: headers });
 
   results.forEach(row => {

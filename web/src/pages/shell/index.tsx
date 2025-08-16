@@ -19,13 +19,12 @@ const Shell: React.FC = () => {
     }
 
     if (connection.type === 'mysql') {
-      if (sql.trim().endsWith(';')) {
-        return executeSql({ connectionId: connection?.id, dbName: dbName.current, sql })
-      }
-      return '\n\r'
+      return executeSql({ connectionId: connection?.id, dbName: dbName.current, sql })
     }
 
-    return ''
+    return {
+      result: '',
+    }
   }
 
   const authUrl = async () => {
@@ -53,7 +52,7 @@ const Shell: React.FC = () => {
     <div style={{ height: '100vh' }}>
       <MySQLShell
         onCommand={handleCommand}
-        name={connection?.name!}
+        name={connection.name}
         type={connectionType as ConnectionType}
       />
     </div>

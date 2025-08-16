@@ -31,7 +31,7 @@ export const WELCOME: Record<ConnectionType, string[]> = {
 }
 
 const SQL_KEYWORDS = [
-  'CREATE', 'DATABASES', 'DROP', 'USE', 'SHOW', 'ALTER',
+  'CREATE', 'DATABASES', 'DROP', 'USE', 'SHOW', 'ALTER', 'COLUMNS',
   'TABLE', 'DESC', 'DESCRIBE', 'TRUNCATE',
   'INDEX', 'UNIQUE', 'PRIMARY', 'KEY',
   'INSERT', 'INTO', 'VALUES', 'SELECT', 'FROM', 'WHERE',
