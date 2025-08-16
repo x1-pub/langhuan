@@ -33,7 +33,6 @@ export const parseActiveId = (activeId: string) => {
   try {
     return JSON.parse(activeId) as { dbName: string, tableName: string }
   } catch (err) {
-    console.log(err)
     return {
       dbName: '',
       tableName: '',

@@ -3,7 +3,7 @@ import { useParams } from "react-router";
 import { Spin } from 'antd';
 
 import { executeSql } from "@/api/mysql";
-import { type ConnectionDetails, getConnectionDetails } from "@/api/connection";
+import { type ConnectionDetails, ConnectionType, getConnectionDetails } from "@/api/connection";
 import useNotification from "@/utils/use-notifition";
 import MySQLShell from "./mysql-shell";
 
@@ -12,10 +12,6 @@ const Shell: React.FC = () => {
   const { connectionType, connectionId } = useParams()
   const [connection, setConnection] = useState<ConnectionDetails>()
   const dbName = useRef<string>(undefined)
-  const title =
-    connectionType === 'mysql' ? 'MySQL shell' :
-    connectionType === 'mongodb' ? 'MongoDB shell' :
-    connectionType === 'redis' ? 'Redis Shell' : undefined
 
   const handleCommand = async (sql: string) => {
     if (!connection) {
@@ -57,7 +53,8 @@ const Shell: React.FC = () => {
     <div style={{ height: '100vh' }}>
       <MySQLShell
         onCommand={handleCommand}
-        title={`${title} (${connection?.name})`}
+        name={connection?.name!}
+        type={connectionType as ConnectionType}
       />
     </div>
   )

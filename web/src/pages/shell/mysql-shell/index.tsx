@@ -4,17 +4,16 @@ import { FitAddon } from '@xterm/addon-fit';
 import '@xterm/xterm/css/xterm.css'
 
 import styles from "./index.module.less"
-import { COLORS, LANG_HUAN } from "../constants";
-
-const PROMPT = "mysql> "
-const CONTINUATION_PROMPT = "    -> "
+import { COLORS, LANG_HUAN, WELCOME, KEYWORDS, TITLE_PREFIX } from "./constants";
+import { ConnectionType } from "@/api/connection";
 
 interface MySQLShellProps {
   onCommand: (command: string) => Promise<string>;
-  title?: string;
+  name?: string;
+  type: ConnectionType;
 }
 
-const MySQLShell: React.FC<MySQLShellProps> = ({ onCommand, title }) => {
+const MySQLShell: React.FC<MySQLShellProps> = ({ onCommand, name, type }) => {
   const terminalRef = useRef<HTMLDivElement>(null)
   const terminalInstance = useRef<Terminal | null>(null)
   const fitAddon = useRef<FitAddon | null>(null)
@@ -25,6 +24,14 @@ const MySQLShell: React.FC<MySQLShellProps> = ({ onCommand, title }) => {
   const isMultilineRef = useRef(false)
   const commandHistoryRef = useRef<string[]>([])
   const historyIndexRef = useRef<number>(-1)
+  const currentSuggestionRef = useRef("")
+  const suggestionsRef = useRef<string[]>([])
+  // const [prompt, setPrompt] = useState<string>(type)
+  // const suggestionIndexRef = useRef(-1) // 后续支持多个提示
+
+  console.log('prompt...', prompt)
+  const PROMPT = `${type}> `
+  const CONTINUATION_PROMPT = `${''.padStart(PROMPT.length - 3, ' ')}-> `
 
   const getDisplayWidth = (str: string): number => {
     let width = 0
@@ -92,10 +99,7 @@ const MySQLShell: React.FC<MySQLShellProps> = ({ onCommand, title }) => {
     terminalInstance.current = terminal
     fitAddon.current = fit
 
-    terminal.writeln("Welcome to MySQL Shell")
-    terminal.writeln("Type your SQL commands and press Enter to execute.")
-    terminal.writeln("Commands should end with semicolon (;)")
-    terminal.writeln(LANG_HUAN.replace(/\n/g, '\n\r'))
+    writeWelcome()
     terminal.writeln("")
     terminal.write(PROMPT)
 
@@ -112,6 +116,17 @@ const MySQLShell: React.FC<MySQLShellProps> = ({ onCommand, title }) => {
     }
   }, [])
 
+  const writeWelcome = () => {
+    const terminal = terminalInstance.current
+    if (!terminal) return
+
+    WELCOME[type].forEach(str => {
+      terminal.writeln(str)
+    })
+
+    terminal.writeln(LANG_HUAN.replace(/\n/g, '\n\r'))
+  }
+
   const handleInput = (data: string) => {
     const terminal = terminalInstance.current
     if (!terminal) return
@@ -122,6 +137,8 @@ const MySQLShell: React.FC<MySQLShellProps> = ({ onCommand, title }) => {
       handleEnter()
     } else if (data === "\x7F") {
       handleBackspace()
+    } else if (code === 9) {
+      handleTab()
     } else if (data === "\x1b[A") {
       handleArrowUp()
     } else if (data === "\x1b[B") {
@@ -135,6 +152,41 @@ const MySQLShell: React.FC<MySQLShellProps> = ({ onCommand, title }) => {
     } else if (code > 127) {
       handlePrintableChar(data)
     }
+  }
+
+
+  const getAutocompleteSuggestions = (input: string): string[] => {
+    const words = input.trim().split(/\s+/)
+    const lastWord = words[words.length - 1]?.toUpperCase() || ""
+
+    if (lastWord.length < 2) return []
+
+    return KEYWORDS[type].filter((keyword) => keyword.startsWith(lastWord) && keyword !== lastWord).slice(0, 5) // Limit to 5 suggestions
+  }
+
+  const handleTab = () => {
+    const terminal = terminalInstance.current
+    if (!terminal) return
+
+    const suggestions = getAutocompleteSuggestions(currentInputRef.current)
+    if (suggestions.length === 0) return
+
+    const currentInput = currentInputRef.current
+    const words = currentInput.split(/\s+/)
+    const lastWordStart = currentInput.lastIndexOf(words[words.length - 1])
+
+    const newInput = currentInput.slice(0, lastWordStart) + suggestions[0]
+    const newCursorPos = newInput.length
+
+    currentInputRef.current = newInput
+    cursorPositionRef.current = newCursorPos
+
+    currentSuggestionRef.current = ""
+    suggestionsRef.current = []
+
+    const currentPrompt = isMultilineRef.current ? CONTINUATION_PROMPT : PROMPT
+    terminal.write("\r\x1b[K")
+    terminal.write(currentPrompt + newInput)
   }
 
   const handlePrintableChar = (char: string) => {
@@ -152,13 +204,40 @@ const MySQLShell: React.FC<MySQLShellProps> = ({ onCommand, title }) => {
     currentInputRef.current = newInput
     cursorPositionRef.current = newCursorPos
 
+    const suggestions = getAutocompleteSuggestions(newInput)
+    suggestionsRef.current = suggestions
+    currentSuggestionRef.current = suggestions.length > 0 ? suggestions[0] : ""
+
+    const currentPrompt = isMultilineRef.current ? CONTINUATION_PROMPT : PROMPT
     terminal.write("\r\x1b[K")
-    terminal.write((isMultilineRef.current ? CONTINUATION_PROMPT : PROMPT) + newInput)
+    terminal.write(currentPrompt + newInput)
+
+    if (currentSuggestionRef.current) {
+      const words = newInput.split(/\s+/)
+      const lastWord = words[words.length - 1] || ""
+      const suggestion = currentSuggestionRef.current
+      const remainingSuggestion = suggestion.slice(lastWord.toUpperCase().length)
+
+      if (remainingSuggestion) {
+        terminal.write("\x1b[90m" + remainingSuggestion.toLowerCase() + "\x1b[0m")
+      }
+    }
 
     const totalDisplayWidth = getDisplayWidth(newInput)
     const cursorDisplayPos = getCursorDisplayPosition(newInput, newCursorPos)
     const moveBack = totalDisplayWidth - cursorDisplayPos
-    if (moveBack > 0) {
+
+    if (currentSuggestionRef.current) {
+      const words = newInput.split(/\s+/)
+      const lastWord = words[words.length - 1] || ""
+      const suggestion = currentSuggestionRef.current
+      const remainingSuggestion = suggestion.slice(lastWord.toUpperCase().length)
+      const suggestionWidth = getDisplayWidth(remainingSuggestion.toLowerCase())
+
+      if (moveBack > 0 || suggestionWidth > 0) {
+        terminal.write("\x1b[" + (moveBack + suggestionWidth) + "D")
+      }
+    } else if (moveBack > 0) {
       terminal.write("\x1b[" + moveBack + "D")
     }
   }
@@ -176,13 +255,40 @@ const MySQLShell: React.FC<MySQLShellProps> = ({ onCommand, title }) => {
     currentInputRef.current = newInput
     cursorPositionRef.current = newCursorPos
 
+    const suggestions = getAutocompleteSuggestions(newInput)
+    suggestionsRef.current = suggestions
+    currentSuggestionRef.current = suggestions.length > 0 ? suggestions[0] : ""
+
+    const currentPrompt = isMultilineRef.current ? CONTINUATION_PROMPT : PROMPT
     terminal.write("\r\x1b[K")
-    terminal.write((isMultilineRef.current ? CONTINUATION_PROMPT : PROMPT) + newInput)
+    terminal.write(currentPrompt + newInput)
+
+    if (currentSuggestionRef.current) {
+      const words = newInput.split(/\s+/)
+      const lastWord = words[words.length - 1] || ""
+      const suggestion = currentSuggestionRef.current
+      const remainingSuggestion = suggestion.slice(lastWord.toUpperCase().length)
+
+      if (remainingSuggestion) {
+        terminal.write("\x1b[90m" + remainingSuggestion.toLowerCase() + "\x1b[0m")
+      }
+    }
 
     const totalDisplayWidth = getDisplayWidth(newInput)
     const cursorDisplayPos = getCursorDisplayPosition(newInput, newCursorPos)
     const moveBack = totalDisplayWidth - cursorDisplayPos
-    if (moveBack > 0) {
+
+    if (currentSuggestionRef.current) {
+      const words = newInput.split(/\s+/)
+      const lastWord = words[words.length - 1] || ""
+      const suggestion = currentSuggestionRef.current
+      const remainingSuggestion = suggestion.slice(lastWord.toUpperCase().length)
+      const suggestionWidth = getDisplayWidth(remainingSuggestion.toLowerCase())
+
+      if (moveBack > 0 || suggestionWidth > 0) {
+        terminal.write("\x1b[" + (moveBack + suggestionWidth) + "D")
+      }
+    } else if (moveBack > 0) {
       terminal.write("\x1b[" + moveBack + "D")
     }
   }
@@ -272,7 +378,7 @@ const MySQLShell: React.FC<MySQLShellProps> = ({ onCommand, title }) => {
       multilineInputRef.current = trimmedInput
     }
 
-    if (!multilineInputRef.current.trim().endsWith(";")) {
+    if (type === 'mysql' && !multilineInputRef.current.trim().endsWith(";")) {
       isMultilineRef.current = true
       currentInputRef.current = ""
       cursorPositionRef.current = 0
@@ -301,7 +407,7 @@ const MySQLShell: React.FC<MySQLShellProps> = ({ onCommand, title }) => {
 
   return (
     <div className={styles.container}>
-      <div className={styles.header}>{title}</div>
+      <div className={styles.header}>{`${TITLE_PREFIX[type]}(${name})`}</div>
       <div ref={terminalRef} className={styles.body} />
     </div>
   );
