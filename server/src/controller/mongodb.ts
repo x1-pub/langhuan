@@ -5,7 +5,8 @@ import mongoodb from '@/pools/mongodb';
 import Connection from '@/model/connection';
 import { ResourceNotFound } from '@/utils/error';
 import { ExecuteMongoDBCommandDTO } from '@/dto/mongodb';
-import { formatMongoResult, MongoShellParser } from '@/utils/mongo-shell-parser';
+import { MongoShellParser } from '@/utils/mongo-shell-parser';
+import { formatMongoResult } from '@/utils/mongo-result-formatter';
 
 interface GetInstanceParams {
   connectionId: string;

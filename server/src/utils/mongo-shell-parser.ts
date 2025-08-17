@@ -1,543 +1,631 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose"
 
-export class MongoShellParser {
-  private connection: mongoose.Connection;
-  private currentDatabase: string;
-
-  constructor(connection: mongoose.Connection) {
-    this.connection = connection;
-    this.currentDatabase = connection.name || 'test';
-  }
-
-  async executeCommand(command: string): Promise<any> {
-    const trimmedCommand = command.trim();
-    
-    // 处理 use database
-    const useDbMatch = trimmedCommand.match(/^use\s+(\w+);?$/);
-    if (useDbMatch) {
-      return await this.useDatabase(useDbMatch[1]);
-    }
-
-    // 处理 show 命令
-    if (trimmedCommand.startsWith('show ')) {
-      return await this.handleShowCommand(trimmedCommand);
-    }
-
-    // 处理单独的 db 命令
-    if (trimmedCommand === 'db' || trimmedCommand === 'db;') {
-      return this.currentDatabase;
-    }
-
-    // 处理管理命令 (优先级高于普通db命令)
-    const adminCommands = [
-      'db.adminCommand',
-      'db.runCommand',
-      'db.stats',
-      'db.serverStatus',
-      'db.version',
-      'db.getMongo',
-      'db.getName',
-      'db.dropDatabase'
-    ];
-
-    for (const adminCmd of adminCommands) {
-      if (trimmedCommand.startsWith(adminCmd)) {
-        return await this.handleAdminCommand(trimmedCommand);
-      }
-    }
-
-    // 处理 db 相关命令 (集合操作)
-    if (trimmedCommand.startsWith('db.')) {
-      return await this.handleDbCommand(trimmedCommand);
-    }
-
-    // 处理用户管理命令
-    if (trimmedCommand.includes('createUser') || trimmedCommand.includes('dropUser') || 
-        trimmedCommand.includes('updateUser') || trimmedCommand.includes('getUsers')) {
-      return await this.handleUserCommand(trimmedCommand);
-    }
-
-    // 处理索引命令
-    if (trimmedCommand.includes('createIndex') || trimmedCommand.includes('dropIndex') || 
-        trimmedCommand.includes('getIndexes')) {
-      return await this.handleIndexCommand(trimmedCommand);
-    }
-
-    throw new Error(`不支持的命令格式: ${command}`);
-  }
-
-  private async useDatabase(dbName: string): Promise<string> {
-    this.currentDatabase = dbName;
-    await this.connection.useDb(dbName)
-    return `switched to db ${dbName}`;
-  }
-
-  private async handleShowCommand(command: string): Promise<any> {
-    const showMatch = command.match(/^show\s+(\w+);?$/);
-    if (!showMatch) {
-      throw new Error('无效的show命令格式');
-    }
-
-    const [, target] = showMatch;
-    
-    switch (target) {
-      case 'collections':
-      case 'tables':
-        return await this.showCollections();
-      case 'dbs':
-      case 'databases':
-        return await this.showDatabases();
-      case 'users':
-        return await this.showUsers();
-      case 'roles':
-        return await this.showRoles();
-      case 'profile':
-        return await this.showProfile();
-      case 'logs':
-        return await this.showLogs();
-      default:
-        throw new Error(`不支持的show命令: show ${target}`);
-    }
-  }
-
-  private async showCollections(): Promise<string[]> {
-    const collections = await this.connection.db!.listCollections().toArray();
-    return collections.map(col => col.name);
-  }
-
-  private async showDatabases(): Promise<any> {
-    const admin = this.connection.db!.admin();
-    const result = await admin.listDatabases();
-    return result.databases.map((db: any) => ({
-      name: db.name,
-      sizeOnDisk: db.sizeOnDisk,
-      empty: db.empty
-    }));
-  }
-
-  private async showUsers(): Promise<any> {
-    try {
-      const result = await this.connection.db!.admin().command({ usersInfo: 1 });
-      return result.users;
-    } catch (error) {
-      return { error: '需要管理员权限查看用户信息' };
-    }
-  }
-
-  private async showRoles(): Promise<any> {
-    try {
-      const result = await this.connection.db!.admin().command({ rolesInfo: 1 });
-      return result.roles;
-    } catch (error) {
-      return { error: '需要管理员权限查看角色信息' };
-    }
-  }
-
-  private async showProfile(): Promise<any> {
-    const result = await this.connection.db!.collection('system.profile').find({}).limit(5).toArray();
-    return result;
-  }
-
-  private async showLogs(): Promise<any> {
-    try {
-      const result = await this.connection.db!.admin().command({ getLog: 'global' });
-      return result.log.slice(-10); // 返回最后10条日志
-    } catch (error) {
-      return { error: '需要管理员权限查看日志' };
-    }
-  }
-
-  private async handleDbCommand(command: string): Promise<any> {
-    // 这个方法现在只处理集合操作，管理命令已经在上层处理
-    const collectionMatch = command.match(/^db\.(\w+)\.(\w+)\((.*?)\)(?:\.(\w+)\((.*?)\))*;?$/);
-    if (collectionMatch) {
-      const [, collectionName, operation, params, chainOperation, chainParams] = collectionMatch;
-      return await this.executeCollectionOperation(collectionName, operation, params, chainOperation, chainParams);
-    }
-
-    throw new Error(`不支持的db命令: ${command}`);
-  }
-
-  private async executeCollectionOperation(
-    collectionName: string, 
-    operation: string, 
-    params: string,
-    chainOperation?: string,
-    chainParams?: string
-  ): Promise<any> {
-    const model = this.getOrCreateModel(collectionName);
-    
-    let query: any;
-    let parsedParams: any = {};
-    
-    // 解析参数
-    if (params.trim()) {
-      try {
-        parsedParams = this.parseParams(params);
-      } catch (error) {
-        throw new Error(`参数解析失败: ${params}`);
-      }
-    }
-
-    // 执行主要操作
-    switch (operation) {
-      // 查询操作
-      case 'find':
-        query = model.find(parsedParams);
-        break;
-      case 'findOne':
-        return await model.findOne(parsedParams);
-      case 'findOneAndUpdate':
-        const [findUpdateFilter, findUpdateDoc, findUpdateOptions] = this.parseMultipleParams(params);
-        return await model.findOneAndUpdate(findUpdateFilter, findUpdateDoc, findUpdateOptions);
-      case 'findOneAndDelete':
-        return await model.findOneAndDelete(parsedParams);
-      case 'findOneAndReplace':
-        const [findReplaceFilter, findReplaceDoc, findReplaceOptions] = this.parseMultipleParams(params);
-        return await model.findOneAndReplace(findReplaceFilter, findReplaceDoc, findReplaceOptions);
-
-      // 计数操作
-      case 'countDocuments':
-        return await model.countDocuments(parsedParams);
-      case 'estimatedDocumentCount':
-        return await model.estimatedDocumentCount();
-      case 'count':
-        return await model.countDocuments(parsedParams);
-
-      // 插入操作
-      case 'insertOne':
-        return await model.create(parsedParams);
-      case 'insertMany':
-        return await model.insertMany(Array.isArray(parsedParams) ? parsedParams : [parsedParams]);
-      case 'insert':
-        return await model.create(parsedParams);
-
-      // 更新操作
-      case 'updateOne':
-        const [updateFilter, updateDoc, updateOptions] = this.parseMultipleParams(params);
-        return await model.updateOne(updateFilter, updateDoc, updateOptions);
-      case 'updateMany':
-        const [updateManyFilter, updateManyDoc, updateManyOptions] = this.parseMultipleParams(params);
-        return await model.updateMany(updateManyFilter, updateManyDoc, updateManyOptions);
-      case 'replaceOne':
-        const [replaceFilter, replaceDoc, replaceOptions] = this.parseMultipleParams(params);
-        return await model.replaceOne(replaceFilter, replaceDoc, replaceOptions);
-
-      // 删除操作
-      case 'deleteOne':
-        return await model.deleteOne(parsedParams);
-      case 'deleteMany':
-        return await model.deleteMany(parsedParams);
-      case 'remove':
-        return await model.deleteMany(parsedParams);
-
-      // 聚合操作
-      case 'aggregate':
-        const pipeline = Array.isArray(parsedParams) ? parsedParams : [parsedParams];
-        return await model.aggregate(pipeline);
-
-      // 去重操作
-      case 'distinct':
-        const [distinctField, distinctFilter] = this.parseMultipleParams(params);
-        return await model.distinct(distinctField, distinctFilter);
-
-      // 集合管理操作
-      case 'drop':
-        return await model.collection.drop();
-      case 'createIndex':
-        const [indexSpec, indexOptions] = this.parseMultipleParams(params);
-        return await model.collection.createIndex(indexSpec, indexOptions);
-      case 'dropIndex':
-        return await model.collection.dropIndex(parsedParams);
-      case 'getIndexes':
-        return await model.collection.indexes();
-      case 'reIndex':
-        // reIndex方法在新版本MongoDB驱动中已移除，使用runCommand替代
-        return await this.connection.db!.command({ reIndex: collectionName });
-
-      // 批量操作
-      case 'bulkWrite':
-        return await model.bulkWrite(parsedParams);
-
-      default:
-        throw new Error(`不支持的操作: ${operation}`);
-    }
-
-    // 处理链式操作
-    if (chainOperation && query) {
-      switch (chainOperation) {
-        case 'limit':
-          const limit = parseInt(chainParams || '10') || 10;
-          query = query.limit(limit);
-          break;
-        case 'skip':
-          const skip = parseInt(chainParams || '0') || 0;
-          query = query.skip(skip);
-          break;
-        case 'sort':
-          const sortParams = this.parseParams(chainParams || '{}');
-          query = query.sort(sortParams);
-          break;
-        case 'select':
-        case 'projection':
-          const selectParams = this.parseParams(chainParams || '{}');
-          query = query.select(selectParams);
-          break;
-        case 'populate':
-          const populateParams = this.parseParams(chainParams || '{}');
-          query = query.populate(populateParams);
-          break;
-        case 'lean':
-          query = query.lean();
-          break;
-        case 'explain':
-          return await query.explain();
-        case 'count':
-          return await query.countDocuments();
-      }
-    }
-
-    return await query.exec();
-  }
-
-  private async handleAdminCommand(command: string): Promise<any> {
-    // 处理 db.stats()
-    if (command.match(/^db\.stats\(\);?$/)) {
-      return await this.connection.db!.stats();
-    }
-
-    // 处理 db.getName()
-    if (command.match(/^db\.getName\(\);?$/)) {
-      return this.currentDatabase;
-    }
-
-    // 处理 db.version()
-    if (command.match(/^db\.version\(\);?$/)) {
-      const result = await this.connection.db!.admin().command({ buildInfo: 1 });
-      return result.version;
-    }
-
-    // 处理 db.serverStatus()
-    if (command.match(/^db\.serverStatus\(\);?$/)) {
-      return await this.connection.db!.admin().command({ serverStatus: 1 });
-    }
-
-    // 处理 db.dropDatabase()
-    if (command.match(/^db\.dropDatabase\(\);?$/)) {
-      return await this.connection.db!.dropDatabase();
-    }
-
-    // 处理 db.runCommand()
-    const runCommandMatch = command.match(/^db\.runCommand\((.*)\);?$/);
-    if (runCommandMatch) {
-      const commandObj = this.parseParams(runCommandMatch[1]);
-      return await this.connection.db!.command(commandObj);
-    }
-
-    // 处理 db.adminCommand()
-    const adminCommandMatch = command.match(/^db\.adminCommand\((.*)\);?$/);
-    if (adminCommandMatch) {
-      const commandObj = this.parseParams(adminCommandMatch[1]);
-      return await this.connection.db!.admin().command(commandObj);
-    }
-
-    throw new Error(`不支持的管理命令: ${command}`);
-  }
-
-  private async handleUserCommand(command: string): Promise<any> {
-    // 处理 db.createUser()
-    const createUserMatch = command.match(/^db\.createUser\((.*)\);?$/);
-    if (createUserMatch) {
-      const userObj = this.parseParams(createUserMatch[1]);
-      return await this.connection.db!.admin().command({ createUser: userObj.user, pwd: userObj.pwd, roles: userObj.roles });
-    }
-
-    // 处理 db.dropUser()
-    const dropUserMatch = command.match(/^db\.dropUser\("(.+)"\);?$/);
-    if (dropUserMatch) {
-      return await this.connection.db!.admin().command({ dropUser: dropUserMatch[1] });
-    }
-
-    // 处理 db.getUsers()
-    if (command.match(/^db\.getUsers\(\);?$/)) {
-      const result = await this.connection.db!.admin().command({ usersInfo: 1 });
-      return result.users;
-    }
-
-    throw new Error(`不支持的用户管理命令: ${command}`);
-  }
-
-  private async handleIndexCommand(command: string): Promise<any> {
-    const collectionMatch = command.match(/^db\.(\w+)\.(createIndex|dropIndex|getIndexes)\((.*?)\);?$/);
-    if (collectionMatch) {
-      const [, collectionName, operation, params] = collectionMatch;
-      const model = this.getOrCreateModel(collectionName);
-
-      switch (operation) {
-        case 'createIndex':
-          const [indexSpec, indexOptions] = this.parseMultipleParams(params);
-          return await model.collection.createIndex(indexSpec, indexOptions || {});
-        case 'dropIndex':
-          const indexName = this.parseParams(params);
-          return await model.collection.dropIndex(indexName);
-        case 'getIndexes':
-          return await model.collection.indexes();
-      }
-    }
-
-    throw new Error(`不支持的索引命令: ${command}`);
-  }
-
-  private parseParams(params: string): any {
-    if (!params.trim()) return {};
-    
-    try {
-      // 处理MongoDB特殊操作符，将$替换为临时标记
-      let processedParams = params.replace(/\$(\w+)/g, '"__DOLLAR__$1"');
-      
-      // 解析JSON
-      let parsed = JSON.parse(processedParams);
-      
-      // 还原$操作符
-      const restoreDollarSigns = (obj: any): any => {
-        if (Array.isArray(obj)) {
-          return obj.map(restoreDollarSigns);
-        } else if (obj && typeof obj === 'object') {
-          const result: any = {};
-          for (const [key, value] of Object.entries(obj)) {
-            const newKey = key.replace(/__DOLLAR__/g, '$');
-            result[newKey] = restoreDollarSigns(value);
-          }
-          return result;
-        }
-        return obj;
-      };
-      
-      return restoreDollarSigns(parsed);
-    } catch (error) {
-      throw new Error(`JSON解析失败: ${params}`);
-    }
-  }
-
-  private parseMultipleParams(params: string): any[] {
-    if (!params.trim()) return [{}];
-    
-    try {
-      // 简单的参数分割，处理嵌套对象
-      const results: any[] = [];
-      let currentParam = '';
-      let braceCount = 0;
-      let inString = false;
-      let escapeNext = false;
-
-      for (let i = 0; i < params.length; i++) {
-        const char = params[i];
-        
-        if (escapeNext) {
-          currentParam += char;
-          escapeNext = false;
-          continue;
-        }
-
-        if (char === '\\') {
-          escapeNext = true;
-          currentParam += char;
-          continue;
-        }
-
-        if (char === '"' && !escapeNext) {
-          inString = !inString;
-        }
-
-        if (!inString) {
-          if (char === '{') braceCount++;
-          if (char === '}') braceCount--;
-          
-          if (char === ',' && braceCount === 0) {
-            if (currentParam.trim()) {
-              results.push(this.parseParams(currentParam.trim()));
-            }
-            currentParam = '';
-            continue;
-          }
-        }
-
-        currentParam += char;
-      }
-
-      if (currentParam.trim()) {
-        results.push(this.parseParams(currentParam.trim()));
-      }
-
-      return results.length > 0 ? results : [{}];
-    } catch (error) {
-      // 如果解析失败，尝试简单分割
-      const parts = params.split(',').map(p => p.trim());
-      return parts.map(part => {
-        try {
-          return this.parseParams(part);
-        } catch {
-          return part;
-        }
-      });
-    }
-  }
-
-  private getOrCreateModel(collectionName: string): mongoose.Model<any> {
-    try {
-      return mongoose.model(collectionName);
-    } catch (error) {
-      // 如果模型不存在，创建一个通用的模型
-      const schema = new mongoose.Schema({}, { strict: false, collection: collectionName });
-      return mongoose.model(collectionName, schema);
-    }
-  }
+interface ParsedCommand {
+  database?: string
+  collection: string
+  operation: string
+  args: any[];
+  chainedOperations?: ChainedOperation[];
 }
 
-export const formatMongoResult = (result: unknown): string => {
-  if (result === null || result === undefined) {
-    return 'null';
+interface ChainedOperation {
+  method: string
+  args: any[]
+}
+
+export class MongoShellParser {
+  private connection: mongoose.Connection
+
+  constructor(connection: mongoose.Connection) {
+    this.connection = connection
   }
 
-  if (typeof result === 'string') {
-    return result;
+  /**
+   * Execute a MongoDB shell command
+   */
+  async executeCommand(command: string): Promise<unknown> {
+    // Clean and normalize the command
+    const cleanCommand = this.cleanCommand(command)
+
+    // Parse the command
+    const parsed = this.parseCommand(cleanCommand)
+
+    // Execute the parsed command
+    return this.executeOperation(parsed)
   }
 
-  if (typeof result === 'number' || typeof result === 'boolean') {
-    return result.toString();
+  /**
+   * Clean and normalize the command string
+   */
+  private cleanCommand(command: string): string {
+    return command
+      .trim()
+      .replace(/;\s*$/, "") // Remove trailing semicolon
+      .replace(/\s+/g, " ") // Normalize whitespace
   }
 
-  if (Array.isArray(result)) {
-    if (result.length === 0) {
-      return '[]';
+  /**
+   * Parse MongoDB shell command into structured format
+   */
+  private parseCommand(command: string): ParsedCommand {
+    // Handle different command patterns
+
+
+    // Database operations: use mydb
+    if (command.match(/^use\s+\w+/)) {
+      const dbName = command.replace(/^use\s+/, "")
+      return this.parseUseCommand(dbName)
     }
 
-    return JSON.stringify(result, null, 2)
-    // // 如果是文档数组，格式化为类似MongoDB shell的输出
-    // const formattedItems = result.map((item, index) => {
-    //   if (typeof item === 'object' && item !== null) {
-    //     return `/* ${index + 1} */\n${JSON.stringify(item, null, 2)}`;
-    //   }
-    //   return JSON.stringify(item);
-    // });
-
-    // return formattedItems.join('\n\n');
-  }
-
-  if (typeof result === 'object') {
-    // 特殊处理一些MongoDB返回的对象
-    if ((result as any).acknowledged !== undefined) {
-      return JSON.stringify(result, null, 2)
+    // Show commands: show dbs, show collections, show users
+    if (command.startsWith("show ")) {
+      return this.parseShowCommand(command)
     }
 
-    // 统计信息格式化
-    // if (result.db && result.collections !== undefined) {
-    //   return `Database: ${result.db}\nCollections: ${result.collections}\nViews: ${result.views || 0}\nObjects: ${result.objects || 0}\nAvg Obj Size: ${result.avgObjSize || 0}\nData Size: ${result.dataSize || 0}\nStorage Size: ${result.storageSize || 0}\nIndexes: ${result.indexes || 0}\nIndex Size: ${result.indexSize || 0}`;
-    // }
+    // Database admin commands: db.createUser(), db.dropUser(), etc.
+    if (command.startsWith("db.") && !command.includes(".")) {
+      return this.parseDbAdminCommand(command)
+    }
 
-    // 默认JSON格式化
-    return JSON.stringify(result, null, 2);
+    const collectionMatch = command.match(/^db\.([^.]+)\.(.+)$/)
+    if (collectionMatch) {
+      const [, collection, operationsString] = collectionMatch
+      return this.parseChainedOperations(collection, operationsString)
+    }
+
+    // Database-level operations: db.stats(), db.serverStatus(), etc.
+    const dbMatch = command.match(/^db\.(\w+)\((.*)$/)
+    if (dbMatch) {
+      const [, operation, argsString] = dbMatch
+      const args = this.parseArguments(argsString)
+      return {
+        collection: "", // No collection for db-level operations
+        operation,
+        args,
+      }
+    }
+
+    throw new Error(`Unsupported command format: ${command}`)
   }
 
-  return String(result);
+  /**
+   * Parse use commands
+   */
+  private parseUseCommand(dbName: string): ParsedCommand {
+    return {
+      collection: "",
+      operation: "use",
+      args: [dbName],
+    }
+  }
+
+  /**
+   * Parse show commands
+   */
+  private parseShowCommand(command: string): ParsedCommand {
+    const showType = command.replace(/^show\s+/, "").trim()
+    return {
+      collection: "",
+      operation: "show",
+      args: [showType],
+    }
+  }
+
+  /**
+   * Parse database admin commands
+   */
+  private parseDbAdminCommand(command: string): ParsedCommand {
+    const operation = command.replace(/^db\./, "").trim()
+    const argsString = command.match(/$$(.*)$$$/) ? command.match(/$$(.*)$$$/)![1] : ""
+    const args = this.parseArguments(argsString)
+
+    return {
+      collection: "",
+      operation,
+      args,
+    }
+  }
+  /**
+   * Parse chained operations like find().limit(10).sort({name: 1})
+   */
+  private parseChainedOperations(collection: string, operationsString: string): ParsedCommand {
+    // Split by method calls while preserving parentheses content
+    const methods = this.splitChainedMethods(operationsString)
+
+    if (methods.length === 0) {
+      throw new Error(`No operations found in: ${operationsString}`)
+    }
+
+    // First method is the main operation
+    const firstMethod = methods[0]
+    const mainOperation = this.parseMethodCall(firstMethod)
+
+    // Remaining methods are chained operations
+    const chainedOperations: ChainedOperation[] = methods.slice(1).map((method) => this.parseMethodCall(method))
+
+    return {
+      collection,
+      operation: mainOperation.method,
+      args: mainOperation.args,
+      chainedOperations: chainedOperations.length > 0 ? chainedOperations : undefined,
+    }
+  }
+
+  /**
+   * Split chained method calls like "find({}).limit(10).sort({name: 1})"
+   */
+  private splitChainedMethods(operationsString: string): string[] {
+    const methods: string[] = []
+    let current = ""
+    let depth = 0
+    let inString = false
+    let stringChar = ""
+
+    for (let i = 0; i < operationsString.length; i++) {
+      const char = operationsString[i]
+      const prevChar = i > 0 ? operationsString[i - 1] : ""
+
+      if (!inString && (char === '"' || char === "'")) {
+        inString = true
+        stringChar = char
+      } else if (inString && char === stringChar && prevChar !== "\\") {
+        inString = false
+        stringChar = ""
+      }
+
+      if (!inString) {
+        if (char === "(") {
+          depth++
+        } else if (char === ")") {
+          depth--
+
+          // End of a method call
+          if (depth === 0) {
+            current += char
+            methods.push(current.trim())
+            current = ""
+
+            // Skip the dot if it exists
+            if (i + 1 < operationsString.length && operationsString[i + 1] === ".") {
+              i++
+            }
+            continue
+          }
+        }
+      }
+
+      current += char
+    }
+
+    // Handle case where there's remaining content (shouldn't happen with proper syntax)
+    if (current.trim()) {
+      methods.push(current.trim())
+    }
+
+    return methods
+  }
+
+  /**
+   * Parse a single method call like "find({name: 'John'})"
+   */
+  private parseMethodCall(methodString: string): ChainedOperation {
+    const match = methodString.match(/^(\w+)\((.*)$/)
+    if (!match) {
+      throw new Error(`Invalid method call format: ${methodString}`)
+    }
+
+    const [, method, argsString] = match
+    const args = this.parseArguments(argsString)
+
+    return { method, args }
+  }
+
+  /**
+   * Parse function arguments, handling JavaScript object syntax
+   */
+  private parseArguments(argsString: string): any[] {
+    const cleanArgs = argsString.replace(/\)$/, "").trim()
+
+    if (!cleanArgs) {
+      return []
+    }
+
+    try {
+      const normalizedArgs = this.normalizeJavaScriptObjects(cleanArgs)
+
+      // Split arguments by commas, but respect nested objects and arrays
+      const args = this.splitArguments(normalizedArgs)
+
+      return args.map((arg) => {
+        const trimmed = arg.trim()
+
+        // Handle different argument types
+        if (trimmed === "true" || trimmed === "false") {
+          return trimmed === "true"
+        }
+
+        if (trimmed === "null") {
+          return null
+        }
+
+        if (trimmed === "undefined") {
+          return undefined
+        }
+
+        // Numbers
+        if (/^-?\d+(\.\d+)?$/.test(trimmed)) {
+          return Number.parseFloat(trimmed)
+        }
+
+        // Strings (quoted)
+        if ((trimmed.startsWith('"') && trimmed.endsWith('"')) || (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
+          return trimmed.slice(1, -1)
+        }
+
+        // Objects and arrays
+        if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+          return JSON.parse(trimmed)
+        }
+
+        // Unquoted strings (field names, etc.)
+        return trimmed
+      })
+    } catch (error) {
+      throw new Error(`Failed to parse arguments: ${cleanArgs}. Error: ${error}`)
+    }
+  }
+
+  /**
+   * Normalize JavaScript objects to valid JSON
+   */
+  private normalizeJavaScriptObjects(input: string): string {
+    return input.replace(/\{[^}]*\}/g, (match) => {
+      // Add quotes to unquoted property names
+      return match.replace(/([{,]\s*)([a-zA-Z_$][a-zA-Z0-9_$]*)\s*:/g, '$1"$2":')
+    })
+  }
+
+  /**
+   * Split arguments respecting nested structures
+   */
+  private splitArguments(argsString: string): string[] {
+    const args: string[] = []
+    let current = ""
+    let depth = 0
+    let inString = false
+    let stringChar = ""
+
+    for (let i = 0; i < argsString.length; i++) {
+      const char = argsString[i]
+      const prevChar = i > 0 ? argsString[i - 1] : ""
+
+      if (!inString && (char === '"' || char === "'")) {
+        inString = true
+        stringChar = char
+      } else if (inString && char === stringChar && prevChar !== "\\") {
+        inString = false
+        stringChar = ""
+      }
+
+      if (!inString) {
+        if (char === "{" || char === "[") {
+          depth++
+        } else if (char === "}" || char === "]") {
+          depth--
+        } else if (char === "," && depth === 0) {
+          args.push(current.trim())
+          current = ""
+          continue
+        }
+      }
+
+      current += char
+    }
+
+    if (current.trim()) {
+      args.push(current.trim())
+    }
+
+    return args
+  }
+
+  /**
+   * Execute the parsed operation
+   */
+  private async executeOperation(parsed: ParsedCommand): Promise<any> {
+    const { collection, operation, args, chainedOperations } = parsed
+
+    // Handle show commands
+    if (operation === "use") {
+      return this.executeUseCommand(args[0])
+    }
+
+    // Handle show commands
+    if (operation === "show") {
+      return this.executeShowCommand(args[0])
+    }
+
+    // Handle database-level operations
+    if (!collection) {
+      return this.executeDbOperation(operation, args)
+    }
+
+    // Handle collection operations
+    const model = this.getModel(collection)
+    return this.executeCollectionOperation(model, operation, args, chainedOperations)
+  }
+
+  private async executeUseCommand(dbName: string) {
+    return `switched to db ${dbName}`
+  }
+
+  /**
+   * Execute show commands
+   */
+  private async executeShowCommand(showType: string): Promise<any> {
+    switch (showType) {
+      case "dbs":
+      case "databases":
+        const admin = this.connection.db!.admin()
+        const dbList = await admin.listDatabases()
+        return dbList.databases
+
+      case "collections":
+        const collections = await this.connection.db!.listCollections().toArray()
+        return collections.map((c) => c.name)
+
+      case "users":
+        try {
+          const users = await this.connection.db!.admin().command({ usersInfo: 1 })
+          return users.users || []
+        } catch (error) {
+          throw new Error("Insufficient privileges to show users")
+        }
+
+      case "roles":
+        try {
+          const roles = await this.connection.db!.admin().command({ rolesInfo: 1 })
+          return roles.roles || []
+        } catch (error) {
+          throw new Error("Insufficient privileges to show roles")
+        }
+
+      default:
+        throw new Error(`Unsupported show command: show ${showType}`)
+    }
+  }
+
+  /**
+   * Execute database-level operations
+   */
+  private async executeDbOperation(operation: string, args: any[]): Promise<any> {
+    const db = this.connection.db!
+
+    switch (operation) {
+      case "stats":
+        return await db.stats()
+
+      case "serverStatus":
+        return await db.admin().serverStatus()
+
+      case "createUser":
+        if (args.length < 1) throw new Error("createUser requires user document")
+        return await db.admin().command({
+          createUser: args[0].user,
+          pwd: args[0].pwd,
+          roles: args[0].roles || [],
+        })
+
+      case "dropUser":
+        if (args.length < 1) throw new Error("dropUser requires username")
+        return await db.admin().removeUser(args[0])
+      // return await db.admin().command({ dropUser: args[0] })
+
+      case "createCollection":
+        if (args.length < 1) throw new Error("createCollection requires collection name")
+        return await db.createCollection(args[0], args[1] || {})
+
+      case "dropDatabase":
+        return await db.dropDatabase()
+
+      case "runCommand":
+        if (args.length < 1) throw new Error("runCommand requires command object")
+        return await db.admin().command(args[0])
+
+      default:
+        throw new Error(`Unsupported database operation: ${operation}`)
+    }
+  }
+
+  /**
+   * Execute collection operations
+   */
+  private async executeCollectionOperation(
+    model: mongoose.Model<any>,
+    operation: string,
+    args: any[],
+    chainedOperations?: ChainedOperation[],
+  ): Promise<any> {
+    let query: any
+
+    // Execute the main operation
+    switch (operation) {
+      // Query operations that return a query object for chaining
+      case "find":
+        const findQuery = args[0] || {}
+        const projection = args[1] || {}
+        query = model.find(findQuery, projection)
+        break
+
+      case "findOne":
+        query = model.findOne(args[0] || {}, args[1] || {})
+        break
+
+      case "findById":
+        if (args.length < 1) throw new Error("findById requires an id")
+        query = model.findById(args[0], args[1] || {})
+        break
+
+      // Operations that don't support chaining - execute immediately
+      case "insertOne":
+        if (args.length < 1) throw new Error("insertOne requires a document")
+        const insertResult = await model.create(args[0])
+        return { insertedId: insertResult._id, acknowledged: true }
+
+      case "insertMany":
+        if (args.length < 1) throw new Error("insertMany requires documents array")
+        const insertManyResult = await model.insertMany(args[0], args[1] || {})
+        return {
+          insertedIds: insertManyResult.map((doc) => doc._id),
+          insertedCount: insertManyResult.length,
+          acknowledged: true,
+        }
+
+      case "updateOne":
+        if (args.length < 2) throw new Error("updateOne requires filter and update")
+        return await model.updateOne(args[0], args[1], args[2] || {})
+
+      case "updateMany":
+        if (args.length < 2) throw new Error("updateMany requires filter and update")
+        return await model.updateMany(args[0], args[1], args[2] || {})
+
+      case "replaceOne":
+        if (args.length < 2) throw new Error("replaceOne requires filter and replacement")
+        return await model.replaceOne(args[0], args[1], args[2] || {})
+
+      case "deleteOne":
+        if (args.length < 1) throw new Error("deleteOne requires a filter")
+        return await model.deleteOne(args[0])
+
+      case "deleteMany":
+        if (args.length < 1) throw new Error("deleteMany requires a filter")
+        return await model.deleteMany(args[0])
+
+      case "aggregate":
+        if (args.length < 1) throw new Error("aggregate requires pipeline array")
+        return await model.aggregate(args[0])
+
+      case "countDocuments":
+        return await model.countDocuments(args[0] || {})
+
+      case "estimatedDocumentCount":
+        return await model.estimatedDocumentCount()
+
+      case "distinct":
+        if (args.length < 1) throw new Error("distinct requires field name")
+        return await model.distinct(args[0], args[1] || {})
+
+      // Index operations
+      case "createIndex":
+        if (args.length < 1) throw new Error("createIndex requires index specification")
+        return await model.collection.createIndex(args[0], args[1] || {})
+
+      case "createIndexes":
+        if (args.length < 1) throw new Error("createIndexes requires index specifications array")
+        return await model.collection.createIndexes(args[0])
+
+      case "dropIndex":
+        if (args.length < 1) throw new Error("dropIndex requires index specification")
+        return await model.collection.dropIndex(args[0])
+
+      case "dropIndexes":
+        return await model.collection.dropIndexes()
+
+      case "getIndexes":
+        return await model.collection.indexes()
+
+      // Collection management
+      case "drop":
+        return await model.collection.drop()
+
+      case "stats":
+        return await this.connection.db!.command({ collStats: model.collection.collectionName })
+
+      case "validate":
+        return await this.connection.db!.command({ validate: model.collection.collectionName })
+
+      default:
+        throw new Error(`Unsupported collection operation: ${operation}`)
+    }
+
+    if (chainedOperations && chainedOperations.length > 0 && query) {
+      for (const chainedOp of chainedOperations) {
+        query = this.applyChainedOperation(query, chainedOp)
+      }
+    }
+
+    // Execute the final query
+    if (query) {
+      // Add .lean() for better performance on find operations
+      if (
+        typeof query.lean === "function" &&
+        (operation === "find" || operation === "findOne" || operation === "findById")
+      ) {
+        return await query.lean()
+      }
+      return await query
+    }
+
+    throw new Error(`Operation ${operation} did not return a result`)
+  }
+
+  /**
+   * Apply a chained operation to a query
+   */
+  private applyChainedOperation(query: any, chainedOp: ChainedOperation): any {
+    const { method, args } = chainedOp
+
+    switch (method) {
+      case "limit":
+        if (args.length < 1) throw new Error("limit requires a number")
+        return query.limit(args[0])
+
+      case "skip":
+        if (args.length < 1) throw new Error("skip requires a number")
+        return query.skip(args[0])
+
+      case "sort":
+        if (args.length < 1) throw new Error("sort requires a sort specification")
+        return query.sort(args[0])
+
+      case "select":
+      case "project":
+        if (args.length < 1) throw new Error("select/project requires field specification")
+        return query.select(args[0])
+
+      case "populate":
+        if (args.length < 1) throw new Error("populate requires path specification")
+        return query.populate(args[0])
+
+      case "lean":
+        return query.lean()
+
+      case "exec":
+        // exec() doesn't modify the query, just returns it for execution
+        return query
+
+      case "count":
+        return query.countDocuments()
+
+      case "distinct":
+        if (args.length < 1) throw new Error("distinct requires field name")
+        return query.distinct(args[0])
+
+      default:
+        throw new Error(`Unsupported chained operation: ${method}`)
+    }
+  }
+
+  /**
+   * Get or create a mongoose model for the collection
+   */
+  private getModel(collectionName: string): mongoose.Model<any> {
+    try {
+      return this.connection.model(collectionName)
+    } catch (error) {
+      // Create a dynamic model if it doesn't exist
+      const schema = new mongoose.Schema({}, { strict: false, collection: collectionName })
+      return this.connection.model(collectionName, schema)
+    }
+  }
 }

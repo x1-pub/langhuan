@@ -21,7 +21,7 @@ import {
 import { ResourceNotFound } from '@/utils/error';
 import mysql from '@/pools/mysql'
 import spatialToString from '@/utils/spatial-to-string';
-import { formatNonQueryResult, formatQueryResult, getStatementType } from '@/utils/format-sql-result';
+import { formatNonQueryResult, formatQueryResult, getStatementType } from '@/utils/sql-result-formatter';
 import { getReorderTableColumnsSql } from '@/utils/sql-cloumn-order';
 
 interface GetInstanceParams {

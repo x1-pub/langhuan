@@ -4,7 +4,8 @@ import redis from '@/pools/redis';
 import Connection from '@/model/connection';
 import { ResourceNotFound } from '@/utils/error';
 import { RedisSearchDTO, RedisGetValueDTO, RedisType, RedisAddValueDTO, RedisDeleteValueDTO, ExecuteRedisCommandDTO } from '@/dto/redis';
-import { formatRedisResult, parseRedisCommand } from '@/utils/format-redis-command';
+import { formatRedisResult } from '@/utils/redis-result-formatter';
+import { parseRedisCommand } from '@/utils/redis-shell-parser';
 
 interface GetInstanceParams {
   connectionId: number;
