@@ -161,7 +161,7 @@ const Terminal: React.FC<TerminalProps> = ({ onCommand, name, type, defaultDB })
 
     if (lastWord.length < 2) return []
 
-    return KEYWORDS[type].filter((keyword) => keyword.startsWith(lastWord) && keyword !== lastWord).slice(0, 5) // Limit to 5 suggestions
+    return KEYWORDS[type].filter((keyword) => keyword.toUpperCase().startsWith(lastWord) && keyword.toUpperCase() !== lastWord).slice(0, 5) // Limit to 5 suggestions
   }
 
   const handleTab = () => {
