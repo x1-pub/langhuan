@@ -3,17 +3,22 @@ import { Context } from 'koa';
 import redis from '@/pools/redis';
 import Connection from '@/model/connection';
 import { ResourceNotFound } from '@/utils/error';
-import { RedisSearchDTO, RedisGetValueDTO, RedisType, type RedisBaseParams, RedisAddValueDTO, RedisDeleteValueDTO, ExecuteRedisCommandDTO } from '@/dto/redis';
+import { RedisSearchDTO, RedisGetValueDTO, RedisType, RedisAddValueDTO, RedisDeleteValueDTO, ExecuteRedisCommandDTO } from '@/dto/redis';
 import { formatRedisResult, parseRedisCommand } from '@/utils/format-redis-command';
 
-type GetInstanceParams = RedisBaseParams & { uid: number; }
+interface GetInstanceParams {
+  connectionId: number;
+  dbName?: string
+  uid: number;
+  sessionId?: string
+}
 
 class RedisController {
   /**
    * 获取 ioredis 的 Redis 实例
    */
   private static async getInstance(config: GetInstanceParams) {
-    const { connectionId, dbName, uid } = config
+    const { connectionId, dbName, uid, sessionId } = config
     const connection = await Connection.findOne({
       where: { creator: uid, id: connectionId, type: 'redis' }
     })
@@ -22,7 +27,7 @@ class RedisController {
     }
 
     const { host, port, username, password } = connection
-    const ioredis = await redis.getInstance({ database: dbName, host, port, username, password, uid })
+    const ioredis = await redis.getInstance({ database: dbName, host, port, username, password, uid, sessionId})
 
     return ioredis
   }
@@ -190,8 +195,8 @@ class RedisController {
   }
 
   execute = async (ctx: Context) => {
-    const { connectionId, command } = await new ExecuteRedisCommandDTO().v(ctx)
-    const ioredis = await RedisController.getInstance({ connectionId, uid: ctx.user.id })
+    const { connectionId, command, sessionId } = await new ExecuteRedisCommandDTO().v(ctx)
+    const ioredis = await RedisController.getInstance({ connectionId, uid: ctx.user.id, sessionId })
 
     const parts = parseRedisCommand(command)
     const [cmd, ...args] = parts;

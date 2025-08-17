@@ -28,6 +28,7 @@ interface GetInstanceParams {
   uid: number;
   connectionId: string;
   dbName?: string;
+  sessionId?: string;
 }
 
 class MysqlController {
@@ -35,7 +36,7 @@ class MysqlController {
    * 获取 sequelize 的 MySQL 实例
    */
   private async getInstance(config: GetInstanceParams) {
-    const { connectionId, dbName, uid } = config
+    const { connectionId, dbName, uid, sessionId } = config
     const connection = await Connection.findOne({
       where: { creator: uid, id: connectionId, type: 'mysql' }
     })
@@ -44,7 +45,7 @@ class MysqlController {
     }
 
     const { host, port, username, password } = connection
-    const dbConfig = { database: dbName, host, port, username, password, uid }
+    const dbConfig = { database: dbName, host, port, username, password, uid, sessionId }
     const sequelize = await mysql.getInstance(dbConfig)
 
     return sequelize
@@ -445,14 +446,14 @@ class MysqlController {
    * 执行 SQL
    */
   execute = async (ctx: Context) => {
-    const { connectionId, dbName, sql } = await new ExecuteSQLDTO().v(ctx)
-    const sequelize = await this.getInstance({ connectionId, dbName, uid: ctx.user.id })
+    const { connectionId, command, sessionId } = await new ExecuteSQLDTO().v(ctx)
+    const sequelize = await this.getInstance({ connectionId, uid: ctx.user.id, sessionId })
 
     try {
       let result;
       let changeDatabase;
-      const [results, metadata] = await sequelize.query(sql)
-      const type = getStatementType(sql);
+      const [results, metadata] = await sequelize.query(command)
+      const type = getStatementType(command);
 
       if (type === 'query') {
         result = formatQueryResult(results);

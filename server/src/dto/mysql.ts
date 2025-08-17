@@ -260,11 +260,12 @@ export class MySQLDeleteColumnDTO extends Validator<{ name: string } & MySQLBase
   }
 }
 
-export class ExecuteSQLDTO extends Validator<{ connectionId: string, dbName?: string, sql: string }> {
+export class ExecuteSQLDTO extends Validator<{ connectionId: string; command: string; sessionId: string }> {
   useRules() {
     return [
       new Rule(isInt, 'connectionId'),
-      new Rule(isLength, 'sql', { min: 1 }),
+      new Rule(isLength, 'command', { min: 1 }),
+      new Rule(isLength, 'sessionId', { min: 1 }),
     ]
   }
 }

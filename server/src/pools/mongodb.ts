@@ -9,6 +9,7 @@ interface MongoDBConfig {
   username?: string;
   password?: string;
   database?: string;
+  sessionId?: string;
 }
 
 interface MongooseInstanceWithTimestamp {
@@ -48,6 +49,16 @@ class MongoDBManager {
         reject(new ConnectionFailed(String(err)))
       }
     })
+  }
+
+  changeInstance(config: MongoDBConfig, connection: Connection) {
+    const key = JSON.stringify(config);
+    const instance = this.mongooseInstances.get(key);
+    if (!instance) {
+      return
+    }
+    instance.lastUsed = Date.now();
+    instance.connection = connection;
   }
 
   private startCleanupTask() {

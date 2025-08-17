@@ -9,6 +9,7 @@ interface RedisConfig {
   username?: string;
   password?: string;
   database?: string;
+  sessionId?: string;
 }
 
 interface RedisInstanceWithTimestamp {

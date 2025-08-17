@@ -2,12 +2,14 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import { Spin } from 'antd';
 
-import { executeSql } from "@/api/mysql";
+import { executeMySqlCommand } from "@/api/mysql";
 import { type ConnectionDetails, ConnectionType, getConnectionDetails } from "@/api/connection";
 import useNotification from "@/utils/use-notifition";
 import Terminal from "./terminal";
 import { executeRedisCommand } from "@/api/redis";
 import { executeMongoCommand } from "@/api/mongodb";
+
+const SESSION_ID = `110${Date.now()}${Math.random().toString().slice(-6)}`
 
 const Shell: React.FC = () => {
   const notify = useNotification()
@@ -20,15 +22,15 @@ const Shell: React.FC = () => {
     }
 
     if (connection.type === 'mysql') {
-      return executeSql({ connectionId: connection?.id, sql: command })
+      return executeMySqlCommand({ connectionId: connection?.id, command, sessionId: SESSION_ID })
     }
 
     if (connection.type === 'redis') {
-      return executeRedisCommand({ connectionId: connection?.id, command  })
+      return executeRedisCommand({ connectionId: connection?.id, command, sessionId: SESSION_ID  })
     }
 
     if (connection.type === 'mongodb') {
-      return executeMongoCommand({ connectionId: connection?.id, command  })
+      return executeMongoCommand({ connectionId: connection?.id, command , sessionId: SESSION_ID })
     }
 
     return {

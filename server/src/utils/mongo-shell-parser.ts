@@ -11,7 +11,7 @@ export class MongoShellParser {
 
   async executeCommand(command: string): Promise<any> {
     const trimmedCommand = command.trim();
-
+    
     // 处理 use database
     const useDbMatch = trimmedCommand.match(/^use\s+(\w+);?$/);
     if (useDbMatch) {
@@ -23,12 +23,12 @@ export class MongoShellParser {
       return await this.handleShowCommand(trimmedCommand);
     }
 
-    // 处理 db 相关命令
-    if (trimmedCommand.startsWith('db.')) {
-      return await this.handleDbCommand(trimmedCommand);
+    // 处理单独的 db 命令
+    if (trimmedCommand === 'db' || trimmedCommand === 'db;') {
+      return this.currentDatabase;
     }
 
-    // 处理管理命令
+    // 处理管理命令 (优先级高于普通db命令)
     const adminCommands = [
       'db.adminCommand',
       'db.runCommand',
@@ -36,7 +36,8 @@ export class MongoShellParser {
       'db.serverStatus',
       'db.version',
       'db.getMongo',
-      'db.getName'
+      'db.getName',
+      'db.dropDatabase'
     ];
 
     for (const adminCmd of adminCommands) {
@@ -45,15 +46,20 @@ export class MongoShellParser {
       }
     }
 
+    // 处理 db 相关命令 (集合操作)
+    if (trimmedCommand.startsWith('db.')) {
+      return await this.handleDbCommand(trimmedCommand);
+    }
+
     // 处理用户管理命令
-    if (trimmedCommand.includes('createUser') || trimmedCommand.includes('dropUser') ||
-      trimmedCommand.includes('updateUser') || trimmedCommand.includes('getUsers')) {
+    if (trimmedCommand.includes('createUser') || trimmedCommand.includes('dropUser') || 
+        trimmedCommand.includes('updateUser') || trimmedCommand.includes('getUsers')) {
       return await this.handleUserCommand(trimmedCommand);
     }
 
     // 处理索引命令
-    if (trimmedCommand.includes('createIndex') || trimmedCommand.includes('dropIndex') ||
-      trimmedCommand.includes('getIndexes')) {
+    if (trimmedCommand.includes('createIndex') || trimmedCommand.includes('dropIndex') || 
+        trimmedCommand.includes('getIndexes')) {
       return await this.handleIndexCommand(trimmedCommand);
     }
 
@@ -62,7 +68,7 @@ export class MongoShellParser {
 
   private async useDatabase(dbName: string): Promise<string> {
     this.currentDatabase = dbName;
-    // 注意：在实际应用中，你可能需要重新连接到新数据库
+    await this.connection.useDb(dbName)
     return `switched to db ${dbName}`;
   }
 
@@ -73,7 +79,7 @@ export class MongoShellParser {
     }
 
     const [, target] = showMatch;
-
+    
     switch (target) {
       case 'collections':
       case 'tables':
@@ -95,14 +101,15 @@ export class MongoShellParser {
   }
 
   private async showCollections(): Promise<string[]> {
-    const collections = await this.connection.db?.listCollections().toArray();
-    return collections?.map(col => col.name) || [];
+    const collections = await this.connection.db!.listCollections().toArray();
+    console.log(collections)
+    return collections.map(col => col.name);
   }
 
   private async showDatabases(): Promise<any> {
-    const admin = this.connection.db?.admin();
-    const result = await admin?.listDatabases();
-    return result?.databases.map((db: any) => ({
+    const admin = this.connection.db!.admin();
+    const result = await admin.listDatabases();
+    return result.databases.map((db: any) => ({
       name: db.name,
       sizeOnDisk: db.sizeOnDisk,
       empty: db.empty
@@ -111,8 +118,8 @@ export class MongoShellParser {
 
   private async showUsers(): Promise<any> {
     try {
-      const result = await this.connection.db?.admin().command({ usersInfo: 1 });
-      return result?.users;
+      const result = await this.connection.db!.admin().command({ usersInfo: 1 });
+      return result.users;
     } catch (error) {
       return { error: '需要管理员权限查看用户信息' };
     }
@@ -120,55 +127,29 @@ export class MongoShellParser {
 
   private async showRoles(): Promise<any> {
     try {
-      const result = await this.connection.db?.admin().command({ rolesInfo: 1 });
-      return result?.roles;
+      const result = await this.connection.db!.admin().command({ rolesInfo: 1 });
+      return result.roles;
     } catch (error) {
       return { error: '需要管理员权限查看角色信息' };
     }
   }
 
   private async showProfile(): Promise<any> {
-    const result = await this.connection.db?.collection('system.profile').find({}).limit(5).toArray();
+    const result = await this.connection.db!.collection('system.profile').find({}).limit(5).toArray();
     return result;
   }
 
   private async showLogs(): Promise<any> {
     try {
-      const result = await this.connection.db?.admin().command({ getLog: 'global' });
-      return result?.log.slice(-10); // 返回最后10条日志
+      const result = await this.connection.db!.admin().command({ getLog: 'global' });
+      return result.log.slice(-10); // 返回最后10条日志
     } catch (error) {
       return { error: '需要管理员权限查看日志' };
     }
   }
 
   private async handleDbCommand(command: string): Promise<any> {
-    // 处理 db.stats()
-    if (command.match(/^db\.stats\(\);?$/)) {
-      return await this.connection.db?.stats();
-    }
-
-    // 处理 db.getName()
-    if (command.match(/^db\.getName\(\);?$/)) {
-      return this.currentDatabase;
-    }
-
-    // 处理 db.version()
-    if (command.match(/^db\.version\(\);?$/)) {
-      const result = await this.connection.db?.admin().command({ buildInfo: 1 });
-      return result?.version;
-    }
-
-    // 处理 db.serverStatus()
-    if (command.match(/^db\.serverStatus\(\);?$/)) {
-      return await this.connection.db?.admin().command({ serverStatus: 1 });
-    }
-
-    // 处理 db.dropDatabase()
-    if (command.match(/^db\.dropDatabase\(\);?$/)) {
-      return await this.connection.db?.dropDatabase();
-    }
-
-    // 处理集合操作
+    // 这个方法现在只处理集合操作，管理命令已经在上层处理
     const collectionMatch = command.match(/^db\.(\w+)\.(\w+)\((.*?)\)(?:\.(\w+)\((.*?)\))*;?$/);
     if (collectionMatch) {
       const [, collectionName, operation, params, chainOperation, chainParams] = collectionMatch;
@@ -179,17 +160,17 @@ export class MongoShellParser {
   }
 
   private async executeCollectionOperation(
-    collectionName: string,
-    operation: string,
+    collectionName: string, 
+    operation: string, 
     params: string,
     chainOperation?: string,
     chainParams?: string
   ): Promise<any> {
     const model = this.getOrCreateModel(collectionName);
-
+    
     let query: any;
     let parsedParams: any = {};
-
+    
     // 解析参数
     if (params.trim()) {
       try {
@@ -272,7 +253,8 @@ export class MongoShellParser {
       case 'getIndexes':
         return await model.collection.indexes();
       case 'reIndex':
-        return await this.connection.db?.command({ reIndex: collectionName });
+        // reIndex方法在新版本MongoDB驱动中已移除，使用runCommand替代
+        return await this.connection.db!.command({ reIndex: collectionName });
 
       // 批量操作
       case 'bulkWrite':
@@ -320,18 +302,44 @@ export class MongoShellParser {
   }
 
   private async handleAdminCommand(command: string): Promise<any> {
+    // 处理 db.stats()
+    if (command.match(/^db\.stats\(\);?$/)) {
+      return await this.connection.db!.stats();
+    }
+
+    // 处理 db.getName()
+    if (command.match(/^db\.getName\(\);?$/)) {
+      return this.currentDatabase;
+    }
+
+    // 处理 db.version()
+    if (command.match(/^db\.version\(\);?$/)) {
+      const result = await this.connection.db!.admin().command({ buildInfo: 1 });
+      return result.version;
+    }
+
+    // 处理 db.serverStatus()
+    if (command.match(/^db\.serverStatus\(\);?$/)) {
+      return await this.connection.db!.admin().command({ serverStatus: 1 });
+    }
+
+    // 处理 db.dropDatabase()
+    if (command.match(/^db\.dropDatabase\(\);?$/)) {
+      return await this.connection.db!.dropDatabase();
+    }
+
     // 处理 db.runCommand()
     const runCommandMatch = command.match(/^db\.runCommand\((.*)\);?$/);
     if (runCommandMatch) {
       const commandObj = this.parseParams(runCommandMatch[1]);
-      return await this.connection.db?.command(commandObj);
+      return await this.connection.db!.command(commandObj);
     }
 
     // 处理 db.adminCommand()
     const adminCommandMatch = command.match(/^db\.adminCommand\((.*)\);?$/);
     if (adminCommandMatch) {
       const commandObj = this.parseParams(adminCommandMatch[1]);
-      return await this.connection.db?.admin().command(commandObj);
+      return await this.connection.db!.admin().command(commandObj);
     }
 
     throw new Error(`不支持的管理命令: ${command}`);
@@ -342,19 +350,19 @@ export class MongoShellParser {
     const createUserMatch = command.match(/^db\.createUser\((.*)\);?$/);
     if (createUserMatch) {
       const userObj = this.parseParams(createUserMatch[1]);
-      return await this.connection.db?.admin().command({ createUser: userObj.user, pwd: userObj.pwd, roles: userObj.roles });
+      return await this.connection.db!.admin().command({ createUser: userObj.user, pwd: userObj.pwd, roles: userObj.roles });
     }
 
     // 处理 db.dropUser()
     const dropUserMatch = command.match(/^db\.dropUser\("(.+)"\);?$/);
     if (dropUserMatch) {
-      return await this.connection.db?.admin().command({ dropUser: dropUserMatch[1] });
+      return await this.connection.db!.admin().command({ dropUser: dropUserMatch[1] });
     }
 
     // 处理 db.getUsers()
     if (command.match(/^db\.getUsers\(\);?$/)) {
-      const result = await this.connection.db?.admin().command({ usersInfo: 1 });
-      return result?.users;
+      const result = await this.connection.db!.admin().command({ usersInfo: 1 });
+      return result.users;
     }
 
     throw new Error(`不支持的用户管理命令: ${command}`);
@@ -383,14 +391,14 @@ export class MongoShellParser {
 
   private parseParams(params: string): any {
     if (!params.trim()) return {};
-
+    
     try {
       // 处理MongoDB特殊操作符，将$替换为临时标记
       let processedParams = params.replace(/\$(\w+)/g, '"__DOLLAR__$1"');
-
+      
       // 解析JSON
       let parsed = JSON.parse(processedParams);
-
+      
       // 还原$操作符
       const restoreDollarSigns = (obj: any): any => {
         if (Array.isArray(obj)) {
@@ -405,7 +413,7 @@ export class MongoShellParser {
         }
         return obj;
       };
-
+      
       return restoreDollarSigns(parsed);
     } catch (error) {
       throw new Error(`JSON解析失败: ${params}`);
@@ -414,7 +422,7 @@ export class MongoShellParser {
 
   private parseMultipleParams(params: string): any[] {
     if (!params.trim()) return [{}];
-
+    
     try {
       // 简单的参数分割，处理嵌套对象
       const results: any[] = [];
@@ -425,7 +433,7 @@ export class MongoShellParser {
 
       for (let i = 0; i < params.length; i++) {
         const char = params[i];
-
+        
         if (escapeNext) {
           currentParam += char;
           escapeNext = false;
@@ -445,7 +453,7 @@ export class MongoShellParser {
         if (!inString) {
           if (char === '{') braceCount++;
           if (char === '}') braceCount--;
-
+          
           if (char === ',' && braceCount === 0) {
             if (currentParam.trim()) {
               results.push(this.parseParams(currentParam.trim()));

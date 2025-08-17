@@ -8,12 +8,13 @@ import { COLORS, LANG_HUAN, WELCOME, KEYWORDS, TITLE_PREFIX } from "./constants"
 import { ConnectionType } from "@/api/connection";
 
 interface TerminalProps {
-  onCommand: (command: string) => Promise<{ result: string; changeDatabase?: string; }>;
   name: string;
   type: ConnectionType;
+  defaultDB?: string;
+  onCommand: (command: string) => Promise<{ result: string; changeDatabase?: string; }>;
 }
 
-const Terminal: React.FC<TerminalProps> = ({ onCommand, name, type }) => {
+const Terminal: React.FC<TerminalProps> = ({ onCommand, name, type, defaultDB }) => {
   const terminalRef = useRef<HTMLDivElement>(null)
   const terminalInstance = useRef<XtermTerminal | null>(null)
   const fitAddon = useRef<FitAddon | null>(null)
@@ -26,7 +27,7 @@ const Terminal: React.FC<TerminalProps> = ({ onCommand, name, type }) => {
   const historyIndexRef = useRef<number>(-1)
   const currentSuggestionRef = useRef("")
   const suggestionsRef = useRef<string[]>([])
-  const promptRef = useRef<string>('> ')
+  const promptRef = useRef<string>(`${defaultDB || ''}> `)
 
   const generateContinuationPrompt = (prompt: string) => {
     return `${''.padStart(prompt.length - 3, ' ')}-> `; // for mysql, end without ;

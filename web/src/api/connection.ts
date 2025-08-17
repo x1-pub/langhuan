@@ -33,6 +33,7 @@ export interface ConnectionDetails extends CreateConnectionParams {
   id: number;
   createdAt: string;
   updatedAt: string;
+  database: string;
 }
 
 export const getConnectionDetails = (connectionId: number | string) => request<ConnectionDetails>({

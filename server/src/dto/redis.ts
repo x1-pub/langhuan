@@ -84,6 +84,7 @@ export class RedisDeleteValueDTO extends Validator<DeleteValueParams> {
 interface ExecuteRedisCommand {
   connectionId: number;
   command: string;
+  sessionId: string;
 }
 
 export class ExecuteRedisCommandDTO extends Validator<ExecuteRedisCommand> {
@@ -91,6 +92,7 @@ export class ExecuteRedisCommandDTO extends Validator<ExecuteRedisCommand> {
     return [
       new Rule(isInt, 'connectionId'),
       new Rule(isLength, 'command', { min: 1 }),
+      new Rule(isLength, 'sessionId', { min: 1 }),
     ]
   }
 }
