@@ -102,7 +102,6 @@ export class MongoShellParser {
 
   private async showCollections(): Promise<string[]> {
     const collections = await this.connection.db!.listCollections().toArray();
-    console.log(collections)
     return collections.map(col => col.name);
   }
 

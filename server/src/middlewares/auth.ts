@@ -6,7 +6,7 @@ import config from '@/config';
 
 export default () => {
   return async (ctx: Context, next: Next) => {
-    console.log('request...', ctx.path)
+    console.log(`[${ctx.method}] ${ctx.url}`)
     const sessionId = ctx.cookies.get(SESSION_ID_NAME)
     const callbackUrl = ctx.request.header.referer
 
