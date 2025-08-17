@@ -7,11 +7,11 @@ const en = {
   homeQuestion: 'Suggestions are welcome',
   homeText1: 'THE MOST POWERFUL',
   homeText2: 'DATABASE GUI',
-  homeText3: 'Easily manage your Redis, MySQL, and MongoDB databases',
+  homeText3: 'Easily manage your MySQL, Redis, MongoDB and PostgreSQL databases',
   homeDescT1: 'Security',
   homeDescD1: 'You can choose offline connection mode, the server will not save any information',
   homeDescT2: 'Variety',
-  homeDescD2: 'Provides three types of mainstream database engines: Redis, MySQL and MongoDB',
+  homeDescD2: 'Provides three types of mainstream database engines: MySQL, Redis, MongoDB and PostgreSQL',
   homeDescT3: 'Simple',
   homeDescD3: 'The minimalist operation interface makes it easy for anyone to manage the database',
   connection: {

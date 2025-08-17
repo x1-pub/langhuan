@@ -35,7 +35,7 @@ const HeaderLayout: React.FC = () => {
           <div className={styles.left}>
             <div className={styles.logoWrap} onClick={navToWelcome}>
               <img className={styles.logo} src={LogoImg} alt="" />
-              <Typography.Text className={styles.title}>Langhuan Hub</Typography.Text>
+              <Typography.Text className={styles.title}>琅嬛阁</Typography.Text>
             </div>
             {!isWelcomePage && (
               <div className={styles.db}>

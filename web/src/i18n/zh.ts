@@ -7,11 +7,11 @@ const zh = {
   homeQuestion: '欢迎提出你的想法和建议',
   homeText1: '史上最强大的',
   homeText2: '数据库管理平台',
-  homeText3: '轻松管理您的 Redis、MySQL 或 MongoDB 数据库',
+  homeText3: '轻松管理您的 MySQL、Redis、MongoDB 和 PostgreSQL 数据库',
   homeDescT1: '安全',
   homeDescD1: '您可以选择离线连接模式，服务器不会保存您的任何信息（如数据库密码等）',
   homeDescT2: '多样',
-  homeDescD2: '提供了 Redis、MySQL 和 MongoDB 三种类型的主流数据库引擎',
+  homeDescD2: '提供了 MySQL、Redis、MongoDB 和 PostgreSQL 多种类型的主流数据库引擎',
   homeDescT3: '简洁',
   homeDescD3: '极简的操作界面，友善的交互方式，使得任何人都可以轻松管理数据库',
   connection: {
