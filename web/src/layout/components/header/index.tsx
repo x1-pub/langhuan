@@ -9,8 +9,10 @@ import ConnectionCreator from "./components/connection-creator";
 import LogoImg from '@/assets/image/logo.png'
 import styles from './index.module.less'
 import { Typography } from "antd";
+import { useTranslation } from "react-i18next";
 
 const HeaderLayout: React.FC = () => {
+  const { t } = useTranslation()
   const selectorRef = useRef<RefHandler>(null)
   const location = useLocation()
   const navigate = useNavigate()
@@ -35,7 +37,7 @@ const HeaderLayout: React.FC = () => {
           <div className={styles.left}>
             <div className={styles.logoWrap} onClick={navToWelcome}>
               <img className={styles.logo} src={LogoImg} alt="" />
-              <Typography.Text className={styles.title}>琅嬛阁</Typography.Text>
+              <Typography.Text className={styles.title}>{t('siteName')}</Typography.Text>
             </div>
             {!isWelcomePage && (
               <div className={styles.db}>
