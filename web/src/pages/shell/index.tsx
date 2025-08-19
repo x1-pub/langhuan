@@ -5,7 +5,8 @@ import { Spin } from 'antd';
 import { executeMySqlCommand } from "@/api/mysql";
 import { type ConnectionDetails, ConnectionType, getConnectionDetails } from "@/api/connection";
 import useNotification from "@/utils/use-notifition";
-import Terminal from "./terminal";
+// import Terminal from "./terminal";
+import TerminalV2 from "./terminal-v2";
 import { executeRedisCommand } from "@/api/redis";
 import { executeMongoCommand } from "@/api/mongodb";
 
@@ -15,26 +16,26 @@ const Shell: React.FC = () => {
   const notify = useNotification()
   const { connectionType, connectionId } = useParams()
   const [connection, setConnection] = useState<ConnectionDetails>()
+  const [prompt, setPrompt] = useState<string>('')
 
-  const handleCommand = async (command: string) => {
+  const handleCommandV2 = async (command: string) => {
     if (!connection) {
       throw new Error('Database Disconnected')
     }
 
-    if (connection.type === 'mysql') {
-      return executeMySqlCommand({ connectionId: connection?.id, command, sessionId: SESSION_ID })
-    }
+    try {
+      const fn =
+        connection.type === 'mysql' ? executeMySqlCommand :
+          connection.type === 'redis' ? executeRedisCommand : executeMongoCommand
 
-    if (connection.type === 'redis') {
-      return executeRedisCommand({ connectionId: connection?.id, command, sessionId: SESSION_ID  })
-    }
+      const { result, changeDatabase } = await fn({ connectionId: connection?.id, command, sessionId: SESSION_ID })
+      if (changeDatabase) {
+        setPrompt(`${changeDatabase}>`)
+      }
+      return result
 
-    if (connection.type === 'mongodb') {
-      return executeMongoCommand({ connectionId: connection?.id, command , sessionId: SESSION_ID })
-    }
-
-    return {
-      result: '',
+    } catch (err) {
+      return err instanceof Error ? err.message : String(err)
     }
   }
 
@@ -49,6 +50,7 @@ const Shell: React.FC = () => {
       return
     }
     setConnection(connection)
+    setPrompt(`${connection.type}>`)
   }
 
   useEffect(() => {
@@ -58,12 +60,13 @@ const Shell: React.FC = () => {
   if (!connection) {
     return <Spin spinning={true} fullscreen size="large" />
   }
-  
+
   return (
     <div style={{ height: '100vh' }}>
-      <Terminal
-        onCommand={handleCommand}
-        name={connection.name}
+      <TerminalV2
+        onExecuteCommand={handleCommandV2}
+        title={connection.name}
+        prompt={prompt}
         type={connectionType as ConnectionType}
       />
     </div>

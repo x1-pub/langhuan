@@ -33,7 +33,7 @@ export function formatQueryResult(results: unknown[]) {
     table.push(Object.values(row as object).map(val => val !== null ? val : 'NULL'));
   });
 
-  return table.toString().replace(/\n/g, '\n\r');
+  return table.toString();
 }
 
 export function formatNonQueryResult(type: ReturnType<typeof getStatementType>, metadata: any) {
