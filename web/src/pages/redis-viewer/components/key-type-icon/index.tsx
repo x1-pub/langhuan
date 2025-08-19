@@ -30,6 +30,7 @@ const KeyTypeIcon: React.FC<KeyTypeProps> = ({ type }) => {
         fontSize: '13px',
         display: 'inline-block',
         textAlign: 'center',
+        flexShrink: '0',
       }}
     >
       <span>{type.toLocaleUpperCase()}</span>

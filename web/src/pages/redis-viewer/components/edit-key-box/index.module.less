@@ -9,13 +9,17 @@
   .title {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 24px;
+    margin-bottom: 12px;
+
+    .left {
+      display: flex;
+      flex-grow: 1;
+    }
   }
 
   .left {
     max-width: calc(100% - 50px);
     white-space: nowrap;
-    overflow: hidden;
     text-overflow: ellipsis;
   }
 
@@ -28,7 +32,6 @@
 .editBoxInfo {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 12px;
 
   .left {
     display: flex;

@@ -7,8 +7,8 @@ import { deleteRedisValue, RedisType, RedisValueRsp } from "@/api/redis";
 import KeyTypeIcon from "../key-type-icon";
 import ValueEditor from "../value-editor";
 import sizeToText from "@/utils/size-to-text";
-import formatSeconds from "@/utils/format-second";
 import useMain from "@/utils/use-main";
+import InlineEditor from "./inline-editor";
 import styles from './index.module.less'
 
 interface EditKeyBoxProps {
@@ -35,7 +35,7 @@ const EditKeyBox: React.FC<EditKeyBoxProps> = ({ data, onDelete, onCancel, onRel
     }
     if (type === RedisType.ZSET) {
       const zsetValue = []
-      for (let i = 0; i < value?.length; i +=2) {
+      for (let i = 0; i < value?.length; i += 2) {
         zsetValue.push({
           member: value[i],
           score: value[i + 1]
@@ -61,8 +61,7 @@ const EditKeyBox: React.FC<EditKeyBoxProps> = ({ data, onDelete, onCancel, onRel
         <div className={styles.title}>
           <div className={styles.left}>
             <KeyTypeIcon type={type} />
-            {/* <Input size="small" value={key} variant="borderless" /> */}
-            <span className={styles.name}>{key}</span>
+            <InlineEditor value={key} tip={key} onConfirm={() => { }} />
           </div>
           <CloseOutlined style={{ cursor: 'pointer' }} onClick={onCancel} />
         </div>
@@ -71,7 +70,10 @@ const EditKeyBox: React.FC<EditKeyBoxProps> = ({ data, onDelete, onCancel, onRel
           <div className={styles.left}>
             <span>Key Size: {sizeToText(size)}</span>
             <span>Length: 111</span>
-            <span>TTL: {formatSeconds(ttl)}</span>
+            <span>
+              <span>TTL:</span>
+              <InlineEditor value={String(ttl)} onConfirm={() => { }} />
+            </span>
           </div>
           <div className={styles.right}>
             <ReloadOutlined style={{ cursor: 'pointer' }} onClick={onReload} />
