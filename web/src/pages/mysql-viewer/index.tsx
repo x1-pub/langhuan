@@ -6,6 +6,7 @@ import TableData from "./components/table-data";
 import TableDesign from "./components/table-design";
 import TableDDL from "./components/table-ddl";
 import TableSatus from "./components/table-status";
+import TableTrigger from "./components/table-trigger";
 import styles from './index.module.less'
 import { useTranslation } from "react-i18next";
 import { preloadMonacoEditor } from "@/components/code-editor/preload";
@@ -29,6 +30,11 @@ const MysqlViewer: React.FC = () => {
       label: t('mysqlTab.ddl'),
       key: 'table-ddl',
       children: <TableDDL />
+    },
+    {
+      label: t('mysqlTab.trigger'),
+      key: 'table-trigger',
+      children: <TableTrigger />
     },
     {
       label: t('mysqlTab.status'),

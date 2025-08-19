@@ -72,6 +72,7 @@ const zh = {
     data: '表数据',
     design: '表设计',
     ddl: '表DDL',
+    trigger: '触发器',
     status: '表状态',
   },
   mysql: {
@@ -80,6 +81,8 @@ const zh = {
     createTable: '新建表',
     editTable: '编辑表',
     noPriTips: '当前表无主键: UPDATE 将使用列的旧值进行精确匹配，他可能会更新超过一条记录',
+    whereTip1: '示例:',
+    whereTip2: '注意: 不要加 LIMIT 条件',
   },
 }
 

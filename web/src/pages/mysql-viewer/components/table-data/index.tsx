@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Tooltip, Button, Input, Table, Popconfirm, type TablePaginationConfig, type TableProps } from "antd";
+import { Tooltip, Button, Table, Popconfirm, type TablePaginationConfig, type TableProps } from "antd";
 import { QuestionCircleOutlined, WarningOutlined } from "@ant-design/icons";
 import * as uuid from 'uuid'
 
@@ -14,10 +14,11 @@ import { getPureType, getConditionValue } from "@/utils/mysql-type";
 import useNotification from "@/utils/use-notifition.tsx";
 import EllipsisText from "@/components/ellipsis-text";
 import ExportDataModal from "./export";
+import CodeEditor from "@/components/code-editor";
 import styles from './index.module.less'
 
 const DEFAULT_PAGE_SIZE = 20
-const DEFAULT_CONDITION = 'where 1 = 1'
+const DEFAULT_CONDITION = 'WHERE 1 = 1'
 const MOCK_Table_ROW_KEY = '$langhuan.x1.pub-mock-mysql-uuid-key=string:bool_0G7uId4p_true'
 
 const TableData: React.FC = () => {
@@ -96,8 +97,8 @@ const TableData: React.FC = () => {
     getData(pagination.current, pagination.pageSize)
   }
 
-  const handleConditionChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setCondition(e.target.value)
+  const handleConditionChange = (value?: string) => {
+    setCondition(value || '')
   };
 
   const handleSearch = () => {
@@ -178,20 +179,20 @@ const TableData: React.FC = () => {
     const condition = getRowsCondition()
     setEditorCondition(condition)
     setExportVisible(true)
-      // .then(count => {
-      //   notify.success({
-      //     message: t('execution.success'),
-      //     description: t('execution.affectedCount', { count }),
-      //     duration: 3,
-      //   })
-      //   getData()
-      // }).catch(err => {
-      //   notify.error({
-      //     message: t('execution.failed'),
-      //     description: <span style={{ whiteSpace: 'pre-wrap' }}>{String(err)}</span>,
-      //     duration: null,
-      //   })
-      // })
+    // .then(count => {
+    //   notify.success({
+    //     message: t('execution.success'),
+    //     description: t('execution.affectedCount', { count }),
+    //     duration: 3,
+    //   })
+    //   getData()
+    // }).catch(err => {
+    //   notify.error({
+    //     message: t('execution.failed'),
+    //     description: <span style={{ whiteSpace: 'pre-wrap' }}>{String(err)}</span>,
+    //     duration: null,
+    //   })
+    // })
   }
 
   const getRowsCondition = (keys = selectedRowKeys) => {
@@ -208,7 +209,7 @@ const TableData: React.FC = () => {
       })
       condition.push(rowCondition)
     })
-    
+
     return condition
   }
 
@@ -219,23 +220,25 @@ const TableData: React.FC = () => {
   return (
     <div>
       <div className={styles.textBox}>
-        <Input.TextArea
-          onChange={handleConditionChange}
-          value={condition}
-          autoSize={{ minRows: 3, maxRows: 3 }}
-          style={{ textIndent: '20px'}}
-        />
+        <div className={styles.editor}>
+          <CodeEditor
+            language="sql"
+            showLineNumbers={false}
+            value={condition}
+            onChange={handleConditionChange}
+            fields={columns.map(col => col.Field)}
+          />
+        </div>
         <Tooltip
-          placement='left'
+          placement='right'
           title={<>
-            <div>示例:</div>
-            <div>(1) Where id = 10 and name = 'kk'</div>
-            <div>(2) Where name like '%cat%'</div>
-            <div>(3) Where time between '2024-01-01' and '2025-02-01'</div>
-            <div>(4) Where age &gt;= 18 order by age desc</div>
-            <div>(5) Where year in ('2024','2025')</div>
-            <div>注意: 不要加 limit 条件</div>
+            <div>{t('mysql.whereTip1')}</div>
+            <div>(1) WHERE id = 10 AND name LIKE '%cat%'</div>
+            <div>(2) WHERE age &gt;= 18 ORDER BY age DESC</div>
+            <div>(3) WHERE year IN ('2024','2025')</div>
+            <div>{t('mysql.whereTip2')}</div>
           </>}
+          styles={{ body: { width: '300px' } }}
         >
           <QuestionCircleOutlined className={styles.help} />
         </Tooltip>

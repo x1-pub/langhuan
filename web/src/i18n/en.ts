@@ -72,6 +72,7 @@ const en = {
     data: 'DATA',
     design: 'Design',
     ddl: 'DDL',
+    trigger: 'Trigger',
     status: 'Status',
   },
   mysql: {
@@ -80,6 +81,8 @@ const en = {
     createTable: 'Create Table',
     editTable: 'Edit Table',
     noPriTips: 'Current table lacks a primary key. UPDATE will match precisely using old column values and might update multiple records.',
+    whereTip1: 'Example:',
+    whereTip2: 'Note: Do not add a LIMIT condition',
   },
 }
 
