@@ -1,8 +1,8 @@
-import React from "react";
-import { Input } from "antd";
-import { DeleteOutlined, PlusCircleOutlined } from "@ant-design/icons";
+import React, { useState } from "react";
+import { DeleteOutlined, PlusCircleOutlined, SaveOutlined } from "@ant-design/icons";
 import classNames from "classnames";
 
+import EditableText from "@/components/editable-text";
 import styles from './index.module.less'
 
 interface HashValueItem {
@@ -12,20 +12,27 @@ interface HashValueItem {
 
 interface HashEditorProps {
   value?: HashValueItem[];
+  mode?: 'add' | 'edit';
   onChange?: (v: HashValueItem[]) => void;
 }
 
 const defaultValueItem: HashValueItem = { field: '', value: '' }
 
-const HashEditor: React.FC<HashEditorProps> = ({ value = [defaultValueItem], onChange }) => {
-  const handleChange = (index: number, type: 'field' | 'value', v: string) => {
-    const current = { ...value[index], [type]: v }
-    const newValue = [...value.slice(0, index), current, ...value.slice(index + 1)]
-    onChange?.(newValue)
-  }
+const HashEditor: React.FC<HashEditorProps> = ({ value = [defaultValueItem], mode = 'add', onChange }) => {
+  const [addItem, setAddItem] = useState<HashValueItem[]>([]);
+
+  // const handleChange = (index: number, type: 'field' | 'value', v: string) => {
+  //   const current = { ...value[index], [type]: v }
+  //   const newValue = [...value.slice(0, index), current, ...value.slice(index + 1)]
+  //   onChange?.(newValue)
+  // }
 
   const handleAdd = () => {
-    onChange?.([...value, defaultValueItem])
+    if (mode === 'add') {
+      onChange?.([...value, defaultValueItem])
+    } else {
+      setAddItem([...addItem, defaultValueItem])
+    }
   }
 
   const handleDelete = (index: number) => {
@@ -41,26 +48,32 @@ const HashEditor: React.FC<HashEditorProps> = ({ value = [defaultValueItem], onC
       <div className={styles.tableWrap}>
         <table className={styles.table}>
           <tbody>
-            {value.map((item, index) => (
+            {[...value, ...addItem].map((item, index) => (
               <tr key={index} className={styles.tr}>
                 <td className={styles.td}>
-                  <Input
+                  {/* <Input
                     value={item.field}
                     variant="borderless"
                     onChange={(event) => handleChange(index, 'field', event.target.value)}
                     placeholder="Enter Field"
-                  />
+                  /> */}
+                  <EditableText readonly={mode === 'edit' && index < value.length} value={item.value} />
                 </td>
                 <td className={styles.td}>
-                  <Input
+                  {/* <Input
                     value={item.value}
                     variant="borderless"
                     onChange={(event) => handleChange(index, 'value', event.target.value)}
                     placeholder="Enter Value"
-                  />
+                  /> */}
+                  <EditableText value={item.value} />
                 </td>
-                <td className={classNames(styles.delete, styles.td)}>
-                  <DeleteOutlined style={{ cursor: 'pointer' }} onClick={() => handleDelete(index)} />
+                <td className={classNames(styles.handler, styles.td)}>
+                  {index < value.length ? (
+                    <DeleteOutlined style={{ cursor: 'pointer' }} onClick={() => handleDelete(index)} />
+                  ) : (
+                    <SaveOutlined style={{ cursor: 'pointer' }} />
+                  )}
                 </td>
               </tr>
             ))}

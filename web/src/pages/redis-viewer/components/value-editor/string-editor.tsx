@@ -1,12 +1,21 @@
-import { Input } from "antd";
 import React from "react";
+import { Input } from "antd";
+
+import EditableText from "@/components/editable-text";
 
 interface StringEditorProps {
   value?: string;
+  mode?: 'add' | 'edit';
   onChange?: (v: string) => void;
 }
 
-const StringEditor: React.FC<StringEditorProps> = ({ value, onChange }) => {
+const StringEditor: React.FC<StringEditorProps> = ({ value, mode = 'add', onChange }) => {
+  if (mode === 'edit') {
+    return (
+      <EditableText value={value} onChange={onChange} multiline />
+    )
+  }
+
   return (
     <Input.TextArea
       autoSize={{ minRows: 5 }}

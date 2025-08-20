@@ -8,7 +8,7 @@ import KeyTypeIcon from "../key-type-icon";
 import ValueEditor from "../value-editor";
 import sizeToText from "@/utils/size-to-text";
 import useMain from "@/utils/use-main";
-import InlineEditor from "./inline-editor";
+import EditableText from "@/components/editable-text";
 import styles from './index.module.less'
 
 interface EditKeyBoxProps {
@@ -61,7 +61,7 @@ const EditKeyBox: React.FC<EditKeyBoxProps> = ({ data, onDelete, onCancel, onRel
         <div className={styles.title}>
           <div className={styles.left}>
             <KeyTypeIcon type={type} />
-            <InlineEditor value={key} tip={key} onConfirm={() => { }} />
+            <EditableText tooltip={key} value={key} onChange={() => { }} />
           </div>
           <CloseOutlined style={{ cursor: 'pointer' }} onClick={onCancel} />
         </div>
@@ -70,9 +70,9 @@ const EditKeyBox: React.FC<EditKeyBoxProps> = ({ data, onDelete, onCancel, onRel
           <div className={styles.left}>
             <span>Key Size: {sizeToText(size)}</span>
             <span>Length: 111</span>
-            <span>
+            <span style={{ display: 'flex', alignItems: 'center' }}>
               <span>TTL:</span>
-              <InlineEditor value={String(ttl)} onConfirm={() => { }} />
+              <EditableText value={String(ttl)} onChange={() => { }} />
             </span>
           </div>
           <div className={styles.right}>
@@ -91,9 +91,7 @@ const EditKeyBox: React.FC<EditKeyBoxProps> = ({ data, onDelete, onCancel, onRel
 
       <Divider className={styles.divider} />
 
-      <div className={styles.editBoxMain}>
-        <ValueEditor type={type} value={formatValue} />
-      </div>
+      <ValueEditor mode="edit" type={type} value={formatValue} />
     </div>
   )
 }

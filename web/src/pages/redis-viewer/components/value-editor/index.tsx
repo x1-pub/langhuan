@@ -9,26 +9,27 @@ import SetEditor from "./set-editor";
 import ZSetEditor from "./zset-editor";
 
 interface ValueEditorProps {
-  type: RedisType
+  type: RedisType;
+  mode?: 'add' | 'edit';
   value?: any;
   onChange?: (v: any) => void;
 }
 
-const ValueEditor: React.FC<ValueEditorProps> = ({ type, value, onChange }) => {
+const ValueEditor: React.FC<ValueEditorProps> = ({ type, mode = 'add', value, onChange }) => {
   if (type === RedisType.STRING) {
-    return <StringEditor value={value} onChange={onChange} />
+    return <StringEditor mode={mode} value={value} onChange={onChange} />
   }
   if (type === RedisType.HASH) {
-    return <HashEditor value={value} onChange={onChange} />
+    return <HashEditor mode={mode} value={value} onChange={onChange} />
   }
   if (type === RedisType.LIST) {
-    return <ListEditor value={value} onChange={onChange} />
+    return <ListEditor mode={mode} value={value} onChange={onChange} />
   }
   if (type === RedisType.SET) {
-    return <SetEditor value={value} onChange={onChange} />
+    return <SetEditor mode={mode} value={value} onChange={onChange} />
   }
   if (type === RedisType.ZSET) {
-    return <ZSetEditor value={value} onChange={onChange} />
+    return <ZSetEditor mode={mode} value={value} onChange={onChange} />
   }
 
   return <Input.TextArea autoSize={{ minRows: 5 }} value={value} onChange={(e) => onChange?.(e.target.value)} />
