@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "NODE_ENV=development nodemon --watch src --ext 'ts,js,json' --exec ts-node ./src/app.ts",
     "build": "rimraf dist && npx tsc",
-    "start": "NODE_ENV=production pm2 start dist/app.js --name langhuan_server -i 2",
+    "start": "pm2 start ecosystem.config.js",
     "postinstall": "node fetch-config.js"
   },
   "author": "",
