@@ -268,6 +268,11 @@ class RedisController {
         }
         break;
       case RedisType.SET:
+        if (value.remove || value.remove === '') {
+          result = await ioredis.srem(key, value.remove)
+        } else if (value.save) {
+          result = await ioredis.sadd(key, value.save)
+        }
         break;
       case RedisType.HASH:
         if (value.remove || value.remove === '') {
@@ -279,6 +284,13 @@ class RedisController {
         }
         break;
       case RedisType.ZSET:
+        if (value.remove || value.remove === '') {
+          result = await ioredis.zrem(key, value.remove)
+        } else if (value.modify) {
+          result = await ioredis.zadd(key, value.modify.score, value.modify.member)
+        } else if (value.save) {
+          result = await ioredis.zadd(key, value.save.score, value.save.member)
+        }
         break;
       case RedisType.STREAM:
         break;

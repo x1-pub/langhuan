@@ -8,16 +8,21 @@ import EditableText from "@/components/editable-text";
 interface SetEditorProps {
   value?: string[];
   mode?: 'add' | 'edit';
-  onChange?: (v: string[]) => void;
+  onChange?: (v: unknown) => void;
 }
 
 const SetEditor: React.FC<SetEditorProps> = ({ value = [''], mode = 'add', onChange }) => {
   const [addItem, setAddItem] = useState<string[]>([]);
 
-  // const handleChange = (index: number, v: string) => {
-  //   const newValue = [...value.slice(0, index), v, ...value.slice(index + 1)]
-  //   onChange?.(newValue)
-  // }
+  const handleChange = (index: number, v: string) => {
+    if (mode === 'add') {
+      const newValue = [...value.slice(0, index), v, ...value.slice(index + 1)]
+      onChange?.(newValue)
+    } else {
+      const idx = index - value.length
+      setAddItem([...addItem.slice(0, idx), v, ...addItem.slice(idx + 1)])
+    }
+  }
 
   const handleAdd = () => {
     if (mode === 'add') {
@@ -28,11 +33,21 @@ const SetEditor: React.FC<SetEditorProps> = ({ value = [''], mode = 'add', onCha
   }
 
   const handleDelete = (index: number) => {
-    if (value.length === 1) {
-      return
+    if (mode === 'add') {
+      if (value.length === 1) {
+        return
+      }
+      const newValue = [...value.slice(0, index), ...value.slice(index + 1)]
+      onChange?.(newValue)
+    } else {
+      onChange?.({ remove: value[index] })
     }
-    const newValue = [...value.slice(0, index), ...value.slice(index + 1)]
-    onChange?.(newValue)
+  }
+
+  const handleSaveItem = (index: number) => {
+    const idx = index - value.length
+    onChange?.({ save: addItem[idx] })
+    setAddItem([...addItem.slice(0, idx), ...addItem.slice(idx + 1)])
   }
 
   return (
@@ -49,13 +64,18 @@ const SetEditor: React.FC<SetEditorProps> = ({ value = [''], mode = 'add', onCha
                     onChange={(event) => handleChange(index, event.target.value)}
                     placeholder="Enter Member"
                   /> */}
-                  <EditableText readonly={mode === 'edit' && index < value.length} value={item} />
+                  <EditableText
+                    readonly={mode === 'edit' && index < value.length}
+                    value={item}
+                    editMode={mode === 'add' || index >= value.length ? 'fastify' : 'normal'}
+                    onChange={(v) => handleChange(index, v)}
+                  />
                 </td>
                 <td className={classNames(styles.handler, styles.td)}>
                   {index < value.length ? (
                     <DeleteOutlined style={{ cursor: 'pointer' }} onClick={() => handleDelete(index)} />
                   ) : (
-                    <SaveOutlined style={{ cursor: 'pointer' }} />
+                    <SaveOutlined style={{ cursor: 'pointer' }} onClick={() => handleSaveItem(index)} />
                   )}
                 </td>
               </tr>
