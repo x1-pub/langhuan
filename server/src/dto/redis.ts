@@ -96,3 +96,52 @@ export class ExecuteRedisCommandDTO extends Validator<ExecuteRedisCommand> {
     ]
   }
 }
+
+interface ModifyTTLParams extends RedisBaseParams {
+  key: string;
+  ttl: number;
+}
+
+export class RedisModifyTTLDTO extends Validator<ModifyTTLParams> {
+  useRules() {
+    return [
+      new Rule(isInt, 'connectionId'),
+      new Rule(isInt, 'dbName', { min: 0 }),
+      new Rule(isLength, 'key', { min: 1 }),
+      new Rule(isInt, 'ttl'),
+    ]
+  }
+}
+
+interface ModifyKeyParams extends RedisBaseParams {
+  key: string;
+  newKey: string;
+}
+
+export class RedisModifyKeyDTO extends Validator<ModifyKeyParams> {
+  useRules() {
+    return [
+      new Rule(isInt, 'connectionId'),
+      new Rule(isInt, 'dbName', { min: 0 }),
+      new Rule(isLength, 'key', { min: 1 }),
+      new Rule(isLength, 'newKey', { min: 1 }),
+    ]
+  }
+}
+
+interface ModifyValueParams extends RedisBaseParams {
+  key: string;
+  type: RedisType;
+  value: any;
+}
+
+export class ModifyValueDTO extends Validator<ModifyValueParams> {
+  useRules() {
+    return [
+      new Rule(isInt, 'connectionId'),
+      new Rule(isInt, 'dbName', { min: 0 }),
+      new Rule(isLength, 'key', { min: 1 }),
+      new Rule(isIn, 'type', Object.values(RedisType)),
+    ]
+  }
+}

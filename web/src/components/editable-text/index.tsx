@@ -13,6 +13,7 @@ interface EditableTextProps {
   maxHeight?: number
   tooltip?: string
   readonly?: boolean;
+  editMode?: 'normal' | 'fastify'
 }
 
 const EditableText: React.FC<EditableTextProps> = ({
@@ -24,16 +25,17 @@ const EditableText: React.FC<EditableTextProps> = ({
   maxHeight = 500,
   tooltip,
   readonly = false,
+  editMode = 'normal',
 }) => {
   const [isEditing, setIsEditing] = useState(false)
   const [editValue, setEditValue] = useState(value)
   const [isHovered, setIsHovered] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null)
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
       inputRef.current.focus()
-      inputRef.current.select()
     }
   }, [isEditing])
 
@@ -52,6 +54,7 @@ const EditableText: React.FC<EditableTextProps> = ({
   const handleSave = () => {
     onChange(editValue)
     setIsEditing(false)
+    setIsHovered(false)
   }
 
   const handleCancel = () => {
@@ -85,19 +88,38 @@ const EditableText: React.FC<EditableTextProps> = ({
     }
   }
 
+  useEffect(() => {
+    const handleClick = (e: Event) => {
+      if (inputRef.current && containerRef.current && !containerRef.current.contains(e.target as HTMLElement)) {
+        handleCancel()
+      }
+    }
+
+    document.addEventListener('click', handleClick, true)
+
+    return () => {
+      document.removeEventListener('click', handleClick, true)
+    }
+  }, [])
+
   if (isEditing) {
     return (
       <div
         className={`${styles.container} ${styles.editing} ${multiline ? styles.multiline : ""} ${className}`}
         style={{ position: "relative" }}
+        ref={containerRef}
       >
         {multiline ? (
           <textarea
             ref={inputRef as React.RefObject<HTMLTextAreaElement>}
             value={editValue}
-            onChange={(e) => setEditValue(e.target.value)}
+            onChange={(e) => {
+              setEditValue(e.target.value)
+              if (editMode === 'fastify') {
+                onChange(e.target.value)
+              }
+            }}
             onKeyDown={handleKeyDown}
-            onBlur={handleCancel}
             className={styles.textarea}
             placeholder={placeholder}
             rows={7}
@@ -108,26 +130,32 @@ const EditableText: React.FC<EditableTextProps> = ({
             ref={inputRef as React.RefObject<HTMLInputElement>}
             type="text"
             value={editValue}
-            onChange={(e) => setEditValue(e.target.value)}
+            onChange={(e) => {
+              setEditValue(e.target.value)
+              if (editMode === 'fastify') {
+                onChange(e.target.value)
+              }
+            }}
             onKeyDown={handleKeyDown}
-            onBlur={handleCancel}
             className={styles.input}
             placeholder={placeholder}
           />
         )}
-        <div className={styles.externalActions}>
-          <button className={styles.cancelButton} onClick={handleCancel} type="button">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-          </button>
-          <button className={styles.saveButton} onClick={handleSave} type="button">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <polyline points="20,6 9,17 4,12"></polyline>
-            </svg>
-          </button>
-        </div>
+        {editMode === 'normal' && (
+          <div className={styles.externalActions}>
+            <button className={styles.cancelButton} onClick={handleCancel} type="button">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+            <button className={styles.saveButton} onClick={handleSave} type="button">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="20,6 9,17 4,12"></polyline>
+              </svg>
+            </button>
+          </div>
+        )}
       </div>
     )
   }

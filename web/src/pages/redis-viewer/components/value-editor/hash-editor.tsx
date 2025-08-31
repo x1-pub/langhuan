@@ -50,7 +50,7 @@ const HashEditor: React.FC<HashEditorProps> = ({ value = [defaultValueItem], mod
           <tbody>
             {[...value, ...addItem].map((item, index) => (
               <tr key={index} className={styles.tr}>
-                <td className={styles.td}>
+                <td className={styles.td} style={{ width: '30%' }}>
                   {/* <Input
                     value={item.field}
                     variant="borderless"

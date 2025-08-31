@@ -2,12 +2,11 @@ import React, { useEffect, useRef } from "react";
 import Editor, { loader } from "@monaco-editor/react"
 import * as monaco from 'monaco-editor';
 
-import { loadPath } from "./preload";
 import { SQL_FUNTIONS, SQL_KEYWORDS } from "./constants";
 
 loader.config({
   paths: {
-    vs: loadPath,
+    vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs',
   },
 })
 

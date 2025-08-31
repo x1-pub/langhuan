@@ -124,8 +124,8 @@ const RedisMain: React.FC = () => {
     setShowEditBox(false)
   }
 
-  const handleKeyReload = async () => {
-    const data = await getRedisValue({ connectionId, dbName, type: activevalue!.type, key: activevalue!.key })
+  const handleKeyReload = async (key?: string) => {
+    const data = await getRedisValue({ connectionId, dbName, type: activevalue!.type, key: key || activevalue!.key })
     if (data.ttl === -2) {
       setActiveValue(undefined)
       setShowEditBox(false)

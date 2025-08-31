@@ -59,7 +59,7 @@ const ZSetEditor: React.FC<ZSetEditorProps> = ({ value = [defaultValueItem], mod
                   /> */}
                   <EditableText readonly={mode === 'edit' && index < value.length} value={item.member} />
                 </td>
-                <td className={styles.td}>
+                <td className={styles.td} style={{ width: '30%' }}>
                   {/* <InputNumber
                     value={item.score}
                     variant="borderless"

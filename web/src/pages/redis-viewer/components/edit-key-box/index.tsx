@@ -3,7 +3,7 @@ import { CloseOutlined, DeleteOutlined, ReloadOutlined } from "@ant-design/icons
 import { Divider, Popconfirm } from "antd";
 
 import { useTranslation } from "react-i18next";
-import { deleteRedisValue, RedisType, RedisValueRsp } from "@/api/redis";
+import { deleteRedisValue, modifyKey, modifyTTL, modifyValue, RedisType, RedisValueRsp } from "@/api/redis";
 import KeyTypeIcon from "../key-type-icon";
 import ValueEditor from "../value-editor";
 import sizeToText from "@/utils/size-to-text";
@@ -15,7 +15,7 @@ interface EditKeyBoxProps {
   data: RedisValueRsp;
   onDelete: () => void;
   onCancel: () => void;
-  onReload: () => void;
+  onReload: (key?: string) => void;
 }
 
 const EditKeyBox: React.FC<EditKeyBoxProps> = ({ data, onDelete, onCancel, onReload }) => {
@@ -55,13 +55,28 @@ const EditKeyBox: React.FC<EditKeyBoxProps> = ({ data, onDelete, onCancel, onRel
     onDelete()
   }
 
+  const handleValueChange = async (value: unknown) => {
+    await modifyValue({ connectionId, dbName, type, key, value })
+    onReload()
+  }
+
+  const handleModifyTTL = async (value: string) => {
+    await modifyTTL({ connectionId, dbName, key, ttl: Math.max(-1, Number(value) || -1) })
+    onReload()
+  }
+
+  const handleModifyKey = async (newKey: string) => {
+    await modifyKey({ connectionId, dbName, key, newKey })
+    onReload(newKey)
+  }
+
   return (
     <div className={styles.editBoxWrap}>
       <div className={styles.editBoxHeader}>
         <div className={styles.title}>
           <div className={styles.left}>
             <KeyTypeIcon type={type} />
-            <EditableText tooltip={key} value={key} onChange={() => { }} />
+            <EditableText tooltip={key} value={key} onChange={handleModifyKey} />
           </div>
           <CloseOutlined style={{ cursor: 'pointer' }} onClick={onCancel} />
         </div>
@@ -72,11 +87,11 @@ const EditKeyBox: React.FC<EditKeyBoxProps> = ({ data, onDelete, onCancel, onRel
             <span>Length: 111</span>
             <span style={{ display: 'flex', alignItems: 'center' }}>
               <span>TTL:</span>
-              <EditableText value={String(ttl)} onChange={() => { }} />
+              <EditableText value={String(ttl)} onChange={handleModifyTTL} />
             </span>
           </div>
           <div className={styles.right}>
-            <ReloadOutlined style={{ cursor: 'pointer' }} onClick={onReload} />
+            <ReloadOutlined style={{ cursor: 'pointer' }} onClick={() => onReload()} />
             <Popconfirm
               title={t('delete.title')}
               description={t('delete.desc')}
@@ -91,7 +106,7 @@ const EditKeyBox: React.FC<EditKeyBoxProps> = ({ data, onDelete, onCancel, onRel
 
       <Divider className={styles.divider} />
 
-      <ValueEditor mode="edit" type={type} value={formatValue} />
+      <ValueEditor mode="edit" type={type} value={formatValue} onChange={handleValueChange} />
     </div>
   )
 }

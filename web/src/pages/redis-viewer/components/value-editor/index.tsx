@@ -1,12 +1,12 @@
 import React from "react";
 
 import { RedisType } from "@/api/redis";
-import { Input } from "antd";
 import StringEditor from "./string-editor";
 import HashEditor from "./hash-editor";
 import ListEditor from "./list-editor";
 import SetEditor from "./set-editor";
 import ZSetEditor from "./zset-editor";
+import StreamEditor from "./stream-editor";
 
 interface ValueEditorProps {
   type: RedisType;
@@ -31,8 +31,9 @@ const ValueEditor: React.FC<ValueEditorProps> = ({ type, mode = 'add', value, on
   if (type === RedisType.ZSET) {
     return <ZSetEditor mode={mode} value={value} onChange={onChange} />
   }
-
-  return <Input.TextArea autoSize={{ minRows: 5 }} value={value} onChange={(e) => onChange?.(e.target.value)} />
+  if (type === RedisType.STREAM) {
+    return <StreamEditor mode={mode} value={value} onChange={onChange} />
+  }
 }
 
 export default ValueEditor

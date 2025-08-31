@@ -1,5 +1,4 @@
 import React from "react";
-import { Input } from "antd";
 
 import EditableText from "@/components/editable-text";
 
@@ -9,20 +8,9 @@ interface StringEditorProps {
   onChange?: (v: string) => void;
 }
 
-const StringEditor: React.FC<StringEditorProps> = ({ value, mode = 'add', onChange }) => {
-  if (mode === 'edit') {
-    return (
-      <EditableText value={value} onChange={onChange} multiline />
-    )
-  }
-
+const StringEditor: React.FC<StringEditorProps> = ({ value, onChange }) => {
   return (
-    <Input.TextArea
-      autoSize={{ minRows: 5 }}
-      value={value}
-      onChange={(e) => onChange?.(e.target.value)}
-      placeholder="Enter Value"
-    />
+    <EditableText value={value} onChange={onChange} multiline placeholder="Enter Value" />
   )
 }
 

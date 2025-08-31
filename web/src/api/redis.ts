@@ -64,7 +64,7 @@ interface AddRedisValueParams {
   key: string;
   type: RedisType;
   ttl?: number;
-  value?: any;
+  value?: unknown;
 }
 
 export const addRedisValue = (data: AddRedisValueParams) => request<void>({
@@ -85,7 +85,6 @@ export const deleteRedisValue = (data: DeleteRedisValueParams) => request<void>(
   url: '/api/redis/redis_delete_value',
 })
 
-
 interface ExecuteRedisCommandParams {
   connectionId: number;
   command: string;
@@ -96,4 +95,44 @@ export const executeRedisCommand = (data: ExecuteRedisCommandParams) => request<
   method: 'POST',
   data,
   url: '/api/redis/redis_execute',
+})
+
+interface ModifyTTLParams {
+  connectionId: string;
+  dbName: string;
+  key: string;
+  ttl: number;
+}
+
+export const modifyTTL = (data: ModifyTTLParams) => request<void>({
+  method: 'POST',
+  data,
+  url: '/api/redis/redis_modify_ttl',
+})
+
+interface ModifyKeyParams {
+  connectionId: string;
+  dbName: string;
+  key: string;
+  newKey: string;
+}
+
+export const modifyKey = (data: ModifyKeyParams) => request<void>({
+  method: 'POST',
+  data,
+  url: '/api/redis/redis_modify_key',
+})
+
+interface ModifyValueParams {
+  connectionId: string;
+  dbName: string;
+  type: RedisType;
+  key: string;
+  value: any;
+}
+
+export const modifyValue = (data: ModifyValueParams) => request<void>({
+  method: 'POST',
+  data,
+  url: '/api/redis/redis_modify_value',
 })

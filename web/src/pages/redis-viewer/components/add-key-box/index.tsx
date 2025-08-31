@@ -13,7 +13,7 @@ type FieldType = {
   type: RedisType;
   ttl: number;
   key: string;
-  value: string;
+  value: unknown;
 }
 
 interface AddKeyBoxProps {
@@ -93,7 +93,7 @@ const AddKeyBox: React.FC<AddKeyBoxProps> = ({ onAddSuccess, onCancel }) => {
           </Form.Item>
           <Divider className={styles.divider} />
           <Form.Item<FieldType>
-            label="Value"
+            label=""
             name="value"
           >
             <ValueEditor type={typeValue} />

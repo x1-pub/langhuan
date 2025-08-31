@@ -3,7 +3,17 @@ import { Context } from 'koa';
 import redis from '@/pools/redis';
 import Connection from '@/model/connection';
 import { ResourceNotFound } from '@/utils/error';
-import { RedisSearchDTO, RedisGetValueDTO, RedisType, RedisAddValueDTO, RedisDeleteValueDTO, ExecuteRedisCommandDTO } from '@/dto/redis';
+import {
+  RedisSearchDTO,
+  RedisGetValueDTO,
+  RedisType,
+  RedisAddValueDTO,
+  RedisDeleteValueDTO,
+  ExecuteRedisCommandDTO,
+  RedisModifyTTLDTO,
+  RedisModifyKeyDTO,
+  ModifyValueDTO,
+} from '@/dto/redis';
 import { formatRedisResult } from '@/utils/redis-result-formatter';
 import { parseRedisCommand } from '@/utils/redis-shell-parser';
 
@@ -28,7 +38,7 @@ class RedisController {
     }
 
     const { host, port, username, password } = connection
-    const ioredis = await redis.getInstance({ database: dbName, host, port, username, password, uid, sessionId})
+    const ioredis = await redis.getInstance({ database: dbName, host, port, username, password, uid, sessionId })
 
     return ioredis
   }
@@ -108,17 +118,18 @@ class RedisController {
         pipe.zrange(key, 0, -1, 'WITHSCORES');
         break;
       case RedisType.STREAM:
-        pipe.xread('STREAMS', key);
+        pipe.xread('STREAMS', key, '0');
         break;
     }
 
     pipe.ttl(key).memory('USAGE', key)
 
     const [value = [], ttl = [], size = []] = await pipe.exec() || []
+    const res = k === RedisType.STREAM ? (value as any)[1]?.[0]?.[1] || [] : value[1]
 
     ctx.r({
       data: {
-        value: value[1],
+        value: res,
         ttl: ttl[1],
         size: size[1],
         type: k,
@@ -168,7 +179,8 @@ class RedisController {
         pipe.zadd(key, ...zsetWithArray)
         break;
       case RedisType.STREAM:
-        await ioredis.xread('STREAMS', key);
+        const [id, values] = value[0]
+        await ioredis.xadd(key, id, ...values);
         break;
     }
 
@@ -177,12 +189,12 @@ class RedisController {
     }
     const [res] = await pipe.exec() || [[]]
 
-    if (res[0]) {
+    if (res?.[0]) {
       throw res[0]
     }
 
     ctx.r({
-      data: res[1]
+      data: res?.[1]
     })
   }
 
@@ -211,6 +223,59 @@ class RedisController {
         changeDatabase: cmd.toLowerCase() === 'select' ? `[db${args[0]}]` : undefined
       }
     })
+  }
+
+  modifyTTL = async (ctx: Context) => {
+    const { connectionId, dbName, key, ttl } = await new RedisModifyTTLDTO().v(ctx)
+    const ioredis = await RedisController.getInstance({ connectionId, dbName, uid: ctx.user.id })
+
+    let result: number
+    if (ttl >= 0) {
+      result = await ioredis.expire(key, ttl)
+    } else {
+      result = await ioredis.persist(key)
+    }
+    ctx.r({ data: result })
+  }
+
+  modifyKey = async (ctx: Context) => {
+    const { connectionId, dbName, key, newKey } = await new RedisModifyKeyDTO().v(ctx)
+    const ioredis = await RedisController.getInstance({ connectionId, dbName, uid: ctx.user.id })
+    const result = await ioredis.renamenx(key, newKey)
+    ctx.r({ data: result })
+  }
+
+  modifyValue = async (ctx: Context) => {
+    const { connectionId, dbName, type, key, value } = await new ModifyValueDTO().v(ctx)
+    const ioredis = await RedisController.getInstance({ connectionId, dbName, uid: ctx.user.id })
+
+    let result
+    switch (type) {
+      case RedisType.STRING:
+        result = await ioredis.set(key, value)
+        break;
+      case RedisType.LIST:
+        if (value.index || value.index === 0) {
+          result = await ioredis.lset(key, value.index, value.value)
+        } else if (value.remove || value.remove === '') {
+          result = await ioredis.lrem(key, 1, value.remove)
+        } else if (value.pushToHead) {
+          result = await ioredis.lpush(key, value.value)
+        } else {
+          result = await ioredis.rpush(key, value.value)
+        }
+        break;
+      case RedisType.SET:
+        break;
+      case RedisType.HASH:
+        break;
+      case RedisType.ZSET:
+        break;
+      case RedisType.STREAM:
+        break;
+    }
+    // const result = await ioredis.renamenx(key, newKey)
+    ctx.r({ data: result })
   }
 }
 

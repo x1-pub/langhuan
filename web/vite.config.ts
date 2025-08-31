@@ -12,7 +12,12 @@ export default defineConfig({
   },
   build: {
     rollupOptions: {
-      external: ['monaco-editor'],
+      external: [],
+      output: {
+        manualChunks: {
+          monaco: ['monaco-editor', '@monaco-editor/react'],
+        },
+      }
     },
   },
   server: {
