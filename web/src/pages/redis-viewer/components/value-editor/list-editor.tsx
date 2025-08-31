@@ -29,7 +29,7 @@ const ListEditor: React.FC<ListEditorProps> = ({ value = defaultValue, mode = 'a
       return
     }
     if (index < value.elements.length) {
-      onChange?.({ index, value: v })
+      onChange?.({ modify: { index, value: v } })
       return
     }
     const idx = index - value.elements.length
@@ -38,7 +38,7 @@ const ListEditor: React.FC<ListEditorProps> = ({ value = defaultValue, mode = 'a
 
   const handlePushValue = (index: number, pushToHead: boolean) => {
     const idx = index - value.elements.length
-    onChange?.({ pushToHead, value: addItem[idx] })
+    onChange?.({ save: { pushToHead, value: addItem[idx] } })
     setAddItem([...addItem.slice(0, idx), ...addItem.slice(idx + 1)])
   }
 
@@ -82,7 +82,11 @@ const ListEditor: React.FC<ListEditorProps> = ({ value = defaultValue, mode = 'a
             {[...value.elements, ...addItem].map((item, index) => (
               <tr key={index} className={styles.tr}>
                 <td className={styles.td}>
-                  <EditableText value={item} onChange={value => handleChange(index, value)} />
+                  <EditableText
+                    value={item}
+                    onChange={value => handleChange(index, value)}
+                    editMode={mode === 'add' || index >= value.elements.length ? 'fastify' : 'normal'}
+                  />
                 </td>
                 <td className={classNames(styles.handler, styles.td)}>
                   {index < value.elements.length ? (

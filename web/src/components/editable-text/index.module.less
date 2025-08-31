@@ -11,12 +11,12 @@
   // transition: all 0.2s ease;
   position: relative;
   box-sizing: border-box;
-  cursor: pointer;
   min-height: 30px;
 }
 
 .container.hovered {
   border-color: var(--langhuan-color-border);
+  cursor: pointer;
 }
 
 .container.editing {
@@ -38,6 +38,11 @@
   overflow: hidden;
   text-overflow: ellipsis;
   user-select: text;
+}
+
+.text:empty::before {
+  content: attr(data-empty);
+  color: #8c8c8c;
 }
 
 /* Updated text styling for multiline display */

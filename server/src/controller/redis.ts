@@ -255,19 +255,28 @@ class RedisController {
         result = await ioredis.set(key, value)
         break;
       case RedisType.LIST:
-        if (value.index || value.index === 0) {
-          result = await ioredis.lset(key, value.index, value.value)
+        if (value.modify) {
+          result = await ioredis.lset(key, value.modify.index, value.modify.value)
         } else if (value.remove || value.remove === '') {
           result = await ioredis.lrem(key, 1, value.remove)
-        } else if (value.pushToHead) {
-          result = await ioredis.lpush(key, value.value)
-        } else {
-          result = await ioredis.rpush(key, value.value)
+        } else if (value.save) {
+          if (value.save.pushToHead) {
+            result = await ioredis.lpush(key, value.save.value)
+          } else {
+            result = await ioredis.rpush(key, value.save.value)
+          }
         }
         break;
       case RedisType.SET:
         break;
       case RedisType.HASH:
+        if (value.remove || value.remove === '') {
+          result = await ioredis.hdel(key, value.remove)
+        } else if (value.modify) {
+          result = await ioredis.hset(key, value.modify.field, value.modify.value)
+        } else if (value.save) {
+          result = await ioredis.hset(key, value.save.field, value.save.value)
+        }
         break;
       case RedisType.ZSET:
         break;

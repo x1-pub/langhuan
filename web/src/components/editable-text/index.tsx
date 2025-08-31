@@ -13,7 +13,9 @@ interface EditableTextProps {
   maxHeight?: number
   tooltip?: string
   readonly?: boolean;
-  editMode?: 'normal' | 'fastify'
+  editMode?: 'normal' | 'fastify';
+  showCopy?: boolean;
+  empty?: string;
 }
 
 const EditableText: React.FC<EditableTextProps> = ({
@@ -26,6 +28,8 @@ const EditableText: React.FC<EditableTextProps> = ({
   tooltip,
   readonly = false,
   editMode = 'normal',
+  showCopy = true,
+  empty = 'Empty',
 }) => {
   const [isEditing, setIsEditing] = useState(false)
   const [editValue, setEditValue] = useState(value)
@@ -168,7 +172,7 @@ const EditableText: React.FC<EditableTextProps> = ({
       onClick={handleTextClick}
     >
       <Tooltip title={tooltip}>
-        <span className={`${styles.text} ${multiline ? styles.multilineText : ""}`}>
+        <span className={`${styles.text} ${multiline ? styles.multilineText : ""}`} data-empty={empty}>
           {multiline
             ? value.split("\n").map((line, index) => (
               <React.Fragment key={index}>
@@ -179,7 +183,7 @@ const EditableText: React.FC<EditableTextProps> = ({
             : value}
         </span>
       </Tooltip>
-      {isHovered && (
+      {isHovered && showCopy && (
         <div className={styles.actions}>
           <button
             className={styles.copyButton}
