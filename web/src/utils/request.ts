@@ -3,6 +3,7 @@ import type { AxiosInstance, AxiosRequestConfig } from "axios"
 import { merge } from "lodash-es"
 
 import { apiCode } from "./constants";
+import { showError } from "./use-notifition";
 
 function createInstance() {
   const instance = axios.create()
@@ -30,6 +31,7 @@ function createInstance() {
           window.location.href = apiData.data.loginUrl
           return
         default:
+          showError(apiData.message)
           return Promise.reject(apiData.message || "Error")
       }
     },
@@ -51,7 +53,7 @@ function createRequest(instance: AxiosInstance) {
       timeout: 20000,
       withCredentials: true
     }
-    
+
     const mergeConfig = merge(defaultConfig, config)
     return instance(mergeConfig)
   }

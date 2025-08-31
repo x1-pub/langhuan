@@ -3,6 +3,7 @@ import { DatabaseError } from 'sequelize';
 
 import { CustomError } from '@/utils/error';
 import { RspCode } from '@/utils/error';
+import { ReplyError } from 'ioredis';
 
 const isDev = process.env.NODE_ENV === 'development';
 
@@ -22,8 +23,16 @@ export default () => {
 
       if (error instanceof DatabaseError) {
         ctx.r({
-          code: RspCode.DATABASE_SQL_ERROR,
-          message: `ERR:  ${error.message}\nSQL:  ${error.sql}`,
+          code: RspCode.MYSQL_ERROR,
+          message: `${error.message}\n${error.sql}`,
+        })
+        return
+      }
+
+      if (error instanceof ReplyError) {
+        ctx.r({
+          code: RspCode.REDIS_ERROR,
+          message: `${error.message}\n${JSON.stringify(error.command)}`,
         })
         return
       }

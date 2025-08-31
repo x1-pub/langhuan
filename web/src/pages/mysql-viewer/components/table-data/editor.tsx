@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { update, insertOne, type Column } from "@/api/mysql";
 import FieldEnter from '@/components/field-enter';
 import useMain from '@/utils/use-main';
-import useNotification from '@/utils/use-notifition.tsx';
+import { showSuccess } from '@/utils/use-notifition.tsx';
 import EllipsisText from "@/components/ellipsis-text";
 import styles from './editor.module.less'
 
@@ -20,7 +20,6 @@ interface EditorProps {
 }
 
 const Editor: React.FC<EditorProps> = ({ data = {}, columns, onOk, onCancel, show, condition }) => {
-  const notify = useNotification()
   const [loading, setLoading] = useState(false)
   const [form, setForm] = useState({});
   const { t } = useTranslation()
@@ -93,19 +92,8 @@ const Editor: React.FC<EditorProps> = ({ data = {}, columns, onOk, onCancel, sho
       } else {
         result = await insertOne({ connectionId, dbName, tableName, data: form })
       }
-
-      notify.success({
-        message: t('execution.success'),
-        description: t('execution.affectedCount', { count: result }),
-        duration: 3,
-      })
+      showSuccess(t('execution.affectedCount', { count: result }))
       onOk()
-    } catch (err) {
-      notify.error({
-        message: t('execution.failed'),
-        description: <span style={{ whiteSpace: 'pre-wrap' }}>{String(err)}</span>,
-        duration: null,
-      })
     } finally {
       setLoading(false)
     }

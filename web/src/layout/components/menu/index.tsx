@@ -11,7 +11,6 @@ import { getTableList, deleteTable, type Table } from '@/api/table';
 import TableIcon from '@/assets/svg/table.svg?react'
 import DBIcon from '@/assets/svg/db.svg?react'
 import ShellIcon from '@/assets/svg/shell.svg?react'
-import useNotification from '@/utils/use-notifition.tsx';
 import Editor, { EditorType } from './components/editor';
 import styles from './index.module.less'
 import { DatabaseContext, generateActiveId, IWind } from '@/utils/use-main';
@@ -25,7 +24,6 @@ interface TableDataMap {
 const MenuLayout: React.FC = () => {
   const { connectionId = '' } = useParams()
   const { t } = useTranslation()
-  const notify = useNotification()
   const connectionType = location.pathname.split('/')[1] as ConnectionType
   const [active, setActive] = useState<string>('')
   const [spinning, setSpinning] = useState<boolean>(false)
@@ -198,14 +196,7 @@ const MenuLayout: React.FC = () => {
     }
 
     setSpinning(true)
-    const data = await getDBList(connectionId).catch((err) => {
-      notify.error({
-        message: t('connection.fail'),
-        description: <span style={{ whiteSpace: 'pre-wrap' }}>{String(err)}</span>,
-        duration: null,
-      })
-      return []
-    }).finally(() => {
+    const data = await getDBList(connectionId).finally(() => {
       setSpinning(false)
     })
     setList(data)
@@ -237,14 +228,7 @@ const MenuLayout: React.FC = () => {
 
   const fetchTableList = async (dbName: string) => {
     setSpinning(true)
-    const data = await getTableList({ connectionId, dbName }).catch((err) => {
-      notify.error({
-        message: t('connection.fail'),
-        description: <span style={{ whiteSpace: 'pre-wrap' }}>{String(err)}</span>,
-        duration: null,
-      })
-      return []
-    }).finally(() => {
+    const data = await getTableList({ connectionId, dbName }).finally(() => {
       setSpinning(false)
     })
 

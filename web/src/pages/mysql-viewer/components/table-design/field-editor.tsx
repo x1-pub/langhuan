@@ -1,9 +1,7 @@
 import React, { useEffect } from 'react';
 import { Modal, Form, Input, Select, Checkbox, Row, Col, Tooltip } from 'antd';
-import { useTranslation } from 'react-i18next';
 
 import { addorUpdateColumn, type MySqlFieldData, type Column } from '@/api/mysql';
-import useNotification from '@/utils/use-notifition.tsx';
 import useMain from '@/utils/use-main';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 
@@ -115,8 +113,6 @@ const FieldEditor: React.FC<FieldEditorProps> = ({
   onSubmit,
   onCancel,
 }) => {
-  const notify = useNotification()
-  const { t } = useTranslation()
   const { connectionId, dbName, tableName } = useMain()
   const [form] = Form.useForm<MySqlFieldData>();
   const selectedType = Form.useWatch('fieldType', form);
@@ -139,14 +135,7 @@ const FieldEditor: React.FC<FieldEditorProps> = ({
         processedValues.oldFieldName = editRow.Field
       }
 
-      await addorUpdateColumn({ data: processedValues, connectionId, dbName, tableName  }).catch(err => {
-        notify.error({
-          message: t('execution.failed'),
-          description: <span style={{ whiteSpace: 'pre-wrap' }}>{String(err)}</span>,
-          duration: null,
-        })
-        return Promise.reject()
-      })
+      await addorUpdateColumn({ data: processedValues, connectionId, dbName, tableName  })
       form.resetFields();
       onSubmit();
     } catch (error) {

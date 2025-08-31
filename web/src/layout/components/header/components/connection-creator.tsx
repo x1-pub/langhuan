@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next";
 import { createConnection, type CreateConnectionParams } from '@/api/connection'
 import ConnectionModal from '@/components/connection-modal'
 import styles from './index.module.less'
-import useNotification from "@/utils/use-notifition.tsx";
+import { showSuccess } from "@/utils/use-notifition.tsx";
 
 interface DBCreatorProps {
   onOk?: () => void
@@ -15,23 +15,18 @@ const DBCreator: React.FC<DBCreatorProps> = ({ onOk }) => {
   const { t } = useTranslation()
   const [open, setOpen] = useState<boolean>(false)
   const [loading, setLoading] = useState<boolean>(false)
-  const notify = useNotification()
 
   const handleSubmit = async (vals: CreateConnectionParams) => {
     setLoading(true)
     await createConnection(vals)
       .then(() => {
+        showSuccess('创建成功')
         setOpen(false)
         onOk?.()
       })
-      .catch(err => {
-        notify.error({
-          message: t('创建失败'),
-          description: <span style={{ whiteSpace: 'pre-wrap' }}>{String(err)}</span>,
-          duration: null,
-        })
+      .finally(() => {
+        setLoading(false)
       })
-    setLoading(false)
   }
 
   return (

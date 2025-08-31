@@ -11,8 +11,11 @@ export enum RspCode {
   // 数据库连接失败
   CONNECTION_FAILED = 10003,
 
-  // 数据库连接失败
-  DATABASE_SQL_ERROR = 10004,
+  // mysql
+  MYSQL_ERROR = 10004,
+
+  // Redis
+  REDIS_ERROR = 10005,
 
   // 未知错误
   UNKNOW_ERROR = 11001,

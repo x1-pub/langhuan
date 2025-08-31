@@ -11,7 +11,7 @@ import BatchEditor from "./batch-editor";
 import FieldEnter from "@/components/field-enter";
 import getTextWidth from "@/utils/get-text-width";
 import { getPureType, getConditionValue } from "@/utils/mysql-type";
-import useNotification from "@/utils/use-notifition.tsx";
+import { showSuccess } from "@/utils/use-notifition.tsx";
 import EllipsisText from "@/components/ellipsis-text";
 import ExportDataModal from "./export";
 import CodeEditor from "@/components/code-editor";
@@ -22,7 +22,6 @@ const DEFAULT_CONDITION = 'WHERE 1 = 1'
 const MOCK_Table_ROW_KEY = '$langhuan.x1.pub-mock-mysql-uuid-key=string:bool_0G7uId4p_true'
 
 const TableData: React.FC = () => {
-  const notify = useNotification()
   const { t } = useTranslation()
   const { connectionId, dbName, tableName } = useMain()
   const [loading, setLoading] = useState(false)
@@ -70,13 +69,6 @@ const TableData: React.FC = () => {
       current: current || pagination?.current || 1,
       pageSize: pageSize || pagination?.pageSize || DEFAULT_PAGE_SIZE,
       condition: where || condition
-    }).catch(err => {
-      notify.error({
-        message: t('execution.failed'),
-        description: <span style={{ whiteSpace: 'pre-wrap' }}>{String(err)}</span>,
-        duration: null,
-      })
-      return Promise.reject()
     })
 
     const primaryKeys = columns.filter(col => col.Key === 'PRI').map(col => col.Field)
@@ -160,18 +152,8 @@ const TableData: React.FC = () => {
 
     batchDelete({ connectionId, dbName, tableName, condition })
       .then(count => {
-        notify.success({
-          message: t('execution.success'),
-          description: t('execution.affectedCount', { count }),
-          duration: 3,
-        })
+        showSuccess(t('execution.affectedCount', { count }))
         getData()
-      }).catch(err => {
-        notify.error({
-          message: t('execution.failed'),
-          description: <span style={{ whiteSpace: 'pre-wrap' }}>{String(err)}</span>,
-          duration: null,
-        })
       })
   }
 
@@ -179,20 +161,6 @@ const TableData: React.FC = () => {
     const condition = getRowsCondition()
     setEditorCondition(condition)
     setExportVisible(true)
-    // .then(count => {
-    //   notify.success({
-    //     message: t('execution.success'),
-    //     description: t('execution.affectedCount', { count }),
-    //     duration: 3,
-    //   })
-    //   getData()
-    // }).catch(err => {
-    //   notify.error({
-    //     message: t('execution.failed'),
-    //     description: <span style={{ whiteSpace: 'pre-wrap' }}>{String(err)}</span>,
-    //     duration: null,
-    //   })
-    // })
   }
 
   const getRowsCondition = (keys = selectedRowKeys) => {

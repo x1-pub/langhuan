@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { update, type Column } from "@/api/mysql";
 import FieldEnter from '@/components/field-enter';
 import useMain from '@/utils/use-main';
-import useNotification from '@/utils/use-notifition.tsx';
+import { showSuccess } from '@/utils/use-notifition.tsx';
 import EllipsisText from '@/components/ellipsis-text';
 import styles from './batch-editor.module.less'
 
@@ -19,7 +19,6 @@ interface BatchEditorProps {
 }
 
 const BatchEditor: React.FC<BatchEditorProps> = ({ columns, condition, onOk, onCancel, show }) => {
-  const notify = useNotification()
   const [loading, setLoading] = useState(false)
   const [form, setForm] = useState<Record<string, any>>({});
   const [fieldList, setFieldList] = useState<{ name: string, type: string }[]>([])
@@ -31,18 +30,8 @@ const BatchEditor: React.FC<BatchEditorProps> = ({ columns, condition, onOk, onC
     setLoading(true)
     await update({ connectionId, dbName, tableName, data: form, condition })
       .then(count => {
-        notify.success({
-          message: t('execution.success'),
-          description: t('execution.affectedCount', { count }),
-          duration: 3,
-        })
+        showSuccess(t('execution.affectedCount', { count }))
         onOk()
-      }).catch(err => {
-        notify.error({
-          message: t('execution.failed'),
-          description: <span style={{ whiteSpace: 'pre-wrap' }}>{String(err)}</span>,
-          duration: null,
-        })
       })
     
     setLoading(false)

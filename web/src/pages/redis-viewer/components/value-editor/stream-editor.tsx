@@ -127,6 +127,31 @@ const StreamEditor: React.FC<StreamEditorProps> = ({ value = [defaultValueItem],
         </div>
       )}
       <div className={styles.tableWrap}>
+        {mode === 'add' && (
+          <table className={styles.table}>
+            <tbody>
+              {value[0][1].map((_, index) => {
+                const row = value[0][1]
+                if (index % 2 === 0) {
+                  return (
+                    <tr key={index} className={styles.tr}>
+                      <td className={styles.td} style={{ width: '30%' }}>
+                        <EditableText editMode='fastify' value={row[index]} onChange={v => handleChange(index, v)} />
+                      </td>
+                      <td className={styles.td}>
+                        <EditableText editMode='fastify' value={row[index + 1]} onChange={v => handleChange(index + 1, v)} />
+                      </td>
+                      <td className={classNames(styles.handler, styles.td)}>
+                        <DeleteOutlined style={{ cursor: 'pointer' }} onClick={() => handleDelete(index)} />
+                      </td>
+                    </tr>
+                  )
+                }
+                return null
+              })}
+            </tbody>
+          </table>
+        )}
         {mode === 'edit' && (
           <table className={styles.table}>
             <thead>
@@ -154,31 +179,6 @@ const StreamEditor: React.FC<StreamEditorProps> = ({ value = [defaultValueItem],
                   </td>
                 </tr>
               ))}
-            </tbody>
-          </table>
-        )}
-        {mode === 'add' && (
-          <table className={styles.table}>
-            <tbody>
-              {value[0][1].map((_, index) => {
-                const row = value[0][1]
-                if (index % 2 === 0) {
-                  return (
-                    <tr key={index} className={styles.tr}>
-                      <td className={styles.td} style={{ width: '30%' }}>
-                        <EditableText value={row[index]} onChange={v => handleChange(index, v)} />
-                      </td>
-                      <td className={styles.td}>
-                        <EditableText value={row[index + 1]} onChange={v => handleChange(index + 1, v)} />
-                      </td>
-                      <td className={classNames(styles.handler, styles.td)}>
-                        <DeleteOutlined style={{ cursor: 'pointer' }} onClick={() => handleDelete(index)} />
-                      </td>
-                    </tr>
-                  )
-                }
-                return null
-              })}
             </tbody>
           </table>
         )}

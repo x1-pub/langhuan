@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Modal, Form, Input, Select, Row, Col, Button } from "antd";
 import { useTranslation } from "react-i18next";
 
-import useNotification from "@/utils/use-notifition.tsx";
+import { showSuccess } from "@/utils/use-notifition.tsx";
 import { connectionTypeOptions } from './constants'
 import { getConnectionDetails, testConnection, type CreateConnectionParams } from "@/api/connection";
 
@@ -18,7 +18,6 @@ interface IConnectionModal {
 const ConnectionModal: React.FC<IConnectionModal> = (props) => {
   const { disabled, open, id, loading, onOk, onCancel } = props
   const [testLoading, setTestLoading] = useState(false)
-  const notify = useNotification()
   const { t } = useTranslation()
   const [form] = Form.useForm<CreateConnectionParams>();
   const connectionType = Form.useWatch('type', form)
@@ -34,17 +33,7 @@ const ConnectionModal: React.FC<IConnectionModal> = (props) => {
     setTestLoading(true)
     testConnection({ ...values, id })
       .then(() => {
-        notify.success({
-          message: '成功',
-          description: '测试连接成功',
-        })
-      })
-      .catch((err) => {
-        notify.error({
-          message: '失败',
-          description: <span style={{ whiteSpace: 'pre-wrap' }}>{String(err)}</span>,
-          duration: null,
-        })
+        showSuccess('测试连接成功')
       })
       .finally(() => {
         setTestLoading(false)

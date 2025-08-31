@@ -1,12 +1,29 @@
-import { useContext } from "react"
-import { NotificationInstance } from "antd/es/notification/interface"
+import { notification } from "antd";
 
-import { NotifyContext } from "@/components/notify/context"
+export const showError = (content: string = 'Unknown Error') => {
+  const [title, subTitle] = content.split('\n')
 
-const useNotification = () => {
-  const notify = useContext(NotifyContext)
+  const payload = {
+    message: 'ERROR',
+    description: (
+      <>
+        <div style={{ fontWeight: 'bold' }}>{title}</div>
+        <div style={{ color: '#8c8c8c', fontSize: '12px' }}>{subTitle}</div>
+      </>
+    ),
+    duration: 0,
+  }
 
-  return (notify as NotificationInstance)
+  notification.error(payload)
 }
 
-export default useNotification
+export const showSuccess = (content: string = 'Execution successful') => {
+  const payload = {
+    message: 'SUCCESS',
+    description: content,
+    showProgress: true,
+    pauseOnHover: true,
+  }
+
+  notification.success(payload)
+}

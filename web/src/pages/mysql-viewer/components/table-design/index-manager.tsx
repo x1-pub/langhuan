@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Button, Table, TableProps, Card, Modal, Popconfirm, Form, Input, Select, Row, Col, InputNumber } from "antd";
 import { useTranslation } from "react-i18next";
-import useNotification from "@/utils/use-notifition.tsx";
 
 import { type Column, type TableIndex, IndexType, addTableIndex, deleteTableIndex, updateTableIndex } from "@/api/mysql";
 import styles from './index.module.less'
@@ -55,7 +54,6 @@ const indexTypeOptions = [
 const IndexManager: React.FC<IndexManagerProps> = (props) => {
   const { data, columns, onOk } = props
   const { t } = useTranslation()
-  const notify = useNotification()
   const { connectionId, dbName, tableName } = useMain()
   const [open, setOpen] = useState<boolean>(false)
   const [loading, setLoading] = useState<boolean>(false)
@@ -107,14 +105,7 @@ const IndexManager: React.FC<IndexManagerProps> = (props) => {
   }
 
   const handleDelete = async (record: TableIndex) => {
-    await deleteTableIndex({ name: record.Key_name, connectionId, dbName, tableName }).catch(err => {
-      notify.error({
-        message: t('execution.failed'),
-        description: <span style={{ whiteSpace: 'pre-wrap' }}>{String(err)}</span>,
-        duration: null,
-      })
-      return Promise.reject()
-    })
+    await deleteTableIndex({ name: record.Key_name, connectionId, dbName, tableName })
     onOk?.()
   }
 
@@ -145,12 +136,6 @@ const IndexManager: React.FC<IndexManagerProps> = (props) => {
       }
       onOk?.()
       setOpen(false)
-    } catch(err) {
-      notify.error({
-        message: t('execution.failed'),
-        description: <span style={{ whiteSpace: 'pre-wrap' }}>{String(err)}</span>,
-        duration: null,
-      })
     } finally {
       setLoading(false)
     }

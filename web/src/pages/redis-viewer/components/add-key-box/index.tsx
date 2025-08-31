@@ -6,7 +6,6 @@ import { addRedisValue, RedisType } from "@/api/redis";
 import KeyTypeIcon from "../key-type-icon";
 import ValueEditor from "../value-editor";
 import useMain from "@/utils/use-main";
-import useNotification from "@/utils/use-notifition.tsx";
 import styles from './index.module.less'
 
 type FieldType = {
@@ -23,7 +22,6 @@ interface AddKeyBoxProps {
 
 const AddKeyBox: React.FC<AddKeyBoxProps> = ({ onAddSuccess, onCancel }) => {
   const { connectionId, dbName } = useMain()
-  const notify = useNotification()
   const [form] = Form.useForm<FieldType>()
 
   const typeValue = Form.useWatch('type', form)
@@ -31,14 +29,7 @@ const AddKeyBox: React.FC<AddKeyBoxProps> = ({ onAddSuccess, onCancel }) => {
   const handleSubmit = async () => {
     await form.validateFields()
     const formData = form.getFieldsValue()
-    await addRedisValue({ connectionId, dbName, ...formData }).catch(err => {
-      notify.error({
-        message: '添加失败',
-        description: <span style={{ whiteSpace: 'pre-wrap' }}>{String(err)}</span>,
-        duration: null,
-      })
-      return Promise.reject()
-    })
+    await addRedisValue({ connectionId, dbName, ...formData })
     onAddSuccess?.()
   }
 

@@ -4,8 +4,7 @@ import { Spin } from 'antd';
 
 import { executeMySqlCommand } from "@/api/mysql";
 import { type ConnectionDetails, ConnectionType, getConnectionDetails } from "@/api/connection";
-import useNotification from "@/utils/use-notifition";
-// import Terminal from "./terminal";
+import { showError } from "@/utils/use-notifition";
 import TerminalV2 from "./terminal-v2";
 import { executeRedisCommand } from "@/api/redis";
 import { executeMongoCommand } from "@/api/mongodb";
@@ -13,7 +12,6 @@ import { executeMongoCommand } from "@/api/mongodb";
 const SESSION_ID = `110${Date.now()}${Math.random().toString().slice(-6)}`
 
 const Shell: React.FC = () => {
-  const notify = useNotification()
   const { connectionType, connectionId } = useParams()
   const [connection, setConnection] = useState<ConnectionDetails>()
   const [prompt, setPrompt] = useState<string>('')
@@ -42,11 +40,7 @@ const Shell: React.FC = () => {
   const authUrl = async () => {
     const connection = await getConnectionDetails(connectionId!)
     if (!connection || connection.type !== connectionType) {
-      notify.error({
-        message: '发生错误',
-        description: <span style={{ whiteSpace: 'pre-wrap' }}>您访问的资源不存在, 请检查URL是否正确</span>,
-        duration: null,
-      })
+      showError('您访问的资源不存在, 请检查URL是否正确')
       return
     }
     setConnection(connection)

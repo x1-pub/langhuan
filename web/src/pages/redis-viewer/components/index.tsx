@@ -20,14 +20,13 @@ import { SearchProps } from 'antd/es/input';
 import AddKeyBox from './add-key-box';
 import EditKeyBox from './edit-key-box';
 import formatSeconds from '@/utils/format-second';
-import useNotification from '@/utils/use-notifition';
+import { showError } from '@/utils/use-notifition';
 import redisListToTree, { TreeNode } from '@/utils/redis-list-to-tree';
 import useElementSize from '../hooks/use-element-size';
 
 const RedisMain: React.FC = () => {
   const { connectionId, dbName } = useMain()
   const { t } = useTranslation()
-  const notify = useNotification()
   const { width, height } = useElementSize('redis-keys-wrap-table')
   const [keysData, setKeysData] = useState<RedisKeyItem[]>([])
   const [total, setTotal] = useState<number>(0)
@@ -130,11 +129,7 @@ const RedisMain: React.FC = () => {
       setActiveValue(undefined)
       setShowEditBox(false)
       getKeysData(true)
-      notify.error({
-        message: '失败',
-        description: <span style={{ whiteSpace: 'pre-wrap' }}>不存在的key</span>,
-        duration: null,
-      })
+      showError('不存在的key')
       return
     }
     setActiveValue(data)

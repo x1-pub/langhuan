@@ -4,7 +4,6 @@ import { useTranslation } from "react-i18next";
 
 import { createTable, modifyTable } from "@/api/table";
 import { createDB, modifyDB } from "@/api/database";
-import useNotification from "@/utils/use-notifition";
 
 export enum EditorType {
   CREATE_TABLE = 0,
@@ -36,7 +35,6 @@ interface EditorProps {
 const Editor: React.FC<EditorProps> = (props) => {
   const { type, connectionId, dbName, tableName, comment, charset, collation, visible, onOk, onCancel } = props
   const { t } = useTranslation()
-  const notify = useNotification()
   const [form] = Form.useForm<FormConfig>();
   const defaultName =
     [EditorType.CREATE_TABLE, EditorType.CREATE_DB].includes(type) ? undefined :
@@ -50,7 +48,6 @@ const Editor: React.FC<EditorProps> = (props) => {
 
   const handleSubmit = async () => {
     const { name, comment, charset, collation } = await form.validateFields();
-    try {
       if (type === EditorType.CREATE_TABLE && dbName) {
         await createTable({ connectionId, dbName, tableName: name, comment })
       }
@@ -65,13 +62,6 @@ const Editor: React.FC<EditorProps> = (props) => {
       }
 
       onOk?.()
-    } catch (err) {
-      notify.error({
-        message: t('执行失败'),
-        description: <span style={{ whiteSpace: 'pre-wrap' }}>{String(err)}</span>,
-        duration: null,
-      })
-    }
   }
 
   useEffect(() => {

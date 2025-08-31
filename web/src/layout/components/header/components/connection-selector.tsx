@@ -8,7 +8,6 @@ import { useParams, useNavigate, useLocation } from "react-router";
 import ConnectionModal from "@/components/connection-modal";
 import { deleteConnection, getConnectionList, modifyConnection, type Connection, type CreateConnectionParams } from "@/api/connection";
 import ConnectionTypeIcon from "./connection-type";
-import useNotification from "@/utils/use-notifition.tsx";
 import EllipsisText from "@/components/ellipsis-text";
 import styles from './index.module.less'
 
@@ -25,7 +24,6 @@ const ConnectionSelector: React.FC<{ ref?: React.Ref<RefHandler> }> = ({ ref }) 
   const [list, setList] = useState<Connection[]>([])
   const [editId, setEditId] = useState<string | number>()
   const [loading, setLoading] = useState<boolean>(false)
-  const notify = useNotification()
 
   const findByConnectionId = (data: Connection[], connectionId: string | number) => {
     return data.find(c => c.connectionId === Number(connectionId))
@@ -76,16 +74,7 @@ const ConnectionSelector: React.FC<{ ref?: React.Ref<RefHandler> }> = ({ ref }) 
 
   const handleSubmit = async (data: CreateConnectionParams) => {
     setLoading(true)
-    await modifyConnection({ ...data, id: editId! })
-      .catch(err => {
-        notify.error({
-          message: '修改失败',
-          description: <span style={{ whiteSpace: 'pre-wrap' }}>{String(err)}</span>,
-          duration: null,
-        })
-        return Promise.reject(err)
-      })
-      .finally(() => setLoading(false))
+    await modifyConnection({ ...data, id: editId! }).finally(() => setLoading(false))
     
     if (Number(connectionId) === Number(editId)) {
       window.location.reload()
@@ -102,15 +91,7 @@ const ConnectionSelector: React.FC<{ ref?: React.Ref<RefHandler> }> = ({ ref }) 
 
   const handleDelete = async (event: React.MouseEvent<HTMLSpanElement>, id: string | number) => {
     event.stopPropagation()
-    await deleteConnection(id).catch(err => {
-      notify.error({
-        message: '修改失败',
-        description: <span style={{ whiteSpace: 'pre-wrap' }}>{String(err)}</span>,
-        duration: null,
-      })
-      return Promise.reject(err)
-    })
-
+    await deleteConnection(id)
     fetchList()
     if (Number(connectionId) === Number(id)) {
       navigate('/notselected')

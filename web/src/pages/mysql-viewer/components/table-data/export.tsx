@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Form, Select, Checkbox } from 'antd';
-import { useTranslation } from 'react-i18next';
 
-import useNotification from '@/utils/use-notifition';
 import useMain from '@/utils/use-main';
 import { exportData } from '@/api/mysql';
 // import type { FormInstance } from 'antd/es/form';
@@ -39,8 +37,6 @@ const fileNameType = {
 
 const ExportDataModal: React.FC<ExportModalProps> = (props) => {
   const { connectionId, dbName, tableName } = useMain()
-  const notify = useNotification()
-  const { t } = useTranslation()
   const { visible, condition, fields, onCancel, onOk } = props
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm<ExportFormValues>();
@@ -49,15 +45,16 @@ const ExportDataModal: React.FC<ExportModalProps> = (props) => {
     setLoading(true)
     const { format, selectedFields } = form.getFieldsValue()
 
-    const res = await exportData({ connectionId, dbName, tableName, condition, fields: selectedFields, type: format }).catch(err => {
-      notify.error({
-        message: t('导出失败'),
-        description: <span style={{ whiteSpace: 'pre-wrap' }}>{String(err)}</span>,
-        duration: null,
-      })
-      setLoading(false)
-      return Promise.reject()
-    })
+    const res = await exportData({
+      connectionId,
+      dbName,
+      tableName,
+      condition,
+      fields:
+      selectedFields,
+      type:
+      format,
+    }).finally(() => setLoading(false))
 
     const url = window.URL.createObjectURL(new Blob([res]));
 

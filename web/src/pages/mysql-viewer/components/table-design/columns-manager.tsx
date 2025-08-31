@@ -18,7 +18,6 @@ import { type Column, columnOrder, deleteColumn } from "@/api/mysql";
 import FieldEditor from "./field-editor";
 import styles from './index.module.less'
 import useMain from "@/utils/use-main";
-import useNotification from "@/utils/use-notifition.tsx";
 
 interface RowProps extends React.HTMLAttributes<HTMLTableRowElement> {
   'data-row-key': string;
@@ -47,7 +46,6 @@ interface ColumnsManagerProps {
 
 const ColumnsManager: React.FC<ColumnsManagerProps> = (props) => {
   const { t } = useTranslation()
-  const notify = useNotification()
   const { connectionId, dbName, tableName } = useMain()
   const { data, onOk } = props
   const [dataOrder, setDataOrder] = useState<Column[]>([])
@@ -154,14 +152,7 @@ const ColumnsManager: React.FC<ColumnsManagerProps> = (props) => {
   }
 
   const handleDelete = async (record: Column) => {
-    await deleteColumn({ connectionId, dbName, tableName, name: record.Field }).catch(err => {
-      notify.error({
-        message: t('execution.failed'),
-        description: <span style={{ whiteSpace: 'pre-wrap' }}>{String(err)}</span>,
-        duration: null,
-      })
-      return Promise.reject()
-    })
+    await deleteColumn({ connectionId, dbName, tableName, name: record.Field })
     onOk?.()
   }
 
