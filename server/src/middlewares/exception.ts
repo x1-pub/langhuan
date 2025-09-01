@@ -30,9 +30,10 @@ export default () => {
       }
 
       if (error instanceof ReplyError) {
+        const { name, args } = error.command as { name: string; args: string[]}
         ctx.r({
           code: RspCode.REDIS_ERROR,
-          message: `${error.message}\n${JSON.stringify(error.command)}`,
+          message: `${error.message}\n${name.toUpperCase()} ${args.join(' ')}`,
         })
         return
       }

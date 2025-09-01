@@ -293,9 +293,14 @@ class RedisController {
         }
         break;
       case RedisType.STREAM:
+        if (value.remove) {
+          result = await ioredis.xdel(key, value.remove)
+        } else if (value.save) {
+          result = await ioredis.xadd(key, value.save[0], ...value.save[1])
+        }
         break;
     }
-    // const result = await ioredis.renamenx(key, newKey)
+
     ctx.r({ data: result })
   }
 }

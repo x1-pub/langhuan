@@ -11,7 +11,7 @@ type StreamValueItem = [string, string[]]
 interface StreamEditorProps {
   value?: StreamValueItem[];
   mode?: 'add' | 'edit';
-  onChange?: (v: StreamValueItem[]) => void;
+  onChange?: (v: unknown) => void;
 }
 
 const defaultValueItem: StreamValueItem = ['*', ['', '']]
@@ -46,13 +46,9 @@ const StreamEditor: React.FC<StreamEditorProps> = ({ value = [defaultValueItem],
   }, [value]);
 
   const idStatus = useMemo(() => {
-    const id = addItem ? addItem[0] : value[0][0]
+    const id = addItem?.[0] || value[0]?.[0]
     return !id || (id !== "*" && !/^\d{13}-\d+$/.test(id)) ? 'error' : ''
   }, [value, addItem])
-
-  // const 
-  // const [addItem, setAddItem] = useState<StreamValueItem['value']>();
-  // const idStatus = !value.id || (value.id !== "*" && !/^\d{13}-\d+$/.test(value.id)) ? 'error' : ''
 
   const handleChange = (index: number, v: string) => {
     if (mode === 'add') {
@@ -64,18 +60,7 @@ const StreamEditor: React.FC<StreamEditorProps> = ({ value = [defaultValueItem],
 
       setAddItem([addItem[0], [...addItem[1].slice(0, index), v, ...addItem[1].slice(index + 1)]])
     }
-    // console.log(index, field)
-    // const fields = [...value.fields.slice(0, index), field, ...value.fields.slice(index + 1)]
-    // onChange?.({ id: value.id, fields })
   }
-
-  // const handleIdChange = (id: string) => {
-  //   setId(id)
-  //   if (!id || (id !== "*" && !/^\d{13}-\d+$/.test(id))) {
-  //     return setIdStatus('error')
-  //   }
-  //   setIdStatus('')
-  // }
 
   const handleAdd = () => {
     if (mode === 'add') {
@@ -86,11 +71,10 @@ const StreamEditor: React.FC<StreamEditorProps> = ({ value = [defaultValueItem],
       } else {
         setAddItem([addItem[0], [...addItem[1], '', '']])
       }
-      // setAddItem([...addItem, ...defaultValueItem.fields])
     }
   }
 
-  const handleDelete = (index: number) => {
+  const handleDelete = (index: number, type: 'old' | 'new') => {
     if (mode === 'add') {
       if (value[0][1].length === 2) {
         return
@@ -101,11 +85,21 @@ const StreamEditor: React.FC<StreamEditorProps> = ({ value = [defaultValueItem],
 
       return
     }
-    // if (value.fields.length === 1) {
-    //   return
-    // }
-    // const fields = [...value.fields.slice(0, index), ...value.fields.slice(index + 1)]
-    // onChange?.({ id: value.id, fields })
+
+    if (type === 'old') {
+      onChange?.({ remove: value[index][0] })
+    } else {
+      if (!addItem || addItem[1].length <= 2) {
+        setAddItem(undefined)
+      } else {
+        setAddItem([addItem![0], [...addItem![1]?.slice(0, index), ...addItem![1].slice(index + 2)]])
+      }
+    }
+  }
+
+  const handleSaveItem = () => {
+    onChange?.({ save: addItem })
+    setAddItem(undefined)
   }
 
   return (
@@ -126,66 +120,70 @@ const StreamEditor: React.FC<StreamEditorProps> = ({ value = [defaultValueItem],
           </span>
         </div>
       )}
-      <div className={styles.tableWrap}>
-        {mode === 'add' && (
-          <table className={styles.table}>
-            <tbody>
-              {value[0][1].map((_, index) => {
-                const row = value[0][1]
-                if (index % 2 === 0) {
-                  return (
-                    <tr key={index} className={styles.tr}>
-                      <td className={styles.td} style={{ width: '30%' }}>
-                        <EditableText editMode='fastify' value={row[index]} onChange={v => handleChange(index, v)} />
-                      </td>
-                      <td className={styles.td}>
-                        <EditableText editMode='fastify' value={row[index + 1]} onChange={v => handleChange(index + 1, v)} />
-                      </td>
-                      <td className={classNames(styles.handler, styles.td)}>
-                        <DeleteOutlined style={{ cursor: 'pointer' }} onClick={() => handleDelete(index)} />
-                      </td>
-                    </tr>
-                  )
-                }
-                return null
-              })}
-            </tbody>
-          </table>
-        )}
-        {mode === 'edit' && (
-          <table className={styles.table}>
-            <thead>
-              <tr className={styles.tr}>
-                <td className={styles.td}>Entry ID</td>
-                {columnKeys.map(field => (
-                  <td className={styles.td}>{field}</td>
-                ))}
-                <td className={styles.td}></td>
-              </tr>
-            </thead>
-            <tbody>
-              {formattedData.map((row, index) => (
-                <tr key={index} className={styles.tr}>
-                  <td className={styles.td}>
-                    <EditableText readonly value={row[ENTRY_ID_KEY]} />
-                  </td>
-                  {columnKeys.map(key => (
-                    <td className={styles.td}>
-                      <EditableText readonly value={row[key]} />
-                    </td>
+      {value.length > 0 && (
+        <div className={styles.tableWrap}>
+          {mode === 'add' && (
+            <table className={styles.table}>
+              <tbody>
+                {value[0][1].map((_, index) => {
+                  const row = value[0][1]
+                  if (index % 2 === 0) {
+                    return (
+                      <React.Fragment key={index}>
+                        <tr key={index} className={styles.tr}>
+                          <td className={styles.td} style={{ width: '30%' }}>
+                            <EditableText editMode='fastify' value={row[index]} onChange={v => handleChange(index, v)} />
+                          </td>
+                          <td className={styles.td}>
+                            <EditableText editMode='fastify' value={row[index + 1]} onChange={v => handleChange(index + 1, v)} />
+                          </td>
+                          <td className={classNames(styles.handler, styles.td)}>
+                            <DeleteOutlined style={{ cursor: 'pointer' }} onClick={() => handleDelete(index, 'old')} />
+                          </td>
+                        </tr>
+                      </React.Fragment>
+                    )
+                  }
+                  return null
+                })}
+              </tbody>
+            </table>
+          )}
+          {mode === 'edit' && (
+            <table className={styles.table}>
+              <thead>
+                <tr className={styles.tr}>
+                  <td className={styles.td}>Entry ID</td>
+                  {columnKeys.map((field, index) => (
+                    <td key={index} className={styles.td}>{field}</td>
                   ))}
-                  <td className={classNames(styles.handler, styles.td)}>
-                    <DeleteOutlined style={{ cursor: 'pointer' }} onClick={() => handleDelete(index)} />
-                  </td>
+                  <td className={styles.td}></td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+              </thead>
+              <tbody>
+                {formattedData.map((row, index) => (
+                  <tr key={index} className={styles.tr}>
+                    <td className={styles.td}>
+                      <EditableText readonly value={row[ENTRY_ID_KEY]} />
+                    </td>
+                    {columnKeys.map((key, idx) => (
+                      <td key={idx} className={styles.td}>
+                        <EditableText readonly value={row[key]} />
+                      </td>
+                    ))}
+                    <td className={classNames(styles.handler, styles.td)}>
+                      <DeleteOutlined style={{ cursor: 'pointer' }} onClick={() => handleDelete(index, 'old')} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
       {addItem && (
         <>
-          <Divider className={styles.divider} />
+          {value.length > 0 && <Divider className={styles.divider} />}
           <div style={{ marginBottom: '10px' }}>
             Entry ID*
             <Input
@@ -207,17 +205,19 @@ const StreamEditor: React.FC<StreamEditorProps> = ({ value = [defaultValueItem],
                   const row = addItem[1]
                   if (index % 2 === 0) {
                     return (
-                      <tr key={index} className={styles.tr}>
-                        <td className={styles.td} style={{ width: '30%' }}>
-                          <EditableText editMode='fastify' value={row[index]} onChange={v => handleChange(index, v)} />
-                        </td>
-                        <td className={styles.td}>
-                          <EditableText editMode='fastify' value={row[index + 1]} onChange={v => handleChange(index + 1, v)} />
-                        </td>
-                        <td className={classNames(styles.handler, styles.td)}>
-                          <DeleteOutlined style={{ cursor: 'pointer' }} onClick={() => handleDelete(index)} />
-                        </td>
-                      </tr>
+                      <React.Fragment key={index}>
+                        <tr key={index} className={styles.tr}>
+                          <td className={styles.td} style={{ width: '30%' }}>
+                            <EditableText editMode='fastify' value={row[index]} onChange={v => handleChange(index, v)} />
+                          </td>
+                          <td className={styles.td}>
+                            <EditableText editMode='fastify' value={row[index + 1]} onChange={v => handleChange(index + 1, v)} />
+                          </td>
+                          <td className={classNames(styles.handler, styles.td)}>
+                            <DeleteOutlined style={{ cursor: 'pointer' }} onClick={() => handleDelete(index, 'new')} />
+                          </td>
+                        </tr>
+                      </React.Fragment>
                     )
                   }
                   return null
@@ -228,7 +228,7 @@ const StreamEditor: React.FC<StreamEditorProps> = ({ value = [defaultValueItem],
         </>
       )}
       <div className={styles.add}>
-        {addItem && <SaveOutlined style={{ cursor: 'pointer' }} />}
+        {addItem && <SaveOutlined style={{ cursor: 'pointer' }} onClick={handleSaveItem} />}
         <PlusCircleOutlined onClick={handleAdd} />
       </div>
     </>
