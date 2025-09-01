@@ -231,7 +231,7 @@ const RedisMain: React.FC = () => {
                 tableLayout="fixed"
                 rowHoverable={true}
                 expandable={{
-                  indentSize: 5,
+                  indentSize: 12,
                   expandRowByClick: true,
                   showExpandColumn: tableType === 'tree',
                   expandIcon: ({ expanded, onExpand, record }) => {
