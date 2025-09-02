@@ -166,7 +166,7 @@ const RedisMain: React.FC = () => {
           addonBefore={(
             <Select value={type} style={{ width: '180px' }} onChange={handleTypeChange}>
               <Select.Option value="">
-                <div style={{ width: '100%', textAlign: 'center' }}>All Key Types</div>
+                <div style={{ width: '100%', textAlign: 'center' }}>{t('redis.allKeyTypes')}</div>
               </Select.Option>
               {Object.values(RedisType).map(key => (
                 <Select.Option value={key} key={key}>
@@ -179,20 +179,20 @@ const RedisMain: React.FC = () => {
           placeholder={t('redis.placeholderRedisSearch')}
           onSearch={handleSearch}
         />
-        <Button type="primary" onClick={handleAddKey}>+ Key</Button>
+        <Button type="primary" onClick={handleAddKey}>+ {t('redis.key')}</Button>
       </div>
 
       <Splitter className={styles.data}>
         <Splitter.Panel collapsible={true} min={480}>
           <div className={styles.content}>
             <div className={styles.left}>
-              <span>Results: {keysData.length}</span>
-              <span>Scanned: {scanned} / {total}</span>
+              <span>{t('redis.results')}: {keysData.length}</span>
+              <span>{t('redis.scanned')}: {scanned} / {total}</span>
               {cursor !== '0' && (
                 <Button
                   size='small'
                   icon={
-                    <Tooltip title="Scanning additional keys may decrease performance and memory available.">
+                    <Tooltip title={t('redis.scanWarn')}>
                       <InfoCircleOutlined />
                     </Tooltip>
                   }
@@ -201,13 +201,15 @@ const RedisMain: React.FC = () => {
               )}
             </div>
             <div className={styles.right}>
-              <ReloadOutlined style={{ cursor: 'pointer' }} onClick={() => getKeysData(true)} />
+              <Tooltip title={t('button.refresh')}>
+                <ReloadOutlined style={{ cursor: 'pointer' }} onClick={() => getKeysData(true)} />
+              </Tooltip>
               <Segmented
                 size="small"
                 shape="round"
                 options={[
-                  { value: 'list', icon: <BarsOutlined /> },
-                  { value: 'tree', icon: <NodeExpandOutlined /> },
+                  { value: 'list', icon: <Tooltip title={t('redis.listView')}><BarsOutlined /></Tooltip> },
+                  { value: 'tree', icon: <Tooltip title={t('redis.treeView')}><NodeExpandOutlined /></Tooltip> },
                 ]}
                 value={tableType}
                 onChange={handleTableTypeChange}

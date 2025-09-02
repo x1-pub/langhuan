@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { CloseOutlined, DeleteOutlined, ReloadOutlined } from "@ant-design/icons";
-import { Divider, Popconfirm } from "antd";
+import { Divider, Popconfirm, Tooltip } from "antd";
 
 import { useTranslation } from "react-i18next";
 import { deleteRedisValue, modifyKey, modifyTTL, modifyValue, RedisType, RedisValueRsp } from "@/api/redis";
@@ -78,27 +78,33 @@ const EditKeyBox: React.FC<EditKeyBoxProps> = ({ data, onDelete, onCancel, onRel
             <KeyTypeIcon type={type} />
             <EditableText tooltip={key} value={key} onChange={handleModifyKey} />
           </div>
-          <CloseOutlined style={{ cursor: 'pointer' }} onClick={onCancel} />
+          <Tooltip placement="left" title={t('button.close')}>
+            <CloseOutlined style={{ cursor: 'pointer' }} onClick={onCancel} />
+          </Tooltip>
         </div>
 
         <div className={styles.editBoxInfo}>
           <div className={styles.left}>
-            <span>Key Size: {sizeToText(size)}</span>
-            <span>Length: 111</span>
+            <span>{t('redis.keySize')}: {sizeToText(size)}</span>
+            <span>{t('redis.length')}: 111</span>
             <span style={{ display: 'flex', alignItems: 'center' }}>
               <span>TTL:</span>
               <EditableText value={String(ttl)} onChange={handleModifyTTL} />
             </span>
           </div>
           <div className={styles.right}>
-            <ReloadOutlined style={{ cursor: 'pointer' }} onClick={() => onReload()} />
+            <Tooltip placement="left" title={t('button.refresh')}>
+              <ReloadOutlined style={{ cursor: 'pointer' }} onClick={() => onReload()} />
+            </Tooltip>
             <Popconfirm
               title={t('delete.title')}
               description={t('delete.desc')}
               placement="left"
               onConfirm={handleDelete}
             >
-              <DeleteOutlined style={{ cursor: 'pointer' }} />
+              <Tooltip placement="left" title={t('button.delete')}>
+                <DeleteOutlined style={{ cursor: 'pointer' }} />
+              </Tooltip>
             </Popconfirm>
           </div>
         </div>

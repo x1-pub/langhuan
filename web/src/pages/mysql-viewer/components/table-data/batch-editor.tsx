@@ -30,7 +30,7 @@ const BatchEditor: React.FC<BatchEditorProps> = ({ columns, condition, onOk, onC
     setLoading(true)
     await update({ connectionId, dbName, tableName, data: form, condition })
       .then(count => {
-        showSuccess(t('execution.affectedCount', { count }))
+        showSuccess(t('mysql.affectedCount', { count }))
         onOk()
       })
     

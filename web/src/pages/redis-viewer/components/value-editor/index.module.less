@@ -12,6 +12,10 @@
     border-bottom: 1px solid var(--langhuan-color-border);
   }
 
+  thead .td {
+    padding: 6px;
+  }
+
   .tr:last-child:not(:first-child) .td {
     border-bottom: none;
   }
@@ -34,4 +38,20 @@
 
 .divider {
   margin: 24px 0 12px;
+}
+
+.icon {
+  cursor: pointer;
+
+  &:hover {
+    color: var(--theme-main-color);
+  }
+}
+
+.delIcon {
+  cursor: pointer;
+
+  &:hover {
+    color: #ff4d4f;
+  }
 }

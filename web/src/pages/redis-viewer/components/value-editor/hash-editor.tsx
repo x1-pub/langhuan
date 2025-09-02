@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { DeleteOutlined, PlusCircleOutlined, SaveOutlined } from "@ant-design/icons";
 import classNames from "classnames";
+import { useTranslation } from "react-i18next";
 
 import EditableText from "@/components/editable-text";
 import styles from './index.module.less'
@@ -19,6 +20,7 @@ interface HashEditorProps {
 const defaultValueItem: HashValueItem = { field: '', value: '' }
 
 const HashEditor: React.FC<HashEditorProps> = ({ value = [defaultValueItem], mode = 'add', onChange }) => {
+  const { t } = useTranslation()
   const [addItem, setAddItem] = useState<HashValueItem[]>([]);
 
   const handleChange = (index: number, type: 'field' | 'value', v: string) => {
@@ -82,6 +84,7 @@ const HashEditor: React.FC<HashEditorProps> = ({ value = [defaultValueItem], mod
                     editMode={mode === 'add' || index >= value.length ? 'fastify' : 'normal'}
                     value={item.field}
                     onChange={v => handleChange(index, 'field', v)}
+                    empty={t('redis.field')}
                   />
                 </td>
                 <td className={styles.td}>
@@ -89,13 +92,14 @@ const HashEditor: React.FC<HashEditorProps> = ({ value = [defaultValueItem], mod
                     value={item.value}
                     editMode={mode === 'add' || index >= value.length ? 'fastify' : 'normal'}
                     onChange={v => handleChange(index, 'value', v)}
+                    empty={index >= value.length ? t('redis.value') : t('redis.empty')}
                   />
                 </td>
                 <td className={classNames(styles.handler, styles.td)}>
                   {index < value.length ? (
-                    <DeleteOutlined style={{ cursor: 'pointer' }} onClick={() => handleDelete(index)} />
+                    <DeleteOutlined className={styles.delIcon} onClick={() => handleDelete(index)} />
                   ) : (
-                    <SaveOutlined style={{ cursor: 'pointer' }} onClick={() => handleSaveItem(index)} />
+                    <SaveOutlined className={styles.icon} onClick={() => handleSaveItem(index)} />
                   )}
                 </td>
               </tr>

@@ -152,7 +152,7 @@ const TableData: React.FC = () => {
 
     batchDelete({ connectionId, dbName, tableName, condition })
       .then(count => {
-        showSuccess(t('execution.affectedCount', { count }))
+        showSuccess(t('mysql.affectedCount', { count }))
         getData()
       })
   }
@@ -244,7 +244,7 @@ const TableData: React.FC = () => {
           current: pagination?.current,
           pageSize: pagination?.pageSize,
           defaultPageSize: DEFAULT_PAGE_SIZE,
-          showTotal: (total) => t('total', { total })
+          showTotal: (total) => t('mysql.total', { total })
         }}
         onChange={handlePagination}
         rowSelection={{

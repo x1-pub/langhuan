@@ -92,7 +92,7 @@ const Editor: React.FC<EditorProps> = ({ data = {}, columns, onOk, onCancel, sho
       } else {
         result = await insertOne({ connectionId, dbName, tableName, data: form })
       }
-      showSuccess(t('execution.affectedCount', { count: result }))
+      showSuccess(t('mysql.affectedCount', { count: result }))
       onOk()
     } finally {
       setLoading(false)

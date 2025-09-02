@@ -1,10 +1,11 @@
 import React, { useMemo, useState } from "react";
 import { DeleteOutlined, PlusCircleOutlined, SaveOutlined } from "@ant-design/icons";
 import classNames from "classnames";
+import { useTranslation } from "react-i18next";
 
 import EditableText from "@/components/editable-text";
 import styles from './index.module.less'
-import { Divider, Input } from "antd";
+import { Divider, Input, Tooltip } from "antd";
 
 type StreamValueItem = [string, string[]]
 
@@ -18,6 +19,7 @@ const defaultValueItem: StreamValueItem = ['*', ['', '']]
 const ENTRY_ID_KEY = 'langhuan_redis_stream_entry_id_key_9g8nxoa04lac724nsdfg-0'
 
 const StreamEditor: React.FC<StreamEditorProps> = ({ value = [defaultValueItem], mode = 'add', onChange }) => {
+  const { t } = useTranslation()
   const [addItem, setAddItem] = useState<StreamValueItem>()
 
   const columnKeys = useMemo(() => {
@@ -106,7 +108,7 @@ const StreamEditor: React.FC<StreamEditorProps> = ({ value = [defaultValueItem],
     <>
       {mode === 'add' && (
         <div style={{ marginBottom: '10px' }}>
-          Entry ID*
+          {t('redis.entryId')}*
           <Input
             value={value[0][0]}
             onChange={e => onChange?.([[e.target.value, value[0][1]]])}
@@ -116,7 +118,7 @@ const StreamEditor: React.FC<StreamEditorProps> = ({ value = [defaultValueItem],
             fontSize: '12px',
             color: idStatus === 'error' ? '#F0685F' : undefined,
           }}>
-            Timestamp - Sequence Number or *
+            {t('redis.entryIdTips')}
           </span>
         </div>
       )}
@@ -132,13 +134,23 @@ const StreamEditor: React.FC<StreamEditorProps> = ({ value = [defaultValueItem],
                       <React.Fragment key={index}>
                         <tr key={index} className={styles.tr}>
                           <td className={styles.td} style={{ width: '30%' }}>
-                            <EditableText editMode='fastify' value={row[index]} onChange={v => handleChange(index, v)} />
+                            <EditableText
+                              editMode='fastify'
+                              value={row[index]}
+                              onChange={v => handleChange(index, v)}
+                              empty={t('redis.field')}
+                            />
                           </td>
                           <td className={styles.td}>
-                            <EditableText editMode='fastify' value={row[index + 1]} onChange={v => handleChange(index + 1, v)} />
+                            <EditableText
+                              editMode='fastify'
+                              value={row[index + 1]}
+                              onChange={v => handleChange(index + 1, v)}
+                              empty={t('redis.value')}
+                            />
                           </td>
                           <td className={classNames(styles.handler, styles.td)}>
-                            <DeleteOutlined style={{ cursor: 'pointer' }} onClick={() => handleDelete(index, 'old')} />
+                            <DeleteOutlined className={styles.delIcon} onClick={() => handleDelete(index, 'old')} />
                           </td>
                         </tr>
                       </React.Fragment>
@@ -153,7 +165,7 @@ const StreamEditor: React.FC<StreamEditorProps> = ({ value = [defaultValueItem],
             <table className={styles.table}>
               <thead>
                 <tr className={styles.tr}>
-                  <td className={styles.td}>Entry ID</td>
+                  <td className={styles.td}>{t('redis.entryId')}</td>
                   {columnKeys.map((field, index) => (
                     <td key={index} className={styles.td}>{field}</td>
                   ))}
@@ -172,7 +184,7 @@ const StreamEditor: React.FC<StreamEditorProps> = ({ value = [defaultValueItem],
                       </td>
                     ))}
                     <td className={classNames(styles.handler, styles.td)}>
-                      <DeleteOutlined style={{ cursor: 'pointer' }} onClick={() => handleDelete(index, 'old')} />
+                      <DeleteOutlined className={styles.delIcon} onClick={() => handleDelete(index, 'old')} />
                     </td>
                   </tr>
                 ))}
@@ -185,7 +197,7 @@ const StreamEditor: React.FC<StreamEditorProps> = ({ value = [defaultValueItem],
         <>
           {value.length > 0 && <Divider className={styles.divider} />}
           <div style={{ marginBottom: '10px' }}>
-            Entry ID*
+            {t('redis.entryId')}*
             <Input
               value={addItem[0]}
               onChange={e => setAddItem([e.target.value, addItem[1]])}
@@ -195,7 +207,7 @@ const StreamEditor: React.FC<StreamEditorProps> = ({ value = [defaultValueItem],
               fontSize: '12px',
               color: idStatus === 'error' ? '#F0685F' : undefined,
             }}>
-              Timestamp - Sequence Number or *
+              {t('redis.entryIdTips')}
             </span>
           </div>
           <div className={styles.tableWrap}>
@@ -208,13 +220,23 @@ const StreamEditor: React.FC<StreamEditorProps> = ({ value = [defaultValueItem],
                       <React.Fragment key={index}>
                         <tr key={index} className={styles.tr}>
                           <td className={styles.td} style={{ width: '30%' }}>
-                            <EditableText editMode='fastify' value={row[index]} onChange={v => handleChange(index, v)} />
+                            <EditableText
+                              editMode='fastify'
+                              value={row[index]}
+                              onChange={v => handleChange(index, v)}
+                              empty={t('redis.field')}
+                            />
                           </td>
                           <td className={styles.td}>
-                            <EditableText editMode='fastify' value={row[index + 1]} onChange={v => handleChange(index + 1, v)} />
+                            <EditableText
+                              editMode='fastify'
+                              value={row[index + 1]}
+                              onChange={v => handleChange(index + 1, v)}
+                              empty={t('redis.value')}
+                            />
                           </td>
                           <td className={classNames(styles.handler, styles.td)}>
-                            <DeleteOutlined style={{ cursor: 'pointer' }} onClick={() => handleDelete(index, 'new')} />
+                            <DeleteOutlined className={styles.delIcon} onClick={() => handleDelete(index, 'new')} />
                           </td>
                         </tr>
                       </React.Fragment>
@@ -228,7 +250,11 @@ const StreamEditor: React.FC<StreamEditorProps> = ({ value = [defaultValueItem],
         </>
       )}
       <div className={styles.add}>
-        {addItem && <SaveOutlined style={{ cursor: 'pointer' }} onClick={handleSaveItem} />}
+        {addItem && (
+          <Tooltip title={t('button.save')}>
+            <SaveOutlined className={styles.icon} onClick={handleSaveItem} />
+          </Tooltip>
+        )}
         <PlusCircleOutlined onClick={handleAdd} />
       </div>
     </>

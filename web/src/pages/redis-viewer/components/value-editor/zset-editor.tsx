@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { DeleteOutlined, PlusCircleOutlined, SaveOutlined } from "@ant-design/icons";
 import classNames from "classnames";
+import { useTranslation } from "react-i18next";
 
 import styles from './index.module.less'
 import EditableText from "@/components/editable-text";
@@ -19,6 +20,7 @@ interface ZSetEditorProps {
 const defaultValueItem: ZSetValueItem = { member: '', score: undefined }
 
 const ZSetEditor: React.FC<ZSetEditorProps> = ({ value = [defaultValueItem], mode = 'add', onChange }) => {
+  const { t } = useTranslation()
   const [addItem, setAddItem] = useState<ZSetValueItem[]>([]);
 
   const handleChange = (index: number, type: 'member' | 'score', v?: string) => {
@@ -75,21 +77,22 @@ const ZSetEditor: React.FC<ZSetEditorProps> = ({ value = [defaultValueItem], mod
                     value={item.member}
                     editMode={mode === 'add' || index >= value.length ? 'fastify' : 'normal'}
                     onChange={(v) => handleChange(index, 'member', v)}
+                    empty={index >= value.length ? t('redis.member') : t('redis.empty')}
                   />
                 </td>
                 <td className={styles.td} style={{ width: '30%' }}>
                   <EditableText
                     value={item.score !== undefined ? String(item.score) : ''}
-                    placeholder="Enter Score*"
                     editMode={mode === 'add' || index >= value.length ? 'fastify' : 'normal'}
                     onChange={(v) => handleChange(index, 'score', v)}
+                    empty={t('redis.score')}
                   />
                 </td>
                 <td className={classNames(styles.handler, styles.td)}>
                   {index < value.length ? (
-                    <DeleteOutlined style={{ cursor: 'pointer' }} onClick={() => handleDelete(index)} />
+                    <DeleteOutlined className={styles.delIcon} onClick={() => handleDelete(index)} />
                   ) : (
-                    <SaveOutlined style={{ cursor: 'pointer' }} onClick={() => handleSaveItem(index)} />
+                    <SaveOutlined className={styles.icon} onClick={() => handleSaveItem(index)} />
                   )}
                 </td>
               </tr>

@@ -14,27 +14,27 @@ const MysqlViewer: React.FC = () => {
   const { t } = useTranslation()
   const tabsItem = [
     {
-      label: t('mysqlTab.data'),
+      label: t('mysql.data'),
       key: 'table-data',
       children: <TableData />
     },
     {
-      label: t('mysqlTab.design'),
+      label: t('mysql.design'),
       key: 'table-design',
       children: <TableDesign />
     },
     {
-      label: t('mysqlTab.ddl'),
+      label: t('mysql.ddl'),
       key: 'table-ddl',
       children: <TableDDL />
     },
     {
-      label: t('mysqlTab.trigger'),
+      label: t('mysql.trigger'),
       key: 'table-trigger',
       children: <TableTrigger />
     },
     {
-      label: t('mysqlTab.status'),
+      label: t('mysql.status'),
       key: 'table-status',
       children: <TableSatus />
     },

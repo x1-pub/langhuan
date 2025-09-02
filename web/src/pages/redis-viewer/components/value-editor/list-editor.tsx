@@ -3,6 +3,7 @@ import { Dropdown, Select } from "antd";
 import { DeleteOutlined, PlusCircleOutlined, SaveOutlined } from "@ant-design/icons";
 import classNames from "classnames";
 
+import { useTranslation } from "react-i18next";
 import styles from './index.module.less'
 import EditableText from "@/components/editable-text";
 
@@ -20,6 +21,7 @@ interface ListEditorProps {
 const defaultValue: ListValue = { pushToHead: false, elements: [''] }
 
 const ListEditor: React.FC<ListEditorProps> = ({ value = defaultValue, mode = 'add', onChange }) => {
+  const { t } = useTranslation()
   const [addItem, setAddItem] = useState<ListValue['elements']>([]);
 
   const handleChange = (index: number, v: string) => {
@@ -68,8 +70,8 @@ const ListEditor: React.FC<ListEditorProps> = ({ value = defaultValue, mode = 'a
       {mode === 'add' && (
         <Select
           options={[
-            { label: 'Push to tail', value: false },
-            { label: 'Push to head', value: true },
+            { label: t('redis.pushToTail'), value: false },
+            { label: t('redis.pushToHead'), value: true },
           ]}
           value={value.pushToHead}
           onChange={(v: boolean) => onChange?.({ pushToHead: v, elements: value.elements })}
@@ -86,21 +88,22 @@ const ListEditor: React.FC<ListEditorProps> = ({ value = defaultValue, mode = 'a
                     value={item}
                     onChange={value => handleChange(index, value)}
                     editMode={mode === 'add' || index >= value.elements.length ? 'fastify' : 'normal'}
+                    empty={index >=value.elements.length ? t('redis.element') : t('redis.empty')}
                   />
                 </td>
                 <td className={classNames(styles.handler, styles.td)}>
                   {index < value.elements.length ? (
-                    <DeleteOutlined style={{ cursor: 'pointer' }} onClick={() => handleDelete(index)} />
+                    <DeleteOutlined className={styles.delIcon} onClick={() => handleDelete(index)} />
                   ) : (
                     <Dropdown
                       menu={{
                         items: [
-                          { key: '1', label: 'Push to tail', onClick: () => handlePushValue(index, false) },
-                          { key: '2', label: 'Push to head', onClick: () => handlePushValue(index, true) },
+                          { key: '1', label: t('redis.pushToTail'), onClick: () => handlePushValue(index, false) },
+                          { key: '2', label: t('redis.pushToHead'), onClick: () => handlePushValue(index, true) },
                         ]
                       }}
                     >
-                      <SaveOutlined style={{ cursor: 'pointer' }} />
+                      <SaveOutlined className={styles.icon} />
                     </Dropdown>
                   )}
                 </td>

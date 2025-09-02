@@ -1,5 +1,6 @@
 import React from "react";
 import { Input } from "antd";
+import { useTranslation } from "react-i18next";
 
 import EditableText from "@/components/editable-text";
 
@@ -10,13 +11,15 @@ interface StringEditorProps {
 }
 
 const StringEditor: React.FC<StringEditorProps> = ({ value, mode = 'add', onChange }) => {
+  const { t } = useTranslation()
+
   if (mode === 'edit') {
     return (
       <EditableText
         value={value}
         onChange={onChange}
         multiline
-        placeholder="Enter Value"
+        empty={t('redis.empty')}
       />
     )
   }
@@ -26,7 +29,7 @@ const StringEditor: React.FC<StringEditorProps> = ({ value, mode = 'add', onChan
       autoSize={{ minRows: 5 }}
       value={value}
       onChange={(e) => onChange?.(e.target.value)}
-      placeholder="Enter Value"
+      placeholder={t('redis.value')}
     />
   )
 }

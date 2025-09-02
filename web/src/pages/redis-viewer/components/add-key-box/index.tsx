@@ -1,12 +1,13 @@
 import React from "react";
 import { CloseOutlined } from "@ant-design/icons";
-import { Button, Col, Divider, Form, Input, InputNumber, Row, Select } from "antd";
+import { Button, Col, Divider, Form, Input, InputNumber, Row, Select, Tooltip } from "antd";
 
 import { addRedisValue, RedisType } from "@/api/redis";
 import KeyTypeIcon from "../key-type-icon";
 import ValueEditor from "../value-editor";
 import useMain from "@/utils/use-main";
 import styles from './index.module.less'
+import { useTranslation } from "react-i18next";
 
 type FieldType = {
   type: RedisType;
@@ -23,6 +24,7 @@ interface AddKeyBoxProps {
 const AddKeyBox: React.FC<AddKeyBoxProps> = ({ onAddSuccess, onCancel }) => {
   const { connectionId, dbName } = useMain()
   const [form] = Form.useForm<FieldType>()
+  const { t } = useTranslation()
 
   const typeValue = Form.useWatch('type', form)
 
@@ -37,8 +39,10 @@ const AddKeyBox: React.FC<AddKeyBoxProps> = ({ onAddSuccess, onCancel }) => {
     <div className={styles.addBoxWrap}>
       <div>
         <div className={styles.addBoxheader}>
-          <span>New Key</span>
-          <CloseOutlined style={{ cursor: 'pointer' }} onClick={onCancel} />
+          <span>{t('redis.newKey')}</span>
+          <Tooltip placement="left" title={t('button.close')}>
+            <CloseOutlined style={{ cursor: 'pointer' }} onClick={onCancel} />
+          </Tooltip>
         </div>
         <Divider className={styles.divider} />
       </div>
@@ -53,7 +57,7 @@ const AddKeyBox: React.FC<AddKeyBoxProps> = ({ onAddSuccess, onCancel }) => {
           <Row gutter={10}>
             <Col span={12}>
               <Form.Item<FieldType>
-                label="Key Type"
+                label={t('redis.keyType')}
                 name="type"
                 rules={[{ required: true }]}
               >
@@ -76,7 +80,7 @@ const AddKeyBox: React.FC<AddKeyBoxProps> = ({ onAddSuccess, onCancel }) => {
             </Col>
           </Row>
           <Form.Item<FieldType>
-            label="Key Name"
+            label={t('redis.keyName')}
             name="key"
             rules={[{ required: true }]}
           >
@@ -91,12 +95,12 @@ const AddKeyBox: React.FC<AddKeyBoxProps> = ({ onAddSuccess, onCancel }) => {
           </Form.Item>
         </Form>
       </div>
-      
+
       <div>
         <Divider className={styles.divider} />
         <div className={styles.addBoxfooter}>
-          <Button onClick={onCancel}>Cancel</Button>
-          <Button type="primary" onClick={handleSubmit}>Add Key</Button>
+          <Button onClick={onCancel}>{t('button.cancel')}</Button>
+          <Button type="primary" onClick={handleSubmit}>{t('button.submit')}</Button>
         </div>
       </div>
 
