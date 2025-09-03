@@ -88,7 +88,7 @@ const ListEditor: React.FC<ListEditorProps> = ({ value = defaultValue, mode = 'a
                     value={item}
                     onChange={value => handleChange(index, value)}
                     editMode={mode === 'add' || index >= value.elements.length ? 'fastify' : 'normal'}
-                    empty={index >=value.elements.length ? t('redis.element') : t('redis.empty')}
+                    empty={index >= value.elements.length || mode === 'add' ? t('redis.element') : t('redis.empty')}
                   />
                 </td>
                 <td className={classNames(styles.handler, styles.td)}>

@@ -92,7 +92,7 @@ const HashEditor: React.FC<HashEditorProps> = ({ value = [defaultValueItem], mod
                     value={item.value}
                     editMode={mode === 'add' || index >= value.length ? 'fastify' : 'normal'}
                     onChange={v => handleChange(index, 'value', v)}
-                    empty={index >= value.length ? t('redis.value') : t('redis.empty')}
+                    empty={index >= value.length || mode === 'add' ? t('redis.value') : t('redis.empty')}
                   />
                 </td>
                 <td className={classNames(styles.handler, styles.td)}>

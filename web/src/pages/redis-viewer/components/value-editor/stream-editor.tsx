@@ -176,11 +176,11 @@ const StreamEditor: React.FC<StreamEditorProps> = ({ value = [defaultValueItem],
                 {formattedData.map((row, index) => (
                   <tr key={index} className={styles.tr}>
                     <td className={styles.td}>
-                      <EditableText readonly value={row[ENTRY_ID_KEY]} />
+                      <EditableText readonly value={row[ENTRY_ID_KEY]} empty={t('redis.empty')} />
                     </td>
                     {columnKeys.map((key, idx) => (
                       <td key={idx} className={styles.td}>
-                        <EditableText readonly value={row[key]} />
+                        <EditableText readonly value={row[key]} empty={t('redis.empty')} />
                       </td>
                     ))}
                     <td className={classNames(styles.handler, styles.td)}>

@@ -65,7 +65,7 @@ const SetEditor: React.FC<SetEditorProps> = ({ value = [''], mode = 'add', onCha
                     value={item}
                     editMode={mode === 'add' || index >= value.length ? 'fastify' : 'normal'}
                     onChange={(v) => handleChange(index, v)}
-                    empty={index >= value.length ? t('redis.member') : t('redis.empty')}
+                    empty={index >= value.length || mode === 'add' ? t('redis.member') : t('redis.empty')}
                   />
                 </td>
                 <td className={classNames(styles.handler, styles.td)}>

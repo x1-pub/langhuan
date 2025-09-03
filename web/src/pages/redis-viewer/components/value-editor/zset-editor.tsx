@@ -77,7 +77,7 @@ const ZSetEditor: React.FC<ZSetEditorProps> = ({ value = [defaultValueItem], mod
                     value={item.member}
                     editMode={mode === 'add' || index >= value.length ? 'fastify' : 'normal'}
                     onChange={(v) => handleChange(index, 'member', v)}
-                    empty={index >= value.length ? t('redis.member') : t('redis.empty')}
+                    empty={index >= value.length || mode === 'add' ? t('redis.member') : t('redis.empty')}
                   />
                 </td>
                 <td className={styles.td} style={{ width: '30%' }}>
