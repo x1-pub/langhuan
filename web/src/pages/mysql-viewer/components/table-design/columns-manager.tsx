@@ -67,11 +67,11 @@ const ColumnsManager: React.FC<ColumnsManagerProps> = (props) => {
       width: 40,
     },
     {
-      title: '名称',
+      title: t('table.name'),
       dataIndex: 'Field',
     },
     {
-      title: '类型',
+      title: t('table.type'),
       dataIndex: 'Type',
       render: (value) => getPureType(value),
     },
@@ -80,11 +80,11 @@ const ColumnsManager: React.FC<ColumnsManagerProps> = (props) => {
       dataIndex: 'Null',
     },
     {
-      title: '注释',
+      title: t('table.comment'),
       dataIndex: 'Comment',
     },
     {
-      title: '操作',
+      title: t('table.operation'),
       dataIndex: '',
       render: (_, record) => (
         <>
@@ -162,7 +162,7 @@ const ColumnsManager: React.FC<ColumnsManagerProps> = (props) => {
 
   return (
     <div>
-      <Card className={styles.card} title="字段" extra={<Button color="cyan" variant="link" onClick={() => setVisible(true)}>新建</Button>}>
+      <Card className={styles.card} title={t('table.field')} extra={<Button color="cyan" variant="link" onClick={() => setVisible(true)}>{t('button.add')}</Button>}>
         <DndContext sensors={sensors} modifiers={[restrictToVerticalAxis]} onDragEnd={onDragEnd}>
           <SortableContext
             // rowKey array

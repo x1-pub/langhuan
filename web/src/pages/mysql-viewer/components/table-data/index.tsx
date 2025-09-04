@@ -69,7 +69,7 @@ const TableData: React.FC = () => {
       current: current || pagination?.current || 1,
       pageSize: pageSize || pagination?.pageSize || DEFAULT_PAGE_SIZE,
       condition: where || condition
-    })
+    }).finally(() => setLoading(false))
 
     const primaryKeys = columns.filter(col => col.Key === 'PRI').map(col => col.Field)
     const data = list.map(l => {
@@ -81,7 +81,6 @@ const TableData: React.FC = () => {
     setTotal(total)
     setColumns(columns)
     setSelectedRowKeys([])
-    setLoading(false)
   }
 
   const handlePagination = (pagination: TablePaginationConfig) => {

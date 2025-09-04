@@ -28,7 +28,7 @@ const Editor: React.FC<EditorProps> = ({ data = {}, columns, onOk, onCancel, sho
 
   const tableColumns: TableProps<Record<string, any>>['columns'] = [
     {
-      title: '字段',
+      title: t('table.key'),
       dataIndex: 'key',
       key: 'key',
       width: 200,
@@ -44,7 +44,7 @@ const Editor: React.FC<EditorProps> = ({ data = {}, columns, onOk, onCancel, sho
       }
     },
     {
-      title: '值',
+      title: t('table.value'),
       dataIndex: 'value',
       key: 'value',
       render: (value, record) => {
@@ -52,17 +52,17 @@ const Editor: React.FC<EditorProps> = ({ data = {}, columns, onOk, onCancel, sho
       }
     },
     {
-      title: '类型',
+      title: t('table.type'),
       dataIndex: 'type',
       key: 'type',
       width: 135,
       ellipsis: true
     },
     {
-      title: '默认值',
+      title: t('table.default'),
       dataIndex: 'default',
       key: 'default',
-      width: 100,
+      width: 130,
       ellipsis: true
     },
   ]

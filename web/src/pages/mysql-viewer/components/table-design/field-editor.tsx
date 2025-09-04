@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { Modal, Form, Input, Select, Checkbox, Row, Col, Tooltip } from 'antd';
+import { useTranslation } from 'react-i18next';
 
 import { addorUpdateColumn, type MySqlFieldData, type Column } from '@/api/mysql';
 import useMain from '@/utils/use-main';
@@ -113,6 +114,7 @@ const FieldEditor: React.FC<FieldEditorProps> = ({
   onSubmit,
   onCancel,
 }) => {
+  const { t } = useTranslation()
   const { connectionId, dbName, tableName } = useMain()
   const [form] = Form.useForm<MySqlFieldData>();
   const selectedType = Form.useWatch('fieldType', form);
@@ -211,7 +213,7 @@ const FieldEditor: React.FC<FieldEditorProps> = ({
 
   return (
     <Modal
-      title="添加新字段"
+      title={editRow ? t('button.edit') : t('button.create')}
       open={visible}
       onOk={handleOk}
       onCancel={onCancel}
@@ -234,9 +236,9 @@ const FieldEditor: React.FC<FieldEditorProps> = ({
         <Row gutter={16}>
           <Col span={12}>
             <Form.Item
-              label="字段名称"
+              label={t('table.name')}
               name="fieldName"
-              rules={[{ required: true, message: '请输入字段名称' }]}
+              rules={[{ required: true }]}
             >
               <Input autoComplete='off' />
             </Form.Item>
@@ -244,9 +246,9 @@ const FieldEditor: React.FC<FieldEditorProps> = ({
 
           <Col span={12}>
             <Form.Item
-              label="字段类型"
+              label={t('table.type')}
               name="fieldType"
-              rules={[{ required: true, message: '请选择字段类型' }]}
+              rules={[{ required: true }]}
             >
               <Select showSearch options={FIELD_TYPES.map(t => ({ value: t, label: t }))} />
             </Form.Item>
@@ -257,17 +259,17 @@ const FieldEditor: React.FC<FieldEditorProps> = ({
           <Row gutter={16}>
             <Col span={12}>      
               <Form.Item
-                label="字段类型附加属性"
+                label={t('table.columnTypeAA')}
                 name="fieldExtra"
                 tooltip={(
                   <div>
-                    <div>例如:</div>
-                    <div>1. DECIMAL类型填写2,10</div>
-                    <div>2. VARCHAR类型填写255</div>
-                    <div>3. ENUM类型填写'Male','Female'</div>
+                    <div>{t('table.e1')}:</div>
+                    <div>1. {t('table.e2')}</div>
+                    <div>2. {t('table.e3')}</div>
+                    <div>3. {t('table.e4')}</div>
                   </div>
                 )}
-                rules={[{ required: varTypes.includes(selectedType), message: '请输入字段类型附加属性' }]}
+                rules={[{ required: varTypes.includes(selectedType) }]}
               >
                 <Input autoComplete='off' />
               </Form.Item>
@@ -285,7 +287,7 @@ const FieldEditor: React.FC<FieldEditorProps> = ({
         <Row gutter={16}>
           <Col span={6}>
             <Form.Item name="allowNull" valuePropName="checked">
-              <Checkbox>允许 NULL</Checkbox>
+              <Checkbox>{t('table.allowNull')}</Checkbox>
             </Form.Item>
           </Col>
 
@@ -302,7 +304,7 @@ const FieldEditor: React.FC<FieldEditorProps> = ({
                 valuePropName="checked"
               >
                 <Checkbox>
-                  自动递增&nbsp;
+                  {t('table.autoIncrement')}&nbsp;
                   <Tooltip
                     title={
                       <>
@@ -324,12 +326,12 @@ const FieldEditor: React.FC<FieldEditorProps> = ({
             <>
               <Col span={6}>
                 <Form.Item name="unsigned" valuePropName="checked">
-                  <Checkbox>无符号</Checkbox>
+                  <Checkbox>{t('table.unsigned')}</Checkbox>
                 </Form.Item>
               </Col>
               <Col span={6}>
                 <Form.Item name="zerofill" valuePropName="checked">
-                  <Checkbox>填充零</Checkbox>
+                  <Checkbox>{t('table.zeroFill')}</Checkbox>
                 </Form.Item>
               </Col>
             </>
@@ -338,7 +340,7 @@ const FieldEditor: React.FC<FieldEditorProps> = ({
           {fullTimeTypes.includes(selectedType) && (
             <Col span={6}>
               <Form.Item name="onUpdateCurrentTime" valuePropName="checked">
-                <Checkbox>根据当前时间戳更新</Checkbox>
+                <Checkbox>{t('table.ut')}</Checkbox>
               </Form.Item>
             </Col>
           )}
@@ -348,12 +350,12 @@ const FieldEditor: React.FC<FieldEditorProps> = ({
         {needCharsetTypes.includes(selectedType) && (
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item label="字符集" name="charset">
+              <Form.Item label={t('table.charset')} name="charset">
                 <Select allowClear options={CHARSET_OPTIONS} />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item label="排序规则" name="collation">
+              <Form.Item label={t('table.collation')} name="collation">
                 <Select
                   allowClear
                   options={charsetValue ? COLLATION_OPTIONS[charsetValue as keyof typeof COLLATION_OPTIONS] : []}
@@ -365,7 +367,7 @@ const FieldEditor: React.FC<FieldEditorProps> = ({
         )}
 
         <Form.Item
-          label="默认值"
+          label={t('table.default')}
           style={{ marginBottom: 16 }}
         >
           <Row gutter={8}>
@@ -373,10 +375,10 @@ const FieldEditor: React.FC<FieldEditorProps> = ({
               <Form.Item name="defaultValueType">
                 <Select
                   options={[
-                    { label: '无默认值', value: 'NONE' },
+                    { label: t('table.noDefault'), value: 'NONE' },
                     { label: 'NULL', value: 'NULL' },
-                    { label: '空字符串', value: 'EMPTY_STRING' },
-                    { label: '自定义', value: 'CUSTOM' },
+                    { label: t('table.emptyString'), value: 'EMPTY_STRING' },
+                    { label: t('table.custom'), value: 'CUSTOM' },
                   ]}
                 />
               </Form.Item>
@@ -385,7 +387,7 @@ const FieldEditor: React.FC<FieldEditorProps> = ({
               <Col span={12}>
                 <Form.Item
                   name="defaultValue"
-                  rules={[{ required: true, message: '请输入自定义默认值' }]}
+                  rules={[{ required: true }]}
                 >
                   <Input autoComplete='off' />
                 </Form.Item>
@@ -394,7 +396,7 @@ const FieldEditor: React.FC<FieldEditorProps> = ({
           </Row>
         </Form.Item>
 
-        <Form.Item label="注释" name="comment">
+        <Form.Item label={t('table.comment')} name="comment">
           <Input.TextArea rows={2} />
         </Form.Item>
       </Form>

@@ -19,7 +19,7 @@ import styles from './index.module.less'
 import { SearchProps } from 'antd/es/input';
 import AddKeyBox from './add-key-box';
 import EditKeyBox from './edit-key-box';
-import formatSeconds from '@/utils/format-second';
+import ttlToText from '@/utils/ttl-to-text';
 import { showError } from '@/utils/use-notifition';
 import redisListToTree, { TreeNode } from '@/utils/redis-list-to-tree';
 import useElementSize from '../hooks/use-element-size';
@@ -63,7 +63,7 @@ const RedisMain: React.FC = () => {
       dataIndex: 'ttl',
       key: 'ttl',
       render: (ttl, record) => {
-        return record.isLeaf ? formatSeconds(ttl) : null
+        return record.isLeaf ? ttlToText(ttl) : null
       },
       align: 'right',
       width: 100,

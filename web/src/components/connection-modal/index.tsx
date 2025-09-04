@@ -33,7 +33,7 @@ const ConnectionModal: React.FC<IConnectionModal> = (props) => {
     setTestLoading(true)
     testConnection({ ...values, id })
       .then(() => {
-        showSuccess('测试连接成功')
+        showSuccess(t('connection.success'))
       })
       .finally(() => {
         setTestLoading(false)
@@ -74,7 +74,7 @@ const ConnectionModal: React.FC<IConnectionModal> = (props) => {
       afterClose={clearForm}
       footer={(_, { CancelBtn }) => (
         <>
-          <Button loading={testLoading} type="dashed" style={{ float: 'left' }} onClick={handleTest}>测试连接</Button>
+          <Button loading={testLoading} type="dashed" style={{ float: 'left' }} onClick={handleTest}>{t('connection.test')}</Button>
           <CancelBtn />
           <Button key="submit" type="primary" loading={loading} onClick={handleOk}>OK</Button>
         </>
@@ -91,7 +91,7 @@ const ConnectionModal: React.FC<IConnectionModal> = (props) => {
             <Form.Item
               label={t('connection.type')}
               name="type"
-              rules={[{ required: true, message: t('connection.notSelected') }]}
+              rules={[{ required: true }]}
             >
               <Select options={connectionTypeOptions} />
             </Form.Item>
@@ -100,7 +100,7 @@ const ConnectionModal: React.FC<IConnectionModal> = (props) => {
             <Form.Item
               label={t('connection.name')}
               name="name"
-              rules={[{ required: true, message: t('connection.notSelected') }]}
+              rules={[{ required: true }]}
             >
               <Input autoComplete="off" />
             </Form.Item>
@@ -111,7 +111,7 @@ const ConnectionModal: React.FC<IConnectionModal> = (props) => {
             <Form.Item
               label={t('connection.host')}
               name="host"
-              rules={[{ required: true, message: t('connection.notSelected') }]}
+              rules={[{ required: true }]}
             >
               <Input autoComplete="off" />
             </Form.Item>
@@ -120,7 +120,7 @@ const ConnectionModal: React.FC<IConnectionModal> = (props) => {
             <Form.Item
               label={t('connection.port')}
               name="port"
-              rules={[{ required: true, message: t('connection.notSelected') }]}
+              rules={[{ required: true }]}
             >
               <Input autoComplete="off" />
             </Form.Item>
@@ -146,8 +146,6 @@ const ConnectionModal: React.FC<IConnectionModal> = (props) => {
               <Input.Password
                 autoComplete="off"
                 disabled={!!id}
-                // iconRender={() => null}
-                // addonAfter={<Typography.Link style={{ color: 'var(--theme-main-color)' }}>修改密码</Typography.Link>}
               />
             </Form.Item>
           </Col>

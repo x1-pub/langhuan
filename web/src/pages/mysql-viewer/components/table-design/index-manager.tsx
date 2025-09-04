@@ -64,24 +64,24 @@ const IndexManager: React.FC<IndexManagerProps> = (props) => {
   const dataAfter = dealIndexData(data)
   const tableColumns: TableProps<TableIndex>['columns'] = [
     {
-      title: '名称',
+      title: t('table.name'),
       dataIndex: 'Key_name',
     },
     {
-      title: '字段',
+      title: t('table.field'),
       dataIndex: 'Column_name',
     },
     {
-      title: '索引类型',
+      title: t('table.indexType'),
       dataIndex: 'Index_type',
       render: (_value, record) => getTypeFromIndexData(record),
     },
     {
-      title: '注释',
+      title: t('table.comment'),
       dataIndex: 'Index_comment',
     },
     {
-      title: '操作',
+      title: t('table.operation'),
       dataIndex: '',
       render: (_, record) => (
         <>
@@ -176,7 +176,7 @@ const IndexManager: React.FC<IndexManagerProps> = (props) => {
 
   return (
     <div>
-      <Card className={styles.card} title="索引" extra={<Button color="cyan" variant="link" onClick={() => setOpen(true)}>新建</Button>}>
+      <Card className={styles.card} title={t('table.index')} extra={<Button color="cyan" variant="link" onClick={() => setOpen(true)}>{t('button.add')}</Button>}>
         <Table
           rowKey={(record) => record.Key_name + record.Column_name + record.Index_type + record.Seq_in_index}
           dataSource={dataAfter}
@@ -209,7 +209,7 @@ const IndexManager: React.FC<IndexManagerProps> = (props) => {
           labelAlign="left"
         >
           <Form.Item
-            label={'索引类型'}
+            label={t('table.indexType')}
             name="type"
             rules={[{ required: true, message: t('connectionTypeError') }]}
             
@@ -217,7 +217,7 @@ const IndexManager: React.FC<IndexManagerProps> = (props) => {
             <Select options={indexTypeOptions} />
           </Form.Item>
           <Form.Item
-            label={'字段'}
+            label={t('table.field')}
             name="field"
             rules={[{ required: true, message: t('connectionNameError') }]}
           >
@@ -236,14 +236,14 @@ const IndexManager: React.FC<IndexManagerProps> = (props) => {
                   <InputNumber
                     defaultValue={fieldExtra[field]?.len ?? undefined}
                     style={{ width: '100%' }}
-                    placeholder="键长度"
+                    placeholder={t('table.length')}
                     onChange={(v) => handleFieldExtraChange(field, 'len', v)}
                   />
                 </Col>
                 <Col span={6}>
                   <Select
                     defaultValue={fieldExtra[field]?.order}
-                    placeholder="排序规则"
+                    placeholder={t('table.collation')}
                     style={{ width: '100%' }}
                     options={[{ label: 'ASC', value: 'ASC' }, { label: 'DESC', value: 'DESC' }]}
                     onChange={(v) => handleFieldExtraChange(field, 'order', v)}
@@ -254,13 +254,13 @@ const IndexManager: React.FC<IndexManagerProps> = (props) => {
           })}
 
           <Form.Item
-            label={'名称'}
+            label={t('table.name')}
             name="name"
           >
             <Input autoComplete="off" />
           </Form.Item>
           <Form.Item
-            label={'注释'}
+            label={t('table.comment')}
             name="comment"
           >
             <Input autoComplete="off" />
