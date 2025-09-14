@@ -175,7 +175,7 @@ const IndexManager: React.FC<IndexManagerProps> = (props) => {
   }, [editIndex, open])
 
   return (
-    <div>
+    <>
       <Card className={styles.card} title={t('table.index')} extra={<Button color="cyan" variant="link" onClick={() => setOpen(true)}>{t('button.add')}</Button>}>
         <Table
           rowKey={(record) => record.Key_name + record.Column_name + record.Index_type + record.Seq_in_index}
@@ -267,7 +267,7 @@ const IndexManager: React.FC<IndexManagerProps> = (props) => {
           </Form.Item>
         </Form>
       </Modal>
-    </div>
+    </>
   )
 }
 

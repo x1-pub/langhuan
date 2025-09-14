@@ -4,7 +4,8 @@ import { Space } from "antd";
 import { tableColumns, tableIndex, type Column, type TableIndex } from "@/api/mysql";
 import IndexManager from "./index-manager";
 import ColumnsManager from "./columns-manager";
-import TablePartitioning from "./table-partitioning";
+import TablePartition from "./table-partition";
+import TableTrigger from "./table-trigger";
 import useMain from "@/utils/use-main"
 
 const TableDesign: React.FC = () => {
@@ -27,7 +28,8 @@ const TableDesign: React.FC = () => {
       <Space direction="vertical" size={16} style={{ width: '100%'}}>    
         <IndexManager data={indexData} columns={columns} onOk={getData} />
         <ColumnsManager data={columns} onOk={getData} />
-        <TablePartitioning />
+        <TablePartition />
+        <TableTrigger />
       </Space>
     </div>
   )

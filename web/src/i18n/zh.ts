@@ -39,6 +39,7 @@ const zh = {
     passwordTip: '密码设置后不可修改, 如需修改请删除连接后重新创建',
     test: '测试连接',
     success: '测试连接成功',
+    notSelected: '请选择要连接的会话',
   },
   table: {
     field: '字段',
@@ -113,6 +114,7 @@ const zh = {
     ddl: '表DDL',
     trigger: '触发器',
     status: '表状态',
+    partition: '分区',
   },
   redis: {
     allKeyTypes: '所有类型',

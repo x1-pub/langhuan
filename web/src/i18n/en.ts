@@ -39,6 +39,7 @@ const en = {
     passwordTip: 'Password cannot be changed once set. To modify, delete and recreate the connection.',
     test: 'Test the connection',
     success: 'Test connection successful',
+    notSelected: 'Please select a connection',
   },
   table: {
     field: 'Field',
@@ -113,6 +114,7 @@ const en = {
     ddl: 'DDL',
     trigger: 'Trigger',
     status: 'Status',
+    partition: 'Partition',
   },
   redis: {
     allKeyTypes: 'All Key Types',

@@ -161,8 +161,12 @@ const ColumnsManager: React.FC<ColumnsManagerProps> = (props) => {
   }, [data])
 
   return (
-    <div>
-      <Card className={styles.card} title={t('table.field')} extra={<Button color="cyan" variant="link" onClick={() => setVisible(true)}>{t('button.add')}</Button>}>
+    <>
+      <Card
+        className={styles.card}
+        title={t('table.field')}
+        extra={<Button color="cyan" variant="link" onClick={() => setVisible(true)}>{t('button.add')}</Button>}
+      >
         <DndContext sensors={sensors} modifiers={[restrictToVerticalAxis]} onDragEnd={onDragEnd}>
           <SortableContext
             // rowKey array
@@ -185,7 +189,7 @@ const ColumnsManager: React.FC<ColumnsManagerProps> = (props) => {
         </DndContext>
       </Card>
       <FieldEditor visible={visible} onSubmit={handleSubmit} onCancel={handleCancel} editRow={editRow} />
-    </div>
+    </>
   )
 }
 
