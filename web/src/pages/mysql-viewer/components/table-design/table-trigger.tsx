@@ -3,63 +3,45 @@ import {
   Table,
   Button,
   Popconfirm,
-  message,
   Tooltip,
   Tag,
   Card
 } from 'antd';
 import { useTranslation } from 'react-i18next';
-import TriggerModal, { TriggerData, TriggerEvent, TriggerTiming } from './trigger-modal';
+import TriggerModal from './trigger-modal';
 import styles from './index.module.less'
+import { addTrigger, deleteTrigger, modifyTrigger, tableTrigger, TriggerData, TriggerEvent, TriggerTiming } from '@/api/mysql';
+import useMain from '@/utils/use-main';
 
 const TableTrigger: React.FC = () => {
   const { t } = useTranslation();
+  const { connectionId, dbName, tableName } = useMain()
   const [triggers, setTriggers] = useState<TriggerData[]>([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingTrigger, setEditingTrigger] = useState<TriggerData | null>(null);
   const [viewingTrigger, setViewingTrigger] = useState<TriggerData | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // 模拟初始数据
+  const getData = async () => {
+    setLoading(true)
+    const data = await tableTrigger({ connectionId, dbName, tableName })
+    setTriggers(data)
+    setLoading(false)
+  }
+
   useEffect(() => {
-    const mockData: TriggerData[] = [
-      {
-        id: '1',
-        name: 'update_modified_time',
-        event: TriggerEvent.UPDATE,
-        timing: TriggerTiming.BEFORE,
-        tableName: 'users',
-        statement: 'SET NEW.updated_at = NOW();',
-        created: '2024-01-15 10:30:00',
-        sqlMode: 'STRICT_TRANS_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO',
-        characterSetClient: 'utf8mb4',
-        collationConnection: 'utf8mb4_unicode_ci'
-      },
-      {
-        id: '2',
-        name: 'log_user_deletion',
-        event: TriggerEvent.DELETE,
-        timing: TriggerTiming.AFTER,
-        tableName: 'users',
-        statement: 'INSERT INTO user_logs (action, user_id, deleted_at) VALUES (\'DELETE\', OLD.id, NOW());',
-        created: '2024-01-20 14:20:00',
-        sqlMode: 'STRICT_TRANS_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO',
-        characterSetClient: 'utf8mb4',
-        collationConnection: 'utf8mb4_unicode_ci'
-      }
-    ];
-    setTriggers(mockData);
+    getData()
   }, []);
 
   const columns = [
     {
-      title: '触发器名称',
+      title: t('table.name'),
       dataIndex: 'name',
       key: 'name',
       width: 180,
     },
     {
-      title: '事件',
+      title: t('table.event'),
       dataIndex: 'event',
       key: 'event',
       width: 100,
@@ -68,7 +50,7 @@ const TableTrigger: React.FC = () => {
       )
     },
     {
-      title: '时机',
+      title: t('table.timing'),
       dataIndex: 'timing',
       key: 'timing',
       width: 100,
@@ -77,20 +59,7 @@ const TableTrigger: React.FC = () => {
       )
     },
     {
-      title: '表名',
-      dataIndex: 'tableName',
-      key: 'tableName',
-      width: 120,
-    },
-    {
-      title: '创建时间',
-      dataIndex: 'created',
-      key: 'created',
-      width: 150,
-      render: (text: string) => text
-    },
-    {
-      title: '触发器语句',
+      title: t('table.statement'),
       dataIndex: 'statement',
       key: 'statement',
       ellipsis: true,
@@ -101,10 +70,9 @@ const TableTrigger: React.FC = () => {
       )
     },
     {
-      title: '操作',
+      title: t('table.operation'),
       key: 'action',
-      width: 150,
-      fixed: 'right' as const,
+      width: 140,
       render: (_: any, record: TriggerData) => (
         <>
           <Button
@@ -118,7 +86,7 @@ const TableTrigger: React.FC = () => {
           <Popconfirm
             title={t('delete.title')}
             description={t('delete.desc')}
-            onConfirm={() => handleDelete(record.id!)}
+            onConfirm={() => handleDelete(record.name)}
           >
             <Button
               className={styles.columnActionBtn}
@@ -133,7 +101,6 @@ const TableTrigger: React.FC = () => {
     }
   ];
 
-  // 获取事件类型颜色
   const getEventColor = (event: TriggerEvent): string => {
     const colorMap: Record<TriggerEvent, string> = {
       [TriggerEvent.INSERT]: 'green',
@@ -143,7 +110,6 @@ const TableTrigger: React.FC = () => {
     return colorMap[event] || 'default';
   };
 
-  // 获取时机颜色
   const getTimingColor = (timing: TriggerTiming): string => {
     const colorMap: Record<TriggerTiming, string> = {
       [TriggerTiming.BEFORE]: 'blue',
@@ -152,90 +118,40 @@ const TableTrigger: React.FC = () => {
     return colorMap[timing] || 'default';
   };
 
-  // 处理新建触发器
   const handleAdd = () => {
     setEditingTrigger(null);
     setViewingTrigger(null);
     setIsModalVisible(true);
   };
 
-  // 处理编辑触发器
   const handleEdit = (trigger: TriggerData) => {
     setEditingTrigger(trigger);
     setViewingTrigger(null);
     setIsModalVisible(true);
   };
 
-  // 处理查看触发器
   const handleView = (trigger: TriggerData) => {
     setViewingTrigger(trigger);
     setEditingTrigger(null);
     setIsModalVisible(true);
   };
 
-  // 处理删除触发器
-  const handleDelete = async (id: string) => {
-    try {
-      setLoading(true);
-      // 这里调用删除API
-      // await deleteTrigger(id);
-
-      setTriggers(prev => prev.filter(t => t.id !== id));
-      message.success('触发器删除成功');
-    } catch (error) {
-      message.error('触发器删除失败');
-    } finally {
-      setLoading(false);
-    }
+  const handleDelete = async (name: string) => {
+    await deleteTrigger({ connectionId, dbName, tableName, name })
+    getData()
   };
 
-  // 处理Modal提交
   const handleModalSubmit = async (values: TriggerData) => {
-    try {
-      setLoading(true);
-
-      if (editingTrigger) {
-        // 编辑模式
-        const updatedTrigger = { ...values, id: editingTrigger.id };
-
-        // 这里调用编辑API
-        // await updateTrigger(updatedTrigger);
-
-        setTriggers(prev =>
-          prev.map(t => t.id === editingTrigger.id ? updatedTrigger : t)
-        );
-        message.success('触发器更新成功');
-      } else {
-        // 新建模式
-        const newTrigger = {
-          ...values,
-          id: Date.now().toString(),
-          created: new Date().toLocaleString('zh-CN', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit'
-          }).replace(/\//g, '-')
-        };
-
-        // 这里调用新建API
-        // await createTrigger(newTrigger);
-
-        setTriggers(prev => [...prev, newTrigger]);
-        message.success('触发器创建成功');
-      }
-
-      setIsModalVisible(false);
-    } catch (error) {
-      message.error('操作失败，请检查输入信息');
-    } finally {
-      setLoading(false);
+    if (editingTrigger) {
+      await modifyTrigger({ connectionId, dbName, tableName, ...values, oldName: editingTrigger.name })
+    } else {
+      await addTrigger({ connectionId, dbName, tableName, ...values })
     }
+
+    getData()
+    setIsModalVisible(false);
   };
 
-  // 处理Modal取消
   const handleModalCancel = () => {
     setIsModalVisible(false);
     setEditingTrigger(null);
@@ -258,7 +174,6 @@ const TableTrigger: React.FC = () => {
           onRow={(record) => ({
             onDoubleClick: () => handleView(record),
           })}
-        // scroll={{ x: 1000 }}
         />
 
         <TriggerModal

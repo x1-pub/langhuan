@@ -332,3 +332,47 @@ export class ColumnOrderDTO extends Validator<{ fields: string[] } & MySQLBasePa
     })
   }
 }
+
+enum TriggerEvent {
+  INSERT = 'INSERT',
+  UPDATE = 'UPDATE',
+  DELETE = 'DELETE'
+}
+
+enum TriggerTiming {
+  BEFORE = 'BEFORE',
+  AFTER = 'AFTER'
+}
+
+export interface TriggerData {
+  oldName?: string;
+  name: string;
+  event: TriggerEvent;
+  timing: TriggerTiming;
+  statement: string;
+}
+
+export class TriggerDTO extends Validator<TriggerData & MySQLBaseParams> {
+  useRules() {
+    return [
+      new Rule(isInt, 'connectionId'),
+      new Rule(isLength, 'dbName', { min: 1 }),
+      new Rule(isLength, 'tableName', { min: 1 }),
+      new Rule(isLength, 'name', { min: 1 }),
+      new Rule(isLength, 'statement', { min: 1 }),
+      new Rule(isIncludes, 'event', [...Object.values(TriggerEvent)]),
+      new Rule(isIncludes, 'timing', [...Object.values(TriggerTiming)]),
+    ]
+  }
+}
+
+export class DeleteTriggerDTO extends Validator<{ name: string } & MySQLBaseParams> {
+  useRules() {
+    return [
+      new Rule(isInt, 'connectionId'),
+      new Rule(isLength, 'dbName', { min: 1 }),
+      new Rule(isLength, 'tableName', { min: 1 }),
+      new Rule(isLength, 'name', { min: 1 }),
+    ]
+  }
+}

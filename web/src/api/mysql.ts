@@ -78,6 +78,25 @@ interface TableIndexForm {
   }
 }
 
+export enum TriggerEvent {
+  INSERT = 'INSERT',
+  UPDATE = 'UPDATE',
+  DELETE = 'DELETE'
+}
+
+export enum TriggerTiming {
+  BEFORE = 'BEFORE',
+  AFTER = 'AFTER'
+}
+
+export interface TriggerData {
+  name: string;
+  event: TriggerEvent;
+  timing: TriggerTiming;
+  statement: string;
+}
+
+
 interface GetMysqlData extends MysqlBaseParams {
   current: number;
   pageSize: number;
@@ -215,4 +234,28 @@ export const columnOrder = (data: { fields: string[] } & MysqlBaseParams) => req
   method: 'POST',
   data,
   url: '/api/mysql/mysql_column_order',
+})
+
+export const tableTrigger = (data: MysqlBaseParams) => request<TriggerData[]>({
+  method: 'POST',
+  data,
+  url: '/api/mysql/mysql_trigger',
+})
+
+export const addTrigger = (data: MysqlBaseParams & TriggerData) => request<void>({
+  method: 'POST',
+  data,
+  url: '/api/mysql/mysql_add_trigger',
+})
+
+export const modifyTrigger = (data: MysqlBaseParams & TriggerData & { oldName: string }) => request<void>({
+  method: 'POST',
+  data,
+  url: '/api/mysql/mysql_modify_trigger',
+})
+
+export const deleteTrigger = (data: MysqlBaseParams & { name: string }) => request<void>({
+  method: 'POST',
+  data,
+  url: '/api/mysql/mysql_delete_trigger',
 })

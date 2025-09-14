@@ -18,7 +18,6 @@ const TablePartition: React.FC = () => {
   const [editingPartition, setEditingPartition] = useState<PartitionData | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // 模拟初始数据
   useEffect(() => {
     const mockData: PartitionData[] = [
       {
@@ -41,16 +40,15 @@ const TablePartition: React.FC = () => {
     setPartitions(mockData);
   }, []);
 
-  // 表格列定义
   const columns = [
     {
-      title: '分区名称',
+      title: t('table.name'),
       dataIndex: 'name',
       key: 'name',
       width: 120,
     },
     {
-      title: '分区类型',
+      title: t('table.type'),
       dataIndex: 'type',
       key: 'type',
       width: 120,
@@ -80,7 +78,7 @@ const TablePartition: React.FC = () => {
       render: (text: string) => text
     },
     {
-      title: '注释',
+      title: t('table.comment'),
       dataIndex: 'comment',
       key: 'comment',
       ellipsis: true,
@@ -118,7 +116,6 @@ const TablePartition: React.FC = () => {
     }
   ];
 
-  // 获取分区类型颜色
   const getPartitionTypeColor = (type: PartitionType): string => {
     const colorMap: Record<PartitionType, string> = {
       [PartitionType.RANGE]: 'green',
@@ -133,19 +130,16 @@ const TablePartition: React.FC = () => {
     return colorMap[type] || 'default';
   };
 
-  // 处理新建分区
   const handleAdd = () => {
     setEditingPartition(null);
     setIsModalVisible(true);
   };
 
-  // 处理编辑分区
   const handleEdit = (partition: PartitionData) => {
     setEditingPartition(partition);
     setIsModalVisible(true);
   };
 
-  // 处理删除分区
   const handleDelete = async (id: string) => {
     try {
       setLoading(true);
@@ -161,7 +155,6 @@ const TablePartition: React.FC = () => {
     }
   };
 
-  // 处理Modal提交
   const handleModalSubmit = async (values: PartitionData) => {
     try {
       setLoading(true);
@@ -199,7 +192,6 @@ const TablePartition: React.FC = () => {
     }
   };
 
-  // 处理Modal取消
   const handleModalCancel = () => {
     setIsModalVisible(false);
   };
@@ -217,7 +209,6 @@ const TablePartition: React.FC = () => {
           rowKey="id"
           loading={loading}
           pagination={false}
-        // scroll={{ x: 800 }}
         />
 
         <PartitionModal

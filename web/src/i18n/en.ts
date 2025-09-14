@@ -56,6 +56,8 @@ const en = {
     collation: 'Collation',
     charset: 'Charset',
     timing: 'Timing',
+    event: 'Event',
+    statement: 'Statement',
     insert: 'Insert',
     update: 'Update',
     delete: 'Delete',

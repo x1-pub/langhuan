@@ -17,12 +17,15 @@ import {
   ExportDTO,
   Format,
   ColumnOrderDTO,
+  TriggerDTO,
+  DeleteTriggerDTO,
 } from '@/dto/mysql';
 import { ResourceNotFound } from '@/utils/error';
 import mysql from '@/pools/mysql'
 import spatialToString from '@/utils/spatial-to-string';
 import { formatNonQueryResult, formatQueryResult, getStatementType } from '@/utils/sql-result-formatter';
 import { getReorderTableColumnsSql } from '@/utils/sql-cloumn-order';
+import { generateTriggerSQL } from '@/utils/generate-trigger-sql';
 
 interface GetInstanceParams {
   uid: number;
@@ -614,6 +617,70 @@ class MysqlController {
     const orderSql = getReorderTableColumnsSql(ddl, tableName, fields)
     await sequelize.query(orderSql)
 
+    ctx.r()
+  }
+
+  triggerList = async (ctx: Context) => {
+    const { connectionId, dbName, tableName } = await new MySQLBaseDTO().v(ctx)
+    const sequelize = await this.getInstance({ connectionId, dbName, uid: ctx.user.id })
+    const triggers = await sequelize.query(`
+      SELECT 
+        TRIGGER_NAME AS name,
+        EVENT_MANIPULATION AS event,
+        ACTION_TIMING AS timing,
+        EVENT_OBJECT_TABLE AS tableName,
+        ACTION_STATEMENT AS statement,
+        CREATED AS created,
+        SQL_MODE AS sqlMode,
+        CHARACTER_SET_CLIENT AS characterSetClient,
+        COLLATION_CONNECTION AS collationConnection
+      FROM information_schema.TRIGGERS
+      WHERE
+        TRIGGER_SCHEMA = DATABASE()
+        AND EVENT_OBJECT_TABLE = ?
+    `, {
+      replacements: [tableName],
+      type: QueryTypes.SELECT
+    });
+
+    ctx.r({ data: triggers })
+  }
+
+  addOrModifyTrigger = async (ctx: Context) => {
+    const { connectionId, dbName, tableName, oldName, ...data } = await new TriggerDTO().v(ctx)
+    const sequelize = await this.getInstance({ connectionId, dbName, uid: ctx.user.id })
+
+    let transaction;
+    try {
+      transaction = await sequelize.transaction();
+
+      if (oldName) {
+        const escapedOldName = this.escapedName(oldName, sequelize)
+        const dropSql = `DROP TRIGGER IF EXISTS ${escapedOldName};`;
+        await sequelize.query(dropSql, { transaction });
+      }
+
+      const escapedTableName = this.escapedName(tableName, sequelize)
+      const escapedTriggerName = this.escapedName(data.name, sequelize)
+      const createSql = generateTriggerSQL(data, escapedTriggerName, escapedTableName)
+      await sequelize.query(createSql, { transaction });
+
+      await transaction.commit();
+      ctx.r()
+    } catch (error) {
+      if (transaction) await transaction.rollback();
+      throw error;
+    }
+
+  }
+
+  deleteTrigger = async (ctx: Context) => {
+    const { connectionId, dbName, tableName, name } = await new DeleteTriggerDTO().v(ctx)
+    const sequelize = await this.getInstance({ connectionId, dbName, uid: ctx.user.id })
+
+    const escapedName = this.escapedName(name, sequelize)
+    const dropSql = `DROP TRIGGER IF EXISTS ${escapedName};`;
+    await sequelize.query(dropSql)
     ctx.r()
   }
 }

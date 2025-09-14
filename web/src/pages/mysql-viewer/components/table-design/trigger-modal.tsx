@@ -1,41 +1,17 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   Modal,
   Form,
   Input,
   Select,
   Tooltip,
-  message,
   Descriptions
 } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
+import { TriggerData, TriggerEvent, TriggerTiming } from '@/api/mysql';
 
 const { Option } = Select;
 const { TextArea } = Input;
-
-export enum TriggerEvent {
-  INSERT = 'INSERT',
-  UPDATE = 'UPDATE',
-  DELETE = 'DELETE'
-}
-
-export enum TriggerTiming {
-  BEFORE = 'BEFORE',
-  AFTER = 'AFTER'
-}
-
-export interface TriggerData {
-  id?: string;
-  name: string;
-  event: TriggerEvent;
-  timing: TriggerTiming;
-  tableName: string;
-  statement: string;
-  created?: string;
-  sqlMode?: string;
-  characterSetClient?: string;
-  collationConnection?: string;
-}
 
 interface TriggerModalProps {
   visible: boolean;
@@ -64,15 +40,11 @@ const TriggerModal: React.FC<TriggerModalProps> = ({
       return;
     }
 
-    try {
-      const values = await form.validateFields();
-      await onSubmit(values);
-    } catch (error) {
-      message.error('请检查输入信息');
-    }
+    const values = await form.validateFields();
+    onSubmit(values);
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (visible) {
       if (editingTrigger) {
         form.setFieldsValue(editingTrigger);
@@ -111,21 +83,6 @@ const TriggerModal: React.FC<TriggerModalProps> = ({
           <Descriptions.Item label="触发时机">
             {viewingTrigger.timing}
           </Descriptions.Item>
-          <Descriptions.Item label="表名">
-            {viewingTrigger.tableName}
-          </Descriptions.Item>
-          <Descriptions.Item label="创建时间" span={2}>
-            {viewingTrigger.created || '-'}
-          </Descriptions.Item>
-          <Descriptions.Item label="SQL模式" span={2}>
-            {viewingTrigger.sqlMode || '-'}
-          </Descriptions.Item>
-          <Descriptions.Item label="字符集">
-            {viewingTrigger.characterSetClient || '-'}
-          </Descriptions.Item>
-          <Descriptions.Item label="排序规则">
-            {viewingTrigger.collationConnection || '-'}
-          </Descriptions.Item>
           <Descriptions.Item label="触发器语句" span={2}>
             <pre style={{
               whiteSpace: 'pre-wrap',
@@ -161,29 +118,19 @@ const TriggerModal: React.FC<TriggerModalProps> = ({
           event: TriggerEvent.INSERT,
           timing: TriggerTiming.BEFORE,
         }}
+        autoComplete='off'
       >
-        <div style={{ display: 'flex', gap: '16px' }}>
-          <Form.Item
-            name="name"
-            label="触发器名称"
-            style={{ flex: 1 }}
-            rules={[
-              { required: true, message: '请输入触发器名称' },
-              { pattern: /^[a-zA-Z_][a-zA-Z0-9_]*$/, message: '触发器名称只能包含字母、数字和下划线，且不能以数字开头' }
-            ]}
-          >
-            <Input placeholder="请输入触发器名称，如：update_modified_time" />
-          </Form.Item>
-
-          <Form.Item
-            name="tableName"
-            label="表名"
-            style={{ flex: 1 }}
-            rules={[{ required: true, message: '请输入表名' }]}
-          >
-            <Input placeholder="请输入表名，如：users" />
-          </Form.Item>
-        </div>
+        <Form.Item
+          name="name"
+          label="触发器名称"
+          style={{ flex: 1 }}
+          rules={[
+            { required: true, message: '请输入触发器名称' },
+            { pattern: /^[a-zA-Z_][a-zA-Z0-9_]*$/, message: '触发器名称只能包含字母、数字和下划线，且不能以数字开头' }
+          ]}
+        >
+          <Input />
+        </Form.Item>
 
         <div style={{ display: 'flex', gap: '16px' }}>
           <Form.Item
@@ -241,47 +188,9 @@ const TriggerModal: React.FC<TriggerModalProps> = ({
         >
           <TextArea
             rows={6}
-            placeholder={`请输入触发器语句，例如：
-INSERT事件: SET NEW.created_at = NOW();
-UPDATE事件: SET NEW.updated_at = NOW();
-DELETE事件: INSERT INTO logs (action, table_name, record_id) VALUES ('DELETE', 'users', OLD.id);`}
+            placeholder={`BEGIN\n  SET NEW.created_at = NOW();\nEND`}
             style={{ fontFamily: 'Monaco, Consolas, "Courier New", monospace' }}
           />
-        </Form.Item>
-
-        <div style={{ display: 'flex', gap: '16px' }}>
-          <Form.Item
-            name="sqlMode"
-            label="SQL模式"
-            style={{ flex: 1 }}
-          >
-            <Input placeholder="SQL模式，如：STRICT_TRANS_TABLES" />
-          </Form.Item>
-
-          <Form.Item
-            name="characterSetClient"
-            label="字符集"
-            style={{ flex: 1 }}
-          >
-            <Select placeholder="选择字符集" allowClear>
-              <Option value="utf8mb4">utf8mb4</Option>
-              <Option value="utf8">utf8</Option>
-              <Option value="latin1">latin1</Option>
-              <Option value="gbk">gbk</Option>
-            </Select>
-          </Form.Item>
-        </div>
-
-        <Form.Item
-          name="collationConnection"
-          label="排序规则"
-        >
-          <Select placeholder="选择排序规则" allowClear>
-            <Option value="utf8mb4_unicode_ci">utf8mb4_unicode_ci</Option>
-            <Option value="utf8mb4_general_ci">utf8mb4_general_ci</Option>
-            <Option value="utf8_unicode_ci">utf8_unicode_ci</Option>
-            <Option value="utf8_general_ci">utf8_general_ci</Option>
-          </Select>
         </Form.Item>
       </Form>
     </Modal>

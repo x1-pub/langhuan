@@ -57,6 +57,10 @@ router.post('/mysql/mysql_delete_column', MysqlController.deleteColumn)
 router.post('/mysql/mysql_execute', MysqlController.execute)
 router.post('/mysql/mysql_export', MysqlController.exportData)
 router.post('/mysql/mysql_column_order', MysqlController.columnOrder)
+router.post('/mysql/mysql_trigger', MysqlController.triggerList)
+router.post('/mysql/mysql_add_trigger', MysqlController.addOrModifyTrigger)
+router.post('/mysql/mysql_modify_trigger', MysqlController.addOrModifyTrigger)
+router.post('/mysql/mysql_delete_trigger', MysqlController.deleteTrigger)
 
 router.post('/mongo/mongo_execute', MongoDBController.execute)
 

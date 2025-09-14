@@ -56,6 +56,8 @@ const zh = {
     collation: '排序规则',
     charset: '字符集',
     timing: '时机',
+    event: '事件',
+    statement: '语句',
     insert: '插入',
     update: '更新',
     delete: '删除',
