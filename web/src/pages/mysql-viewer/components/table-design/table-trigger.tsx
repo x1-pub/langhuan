@@ -168,7 +168,7 @@ const TableTrigger: React.FC = () => {
         <Table
           columns={columns}
           dataSource={triggers}
-          rowKey="id"
+          rowKey="name"
           loading={loading}
           pagination={false}
           onRow={(record) => ({

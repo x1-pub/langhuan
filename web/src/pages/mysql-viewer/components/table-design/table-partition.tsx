@@ -19,26 +19,8 @@ const TablePartition: React.FC = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const mockData: PartitionData[] = [
-      {
-        id: '1',
-        name: 'p0',
-        type: PartitionType.RANGE,
-        expression: 'year(created_at)',
-        value: '2020',
-        comment: '2020年之前的数据'
-      },
-      {
-        id: '2',
-        name: 'p1',
-        type: PartitionType.RANGE,
-        expression: 'year(created_at)',
-        value: '2021',
-        comment: '2020-2021年的数据'
-      }
-    ];
-    setPartitions(mockData);
-  }, []);
+
+  }, [])
 
   const columns = [
     {

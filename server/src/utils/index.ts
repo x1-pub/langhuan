@@ -1,1 +1,0 @@
-export const SESSION_ID_NAME = 'langhuan_session'

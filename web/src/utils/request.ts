@@ -27,8 +27,8 @@ function createInstance() {
       switch (code) {
         case apiCode.SUCCESS:
           return apiData.data
-        case apiCode.NOT_LOGIN:
-          window.location.href = apiData.data.loginUrl
+        case apiCode.REDIRECT:
+          window.location.href = apiData.data
           return
         default:
           showError(apiData.message)

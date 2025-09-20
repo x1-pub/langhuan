@@ -7,13 +7,10 @@ import TableController from '../controller/table';
 import RedisController from '../controller/redis';
 import MysqlController from '../controller/mysql';
 import MongoDBController from '../controller/mongodb';
-import AuthController from '@/controller/auth';
 
 const router = new Router({
   prefix: config.koa.globalPrefix
 })
-
-router.get('/auth/ticket', AuthController.ticket)
 
 router.post('/connection/create_connection', ConnectionController.create)
 router.get('/connection/connection_list', ConnectionController.list)

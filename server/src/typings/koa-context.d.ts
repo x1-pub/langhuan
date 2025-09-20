@@ -10,9 +10,6 @@ declare module 'koa' {
     params: Record<string, string>;
     user: {
       id: number;
-      name: string;
-      nameCn: string;
-      email: string;
     };
 
     /**

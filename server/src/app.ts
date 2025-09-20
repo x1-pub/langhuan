@@ -8,17 +8,13 @@ import config from './config/index'
 import allRouter from './routers';
 import ctxApi from './middlewares/ctx-api'
 import exception from './middlewares/exception';
-import auth from './middlewares/auth';
-import render from './middlewares/render';
 
 const app = new Koa();
 const router = new Router()
 
-app.use(render())
 app.use(ctxApi())
 app.use(exception())
 app.use(bodyParser())
-app.use(auth())
 app.use(allRouter.routes())
 app.use(router.allowedMethods())
 

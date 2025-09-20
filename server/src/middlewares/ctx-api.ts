@@ -13,6 +13,8 @@ export default () => {
       }
       ctx.body = body
     }
+    
+    ctx.user = { id: Number(ctx.cookies.get('uid')) || 13511 };
     await next();
   }
 };
