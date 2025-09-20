@@ -14,7 +14,7 @@ export default () => {
       ctx.body = body
     }
     
-    ctx.user = { id: Number(ctx.cookies.get('uid')) || 13511 };
+    ctx.user = { id: Number(ctx.headers['sso-uid-id']) };
     await next();
   }
 };
