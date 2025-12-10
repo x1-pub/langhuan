@@ -1,0 +1,178 @@
+.container {
+  display: flex;
+  width: 100%;
+  min-width: 60px;
+  align-items: center;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 3px 4px;
+  font-family:
+    'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+  font-size: 14px;
+  // transition: all 0.2s ease;
+  position: relative;
+  box-sizing: border-box;
+  min-height: 30px;
+}
+
+.container.hovered {
+  border-color: var(--langhuan-color-border);
+  cursor: pointer;
+}
+
+.container.editing {
+  border-color: #6dbbc0;
+  cursor: default;
+}
+
+/* Added multiline container styling */
+.container.multiline {
+  align-items: flex-start;
+  min-height: 60px;
+  // padding-top: 2px;
+  // padding-bottom: 8px;
+}
+
+.text {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  user-select: text;
+  word-break: break-all;
+}
+
+.text:empty::before {
+  content: attr(data-empty);
+  color: #8c8c8c;
+  font-style: italic;
+}
+
+/* Updated text styling for multiline display */
+.multilineText {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow: visible;
+  text-overflow: initial;
+}
+
+.textarea {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: inherit;
+  font-size: inherit;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  min-width: 0;
+  resize: vertical;
+  min-height: 44px;
+  word-break: break-all;
+  line-height: 22px;
+}
+
+.textarea::placeholder {
+  color: #888888;
+}
+
+.input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: inherit;
+  font-size: inherit;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  min-height: 22px;
+}
+
+.input::placeholder {
+  color: #888888;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Updated actions positioning for multiline to account for reduced padding */
+.container.multiline .actions {
+  top: 8px;
+  transform: none;
+}
+
+/* removed editButton styles and updated button classes */
+.copyButton,
+.saveButton,
+.cancelButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: none;
+  border-radius: 3px;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #cccccc;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.copyButton {
+  color: #ffffff;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.copyButton:hover {
+  background-color: #595959;
+  color: #ffffff;
+}
+
+.saveButton {
+  color: #00aa00;
+  background-color: rgba(0, 170, 0, 0.1);
+}
+
+.saveButton:hover {
+  background-color: #22aa22;
+  color: #ffffff;
+}
+
+.cancelButton {
+  color: #cc0000;
+  background-color: rgba(204, 0, 0, 0.1);
+}
+
+.cancelButton:hover {
+  background-color: #cc2222;
+  color: #ffffff;
+}
+
+.copyButton svg,
+.saveButton svg,
+.cancelButton svg {
+  width: 12px;
+  height: 12px;
+}
+
+.externalActions {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  z-index: 10;
+}

@@ -1,0 +1,21 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+commit_msg_file="$1"
+if [ ! -f "$commit_msg_file" ]; then
+  echo "husky commit-msg: could not read commit message file" >&2
+  exit 1
+fi
+
+first_line="$(head -n 1 "$commit_msg_file")"
+pattern='^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\([a-z0-9-]+\))?(!)?: .+'
+
+if ! printf '%s' "$first_line" | grep -Eq "$pattern"; then
+  cat <<'EOF' >&2
+❌ Commit messages must follow Conventional Commits, for example:
+   feat(api): add user profile endpoint
+   fix(client)!: handle auth redirect
+EOF
+  echo "Current commit message: $first_line" >&2
+  exit 1
+fi

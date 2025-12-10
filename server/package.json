@@ -1,0 +1,42 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "Fastify + tRPC backend for Langhuan",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "cross-env NODE_ENV=development tsx watch src/index.ts",
+    "start": "node dist/index.js"
+  },
+  "keywords": [
+    "fastify",
+    "trpc",
+    "backend"
+  ],
+  "author": "",
+  "license": "MIT",
+  "packageManager": "pnpm@10.16.1",
+  "dependencies": {
+    "@fastify/cors": "^11.1.0",
+    "@trpc/server": "^11.5.1",
+    "cli-table3": "^0.6.5",
+    "dotenv": "^17.2.2",
+    "drizzle-orm": "^0.44.5",
+    "fastify": "^5.6.0",
+    "ioredis": "^5.7.0",
+    "lodash-es": "^4.17.21",
+    "mongoose": "^8.18.1",
+    "mysql2": "^3.15.0",
+    "sequelize": "^6.37.7",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@types/lodash-es": "^4.17.12",
+    "@types/node": "^24.5.0",
+    "cross-env": "^10.0.0",
+    "drizzle-kit": "^0.31.4",
+    "tsx": "^4.20.5",
+    "typescript": "5.7.3",
+    "zod": "^4.1.9"
+  }
+}

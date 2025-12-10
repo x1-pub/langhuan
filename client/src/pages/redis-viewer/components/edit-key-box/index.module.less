@@ -1,0 +1,53 @@
+.editBoxWrap {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding-left: 10px;
+}
+
+.editBoxHeader {
+  .title {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    align-items: center;
+
+    .left {
+      display: flex;
+      flex-grow: 1;
+      align-items: center;
+      gap: 4px;
+    }
+  }
+
+  .left {
+    max-width: calc(100% - 50px);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .name {
+    margin-left: 7px;
+    font-weight: bolder;
+  }
+}
+
+.editBoxInfo {
+  display: flex;
+  justify-content: space-between;
+
+  .left {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+  }
+
+  .right {
+    display: flex;
+    gap: 15px;
+  }
+}
+
+.divider {
+  margin: 12px 0 24px;
+}

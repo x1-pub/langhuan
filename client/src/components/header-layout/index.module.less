@@ -1,0 +1,60 @@
+.headerWrap {
+  position: sticky;
+  border-bottom: 1px solid var(--theme-border-color);
+  background-color: var(--theme-background-color);
+  z-index: 100;
+  top: 0;
+  left: 0;
+  right: 0;
+}
+
+.header {
+  display: flex;
+  height: 50px;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+
+  .logoWrap {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .logo {
+    width: 25px;
+    height: 25px;
+    background: #ffffff;
+    border-radius: 50%;
+  }
+
+  .title {
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  .db {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+}
+
+.right {
+  display: flex;
+  gap: 20px;
+
+  .github {
+    color: var(--theme-text-color);
+    font-size: 20px;
+    cursor: pointer;
+  }
+}

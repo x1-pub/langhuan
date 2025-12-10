@@ -1,0 +1,52 @@
+.textBox {
+  position: relative;
+  height: 76px;
+
+  .editor {
+    border: 1px solid #d9d9d9;
+    height: 100%;
+    border-radius: 3px;
+    box-sizing: border-box;
+    padding: 3px;
+  }
+
+  .help {
+    position: absolute;
+    left: 3px;
+    top: 7px;
+  }
+}
+
+.buttonGroup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0;
+
+  .warn {
+    color: #f5be38;
+    font-size: 24px;
+    margin-left: 5px;
+  }
+}
+
+.dataTable {
+  :global {
+    .langhuan-table-container > .langhuan-table-body {
+      overflow: auto scroll !important;
+      max-height: calc(100vh - 375px) !important;
+    }
+  }
+}
+
+.tableTitle {
+  display: flex;
+  flex-direction: column;
+  white-space: nowrap;
+
+  .type {
+    color: #8dcdce;
+    font-weight: lighter;
+    font-size: 12px;
+  }
+}

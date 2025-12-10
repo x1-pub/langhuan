@@ -1,0 +1,61 @@
+.tableWrap {
+  border: 1px solid var(--langhuan-color-border);
+  border-radius: 5px;
+}
+
+.table {
+  border-collapse: collapse;
+  width: 100%;
+
+  .td {
+    border-right: 1px solid var(--langhuan-color-border);
+    border-bottom: 1px solid var(--langhuan-color-border);
+  }
+
+  thead .td {
+    padding: 6px;
+    background-color: rgba(0, 0, 0, 0.1);
+  }
+
+  .tr:last-child:not(:first-child) .td {
+    border-bottom: none;
+  }
+
+  .handler {
+    width: 40px;
+    padding-left: 10px;
+    padding-right: 10px;
+    border-right: none;
+    // text-align: center;
+  }
+}
+
+.add {
+  padding-right: 10px;
+  margin-top: 10px;
+  display: flex;
+  gap: 10px;
+  justify-content: end;
+}
+
+.divider {
+  margin: 24px 0 12px;
+}
+
+.icon {
+  cursor: pointer;
+  padding: 0 3px;
+
+  &:hover {
+    color: var(--theme-main-color);
+  }
+}
+
+.delIcon {
+  cursor: pointer;
+  padding: 0 3px;
+
+  &:hover {
+    color: #ff4d4f;
+  }
+}

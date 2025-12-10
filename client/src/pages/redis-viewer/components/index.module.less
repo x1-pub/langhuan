@@ -1,0 +1,103 @@
+.redisWrap {
+  height: calc(100vh - 130px);
+  margin: 10px;
+}
+
+.searchGroup {
+  display: flex;
+  gap: 10px;
+}
+
+.searchSelect {
+  width: 100%;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.data {
+  height: calc(100% - 40px);
+  margin: 10px 0;
+
+  .redisKeys {
+    overflow: scroll;
+    padding-right: 10px;
+    height: calc(100% - 45px);
+
+    :global {
+      .langhuan-table-tbody > tr > td {
+        border: none !important;
+      }
+      .langhuan-table-tbody > .langhuan-table-tbody-virtual-scrollbar-horizontal {
+        display: none;
+      }
+      .langhuan-table-tbody-virtual-scrollbar {
+        display: none;
+      }
+    }
+  }
+
+  .redisValue {
+    height: calc(100vh - 170px);
+  }
+}
+
+.content {
+  height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-right: 10px;
+  flex-wrap: wrap;
+
+  .left {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .right {
+    display: flex;
+    gap: 10px;
+  }
+}
+
+.loadMore {
+  text-align: center;
+  color: var(--theme-main-color);
+  cursor: pointer;
+}
+
+.avtiveRow {
+  background: linear-gradient(
+    to right,
+    var(--theme-main-color) 3px,
+    var(--langhuan-table-row-hover-bg) 3px
+  );
+
+  &:hover {
+    :global {
+      .langhuan-table-cell {
+        background: var(--langhuan-table-row-hover-bg) !important;
+      }
+      .langhuan-table-cell:nth-of-type(1) {
+        background: linear-gradient(
+          to right,
+          var(--theme-main-color) 3px,
+          var(--langhuan-table-row-hover-bg) 3px
+        ) !important;
+      }
+    }
+  }
+}
+
+.expandIconLeft {
+  font-size: 10px;
+  padding-right: 5px;
+  vertical-align: unset;
+}
+
+.expandIconRight {
+  padding-right: 5px;
+}

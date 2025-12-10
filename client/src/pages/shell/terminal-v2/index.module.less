@@ -1,0 +1,138 @@
+.terminalContainer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: #1e1e1e;
+  color: #f8f8f2;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 14px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.terminalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background-color: #2d2d2d;
+  border-bottom: 1px solid #444;
+}
+
+.terminalTitle {
+  font-weight: bold;
+  color: #f8f8f2;
+}
+
+.terminalControls {
+  display: flex;
+  gap: 8px;
+}
+
+.terminalBtn {
+  padding: 4px 8px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background-color 0.2s;
+
+  &.clear {
+    background-color: #ff5555;
+    color: white;
+
+    &:hover {
+      background-color: #ff6b6b;
+    }
+  }
+}
+
+.terminalContent {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+  background-color: #1e1e1e;
+}
+
+.terminalLine {
+  margin-bottom: 4px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  user-select: text;
+  cursor: text;
+}
+
+.terminalInputLine {
+  display: flex;
+  align-items: flex-start;
+}
+
+.terminalPrompt {
+  color: #50fa7b;
+  margin-right: 8px;
+  white-space: nowrap;
+  font-family: 'Consolas', 'Monaco', 'Courier New', 'Microsoft YaHei', 'SimHei', monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  vertical-align: top;
+  align-self: flex-start;
+}
+
+.terminalInputContainer {
+  position: relative;
+  flex: 1;
+}
+
+.terminalInput {
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #f8f8f2;
+  font-family: 'Consolas', 'Monaco', 'Courier New', 'Microsoft YaHei', 'SimHei', monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  resize: none;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow: hidden;
+  padding: 0;
+  margin: 0;
+  vertical-align: top;
+  box-sizing: border-box;
+
+  &::placeholder {
+    color: #6272a4;
+  }
+}
+
+.suggestionsPopup {
+  position: absolute;
+  background-color: #44475a;
+  border: 1px solid #6272a4;
+  border-radius: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.suggestionItem {
+  padding: 8px 12px;
+  cursor: pointer;
+  color: #f8f8f2;
+  border-bottom: 1px solid #6272a4;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover,
+  &.selected {
+    background-color: #6272a4;
+    color: #ffffff;
+  }
+}

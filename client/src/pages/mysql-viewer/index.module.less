@@ -1,0 +1,36 @@
+.mysqlWrap {
+  height: calc(100vh - 107px);
+}
+
+.mysqlTabs {
+  height: 100%;
+
+  :global {
+    .langhuan-tabs-tabpane {
+      padding: 10px !important;
+    }
+
+    .langhuan-tabs-content-holder {
+      height: 100%;
+
+      .langhuan-tabs-content {
+        height: 100%;
+
+        .langhuan-tabs-tabpane {
+          height: 100%;
+          overflow: hidden;
+        }
+
+        .langhuan-tabs-tabpane[id$='panel-table-status'],
+        .langhuan-tabs-tabpane[id$='panel-table-design'] {
+          overflow-y: scroll;
+        }
+
+        .langhuan-tabs-tabpane[id$='panel-table-sql'] {
+          padding-right: 0 !important;
+          padding-bottom: 0 !important;
+        }
+      }
+    }
+  }
+}
