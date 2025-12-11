@@ -40,7 +40,10 @@ const createContext = async ({ req, res }: CreateFastifyContextOptions) => {
             ),
         });
         if (!instance) {
-          throw new TRPCError({ code: 'NOT_FOUND' });
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: `The MySQL connection instance (ID: ${connectionId}) does not exist.`,
+          });
         }
         return mysql.getInstance({
           uid,
@@ -69,7 +72,10 @@ const createContext = async ({ req, res }: CreateFastifyContextOptions) => {
             ),
         });
         if (!instance) {
-          throw new TRPCError({ code: 'NOT_FOUND' });
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: `The Redis connection instance (ID: ${connectionId}) does not exist.`,
+          });
         }
         return redis.getInstance({
           uid,
@@ -99,7 +105,10 @@ const createContext = async ({ req, res }: CreateFastifyContextOptions) => {
             ),
         });
         if (!instance) {
-          throw new TRPCError({ code: 'NOT_FOUND' });
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: `The MongoDB connection instance (ID: ${connectionId}) does not exist.`,
+          });
         }
         const connection = await mongodb.getInstance({
           uid,

@@ -41,7 +41,10 @@ export const tableRouter = router({
       return res.map(db => ({ name: db.name })) as ITableItem[];
     }
 
-    throw new TRPCError({ code: 'BAD_REQUEST' });
+    throw new TRPCError({
+      code: 'BAD_REQUEST',
+      message: 'Only MySQL and MongoDB are supported for table/collection list queries.',
+    });
   }),
 
   create: protectedProcedure.input(CreateTableSchema).mutation(async ({ ctx, input }) => {

@@ -1,6 +1,3 @@
-#!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
-
 commit_msg_file="$1"
 if [ ! -f "$commit_msg_file" ]; then
   echo "husky commit-msg: could not read commit message file" >&2

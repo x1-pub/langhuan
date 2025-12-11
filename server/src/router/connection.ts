@@ -55,7 +55,10 @@ export const connectionRouter = router({
     });
 
     if (!data) {
-      throw new TRPCError({ code: 'NOT_FOUND' });
+      throw new TRPCError({
+        code: 'NOT_FOUND',
+        message: `The accessed connection (ID: ${input.id}) does not exist or permission is denied.`,
+      });
     }
 
     return { ...data, password: data?.password ? '*'.repeat(10) : null };

@@ -51,9 +51,13 @@ export const redisRouter = router({
     keys.forEach(key => {
       pipe.type(key).ttl(key).memory('USAGE', key);
     });
+
     const res = await pipe.exec();
     if (!res) {
-      throw new TRPCError({ code: 'BAD_REQUEST' });
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: 'An unexpected error occurred while executing the Redis command.',
+      });
     }
 
     const items: IRedisKey[] = [];
@@ -111,7 +115,10 @@ export const redisRouter = router({
 
     const res = await pipe.exec();
     if (!res) {
-      throw new TRPCError({ code: 'BAD_REQUEST' });
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: 'An unexpected error occurred while executing the Redis command.',
+      });
     }
 
     const [[valueError, value], [ttlError, ttl], [sizeError, size]] = res;
