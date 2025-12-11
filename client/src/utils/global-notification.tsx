@@ -1,14 +1,18 @@
 import { notification } from 'antd';
 
-export const showError = (content: string = 'Unknown Error') => {
-  const [title, ...subTitle] = content.split('\n');
+interface NotificationParams {
+  title?: string;
+  message?: string;
+  sql?: string;
+}
 
+export const showError = ({ title, message, sql }: NotificationParams) => {
   const payload = {
-    message: 'ERROR',
+    message: title || 'UNKNOWN_ERROR',
     description: (
       <>
-        <div style={{ fontWeight: 'bold' }}>{title}</div>
-        <pre style={{ color: '#8c8c8c', fontSize: '12px' }}>{subTitle.join('\n')}</pre>
+        <div style={{ fontSize: '12px' }}>{message}</div>
+        <div style={{ color: '#8c8c8c', fontSize: '12px' }}>{sql}</div>
       </>
     ),
     showProgress: true,

@@ -23,7 +23,14 @@ const createContext = async ({ req, res }: CreateFastifyContextOptions) => {
     user: { id: uid },
     db,
     pool: {
-      getMysqlInstance: async (connectionId: number, dbName?: string, pageId?: string) => {
+      /**
+       * 根据连接 ID 获取 MySQL 连接实例
+       * @param connectionId 连接 ID
+       * @param databaseName 可选数据库名称
+       * @param pageId 可选页面 ID，用于区分不同数据库实例
+       * @returns MySQL 连接实例
+       */
+      getMysqlInstance: async (connectionId: number, databaseName?: string, pageId?: string) => {
         const instance = await db.query.connectionsTable.findFirst({
           where: (table, { and, eq }) =>
             and(
@@ -41,11 +48,18 @@ const createContext = async ({ req, res }: CreateFastifyContextOptions) => {
           port: instance.port,
           username: instance.username,
           password: instance.password,
-          database: dbName,
+          database: databaseName,
           pageId,
         });
       },
-      getRedislInstance: async (connectionId: number, dbName?: string, pageId?: string) => {
+      /**
+       * 根据连接 ID Redis 连接实例
+       * @param connectionId 连接 ID
+       * @param databaseName Redis 库名（默认使用 0 号库）
+       * @param pageId 可选页面 ID，用于区分不同数据库实例
+       * @returns Redis 连接实例
+       */
+      getRedislInstance: async (connectionId: number, databaseName?: string, pageId?: string) => {
         const instance = await db.query.connectionsTable.findFirst({
           where: (table, { and, eq }) =>
             and(
@@ -63,11 +77,19 @@ const createContext = async ({ req, res }: CreateFastifyContextOptions) => {
           port: instance.port,
           username: instance.username,
           password: instance.password,
-          database: dbName,
+          database: databaseName,
           pageId,
         });
       },
-      getMongoDBlInstance: async (connectionId: number, dbName?: string, pageId?: string) => {
+
+      /**
+       * 根据连接 ID 获取 MongoDB 实例
+       * @param connectionId 连接 ID
+       * @param databaseName 可选数据库名称，缺省时返回默认数据库实例
+       * @param pageId 可选页面 ID，用于区分不同数据库实例
+       * @returns MongoDB 数据库实例
+       */
+      getMongoDBlInstance: async (connectionId: number, databaseName?: string, pageId?: string) => {
         const instance = await db.query.connectionsTable.findFirst({
           where: (table, { and, eq }) =>
             and(
@@ -88,14 +110,17 @@ const createContext = async ({ req, res }: CreateFastifyContextOptions) => {
           database: instance.database,
           pageId,
         });
-        return dbName ? connection.useDb(dbName) : connection;
+        return databaseName ? connection.useDb(databaseName) : connection;
       },
-      changeMongoDB: async (
-        newDbName: string,
-        connectionId: number,
-        _dbName?: string,
-        pageId?: string,
-      ) => {
+
+      /**
+       * 切换 MongoDB 数据库
+       * @param databaseName 目标数据库名称
+       * @param connectionId 连接 ID
+       * @param pageId 可选页面 ID，用于区分不同数据库实例
+       * @returns Promise<void>
+       */
+      changeMongoDB: async (databaseName: string, connectionId: number, pageId?: string) => {
         const instance = await db.query.connectionsTable.findFirst({
           where: (table, { and, eq }) =>
             and(
@@ -117,7 +142,7 @@ const createContext = async ({ req, res }: CreateFastifyContextOptions) => {
           pageId,
         };
         const oldConnection = await mongodb.getInstance(config);
-        mongodb.changeInstance(config, oldConnection.useDb(newDbName));
+        mongodb.changeInstance(config, oldConnection.useDb(databaseName));
       },
     },
   };

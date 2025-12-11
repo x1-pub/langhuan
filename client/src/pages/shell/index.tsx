@@ -3,7 +3,6 @@ import { useParams } from 'react-router';
 import { Spin } from 'antd';
 import { useMutation, useQuery } from '@tanstack/react-query';
 
-import { showError } from '@/utils/global-notification';
 import TerminalV2 from './terminal-v2';
 import { trpc } from '@/utils/trpc';
 import { EConnectionType } from '@packages/types/connection';
@@ -47,7 +46,6 @@ const Shell: React.FC = () => {
   }
 
   if (connectionDetailQuery.data.type !== connectionType) {
-    showError('您访问的资源不存在, 请检查URL是否正确');
     return null;
   }
 

@@ -1,13 +1,24 @@
+import { DatabaseError } from 'sequelize';
 import { initTRPC, TRPCError } from '@trpc/server';
+
 import createContext from './context';
 
 type Context = Awaited<ReturnType<typeof createContext>>;
 
 const t = initTRPC.context<Context>().create({
-  errorFormatter({ shape }) {
+  errorFormatter({ shape, error }) {
+    let sql: string | undefined = undefined;
+
+    if (error.cause instanceof DatabaseError) {
+      sql = error.cause.sql;
+    }
+
     return {
-      code: shape.code,
-      message: shape.message,
+      ...shape,
+      data: {
+        ...shape.data,
+        sql,
+      },
     };
   },
 });

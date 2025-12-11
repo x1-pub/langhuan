@@ -16,6 +16,7 @@ async function main() {
     credentials: true,
     origin: true,
   });
+
   await fastify.register(fastifyTRPCPlugin, {
     prefix: '/trpc',
     trpcOptions: {
@@ -23,6 +24,7 @@ async function main() {
       createContext,
     },
   });
+
   await fastify.listen({ port: 7209 });
 }
 

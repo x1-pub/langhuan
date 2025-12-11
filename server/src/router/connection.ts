@@ -133,7 +133,7 @@ export const connectionRouter = router({
             };
           }
 
-          const db = getMysqlDBNameFromMetadata(metadata)
+          const db = getMysqlDBNameFromMetadata(metadata);
           return {
             result: formatNonQueryResult(type, metadata),
             changeDatabase: type === 'use' && db ? db : undefined,
@@ -149,7 +149,7 @@ export const connectionRouter = router({
           const changeDatabase = result.match(/switched to db (.+)/)?.[1];
 
           if (changeDatabase) {
-            await ctx.pool.changeMongoDB(changeDatabase, connectionId, undefined, pageId);
+            await ctx.pool.changeMongoDB(changeDatabase, connectionId, pageId);
           }
 
           return {
