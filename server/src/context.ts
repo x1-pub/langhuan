@@ -12,7 +12,7 @@ import { EConnectionType } from '@packages/types/connection';
 
 dotenv.config({ path: path.join(__dirname, `../.env.${process.env.NODE_ENV}`) });
 
-const db = drizzle(process.env.DATABASE_URL, { schema, mode: 'default' });
+const db = drizzle(process.env.DATABASE_URL as string, { schema, mode: 'default' });
 
 const createContext = async ({ req, res }: CreateFastifyContextOptions) => {
   const uid = Number(req.headers['sso-uid-id']) || Number(process.env.DEV_USER_ID);

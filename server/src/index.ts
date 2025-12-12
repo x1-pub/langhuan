@@ -18,7 +18,7 @@ async function main() {
   });
 
   await fastify.register(fastifyTRPCPlugin, {
-    prefix: '/trpc',
+    prefix: '/api/trpc',
     trpcOptions: {
       router: appRouter,
       createContext,

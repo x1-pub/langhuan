@@ -17,7 +17,7 @@ const extractError = (error: unknown) => {
 };
 
 export const trpcClient = createTRPCClient<AppRouter>({
-  links: [httpBatchLink({ url: 'http://localhost:7209/trpc' })],
+  links: [httpBatchLink({ url: 'http://localhost:7209/api/trpc' })],
 });
 
 export type RouterOutput = inferRouterOutputs<AppRouter>;

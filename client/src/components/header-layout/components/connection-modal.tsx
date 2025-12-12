@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import z from 'zod';
 
 import { showSuccess } from '@/utils/global-notification';
-import { CreateConnectionSchema } from '@packages/zod';
+import { CreateConnectionSchema } from '@packages/zod/connection';
 import { trpc } from '@/utils/trpc';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { EConnectionType } from '@packages/types/connection';
