@@ -25,10 +25,9 @@ export default defineConfig({
     host: '127.0.0.1',
     port: 7201,
     proxy: {
-      '/dev-api': {
-        target: 'http://127.0.0.1:7202/',
+      '/api/trpc': {
+        target: 'http://127.0.0.1:7209',
         changeOrigin: false,
-        rewrite: path => path.replace(/^\/dev-api/, ''),
       },
     },
   },
