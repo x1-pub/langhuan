@@ -25,7 +25,7 @@ async function main() {
     },
   });
 
-  await fastify.listen({ port: 7209 });
+  await fastify.listen({ host: '0.0.0.0', port: 7209 });
 }
 
 main();
