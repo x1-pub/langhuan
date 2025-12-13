@@ -4,7 +4,7 @@ import { Outlet, useParams } from 'react-router';
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
 import classNames from 'classnames';
 import { useTranslation } from 'react-i18next';
-import { omit } from 'lodash-es';
+import { omit } from 'lodash';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { EConnectionType } from '@packages/types/connection';

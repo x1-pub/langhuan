@@ -1,5 +1,5 @@
 import { type Sequelize } from 'sequelize';
-import { pickBy } from 'lodash-es';
+import { pickBy } from 'lodash';
 
 export const removeNullAndUndefined = (obj: object) => {
   return pickBy(obj, value => value !== null && value !== undefined);

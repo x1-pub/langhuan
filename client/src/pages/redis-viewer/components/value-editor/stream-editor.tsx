@@ -3,7 +3,7 @@ import { DeleteOutlined, PlusCircleOutlined, SaveOutlined } from '@ant-design/ic
 import classNames from 'classnames';
 import { useTranslation } from 'react-i18next';
 import { Input } from 'antd';
-import { clone, flatten } from 'lodash-es';
+import { clone, flatten } from 'lodash';
 import { useMutation } from '@tanstack/react-query';
 
 import EditableText from '@/components/editable-text';

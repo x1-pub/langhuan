@@ -1,5 +1,5 @@
 import { ERedisDataType, TRedisValue } from '@packages/types/redis';
-import { chunk } from 'lodash-es';
+import { chunk } from 'lodash';
 
 /**
  * 把不用类型的value格式化为同一类型 string[][]

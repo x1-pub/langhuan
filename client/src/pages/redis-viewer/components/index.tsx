@@ -12,7 +12,7 @@ import {
   ReloadOutlined,
   RightOutlined,
 } from '@ant-design/icons';
-import { last, sumBy } from 'lodash-es';
+import { last, sumBy } from 'lodash';
 import { useInfiniteQuery, useQueryClient, useQuery } from '@tanstack/react-query';
 
 import KeyTypeIcon from './key-type-icon';
