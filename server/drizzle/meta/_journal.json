@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1765628990993,
+      "tag": "0000_mysterious_master_chief",
+      "breakpoints": true
+    }
+  ]
+}

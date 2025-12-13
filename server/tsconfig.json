@@ -7,11 +7,9 @@
     "strict": true,
     "outDir": "dist",
     "skipLibCheck": true,
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
-    "useDefineForClassFields": false,
     "paths": {
       "@packages/*": ["../packages/*"]
     }
-  }
+  },
+  "include": ["src/index.ts"]
 }

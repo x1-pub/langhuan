@@ -10,7 +10,7 @@ import * as schema from './schema';
 import { TRPCError } from '@trpc/server';
 import { EConnectionType } from '@packages/types/connection';
 
-dotenv.config({ path: path.join(__dirname, `../.env.${process.env.NODE_ENV}`) });
+dotenv.config({ path: path.join(__dirname, '../.env') });
 
 const db = drizzle(process.env.DATABASE_URL as string, { schema, mode: 'default' });
 

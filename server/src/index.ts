@@ -7,7 +7,7 @@ import path from 'path';
 import createContext from './context';
 import { appRouter } from './router';
 
-dotenv.config({ path: path.join(__dirname, `../.env.${process.env.NODE_ENV}`) });
+dotenv.config({ path: path.join(__dirname, '../.env') });
 
 const fastify = Fastify({ logger: false });
 
