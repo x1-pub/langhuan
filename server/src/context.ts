@@ -15,7 +15,7 @@ dotenv.config({ path: path.join(__dirname, '../.env') });
 const db = drizzle(process.env.DATABASE_URL as string, { schema, mode: 'default' });
 
 const createContext = async ({ req, res }: CreateFastifyContextOptions) => {
-  const uid = Number(req.headers['sso-uid-id']) || Number(process.env.DEV_USER_ID);
+  const uid = Number(req.headers['x-sso-uid']) || Number(process.env.DEV_USER_ID);
 
   return {
     req,

@@ -16,8 +16,31 @@ const extractError = (error: unknown) => {
   showError({ title, message, sql });
 };
 
+// export const trpcClient = createTRPCClient<AppRouter>({
+//   links: [httpBatchLink({ url: '/api/trpc' })],
+// });
+
 export const trpcClient = createTRPCClient<AppRouter>({
-  links: [httpBatchLink({ url: '/api/trpc' })],
+  links: [
+    httpBatchLink({
+      url: '/api/trpc',
+      fetch: async (input, init) => {
+        const res = await fetch(input, init);
+
+        if (res.status === 401) {
+          const headerLoginUrl = res.headers.get('X-Login-Url');
+
+          if (!headerLoginUrl) {
+            return res;
+          }
+
+          window.location.href = headerLoginUrl;
+        }
+
+        return res;
+      },
+    }),
+  ],
 });
 
 export type RouterOutput = inferRouterOutputs<AppRouter>;
