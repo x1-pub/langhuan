@@ -254,7 +254,10 @@ const DBListLayout: React.FC = () => {
           setActive,
         }}
       >
-        <Spin spinning={databaseListQuery.isLoading || tableListMutation.isPending}>
+        <Spin
+          style={{ height: '100%' }}
+          spinning={databaseListQuery.isLoading || tableListMutation.isPending}
+        >
           <div className={styles.menu}>
             <div className={styles.buttonGroup}>
               {connectionType !== EConnectionType.REDIS && (
@@ -282,6 +285,7 @@ const DBListLayout: React.FC = () => {
               <List
                 split={false}
                 dataSource={databaseListQuery.data}
+                className={styles.list}
                 renderItem={item => (
                   <List.Item>
                     <span
@@ -302,6 +306,7 @@ const DBListLayout: React.FC = () => {
                 onChange={handleOpenDB}
                 expandIconPosition="start"
                 items={databaseCollapse}
+                className={styles.list}
               />
             )}
           </div>

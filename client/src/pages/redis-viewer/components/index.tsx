@@ -62,8 +62,8 @@ const RedisMain: React.FC = () => {
       {
         connectionId,
         dbName,
-        type: active!.type,
-        key: active!.key,
+        type: active?.type ?? ('' as never),
+        key: active?.key ?? ('' as never),
       },
       {
         enabled: !!active,
