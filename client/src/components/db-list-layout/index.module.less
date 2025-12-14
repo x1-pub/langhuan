@@ -2,6 +2,10 @@
   display: flex;
   height: calc(100vh - 51px);
   overflow: hidden;
+
+  :global(.langhuan-spin-container) {
+    height: 100%;
+  }
 }
 
 .menu {
@@ -25,6 +29,12 @@
       fill: var(--theme-text-color);
     }
   }
+}
+
+.list {
+  height: calc(100% - 44px);
+  overflow-y: auto;
+  scrollbar-width: none;
 }
 
 .main {
@@ -59,9 +69,11 @@
       display: flex !important;
       align-items: center !important;
     }
+
     .langhuan-collapse-header:hover .langhuan-collapse-extra > div {
       display: flex;
     }
+
     .langhuan-collapse-content-box {
       padding: 0 !important;
     }
