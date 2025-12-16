@@ -14,7 +14,7 @@ import styles from './index.module.less';
 
 dayjs.locale(isChinese ? 'zh-cn' : 'en');
 
-const LocaleController: React.FC = () => {
+const LocaleSwitcher: React.FC = () => {
   const { i18n } = useTranslation();
   const { setLocal } = useContext(LocaleContext);
 
@@ -49,4 +49,4 @@ const LocaleController: React.FC = () => {
   );
 };
 
-export default LocaleController;
+export default LocaleSwitcher;

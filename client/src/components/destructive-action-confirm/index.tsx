@@ -64,13 +64,17 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   );
 };
 
-interface ConfirmationProps {
+interface DestructiveActionConfirmProps {
   node: React.ReactNode;
   matchText: string;
   onConfirm?: () => void;
 }
 
-export const Confirmation: React.FC<ConfirmationProps> = ({ node, matchText, onConfirm }) => {
+const DestructiveActionConfirm: React.FC<DestructiveActionConfirmProps> = ({
+  node,
+  matchText,
+  onConfirm,
+}) => {
   const [visible, setVisible] = useState<boolean>(false);
 
   const handleConfirm = () => {
@@ -102,4 +106,4 @@ export const Confirmation: React.FC<ConfirmationProps> = ({ node, matchText, onC
   );
 };
 
-// export default ConfirmationModal;
+export default DestructiveActionConfirm;

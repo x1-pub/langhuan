@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useImperativeHandle } from 'react';
-import { Select } from 'antd';
+import { Select, Popconfirm } from 'antd';
 import type { SelectProps } from 'antd';
 import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { useParams, useNavigate, useLocation } from 'react-router';
 import { useQuery, useMutation } from '@tanstack/react-query';
 
 import { trpc } from '@/utils/trpc';
-import ConnectionModal from './connection-modal';
-import ConnectionTypeIcon from './connection-type';
+import ConnectionModal from '../connection-editor';
+import DatabaseIcon from '../database-icon';
 import EllipsisText from '@/components/ellipsis-text';
 import styles from './index.module.less';
+import { useTranslation } from 'react-i18next';
 
 type LabelRender = SelectProps['labelRender'];
 
@@ -19,6 +20,7 @@ export interface RefHandler {
 
 const ConnectionSelector: React.FC<{ ref?: React.Ref<RefHandler> }> = ({ ref }) => {
   const { connectionId: connectionIdString } = useParams();
+  const { t } = useTranslation();
   const connectionId = Number(connectionIdString) || undefined;
 
   const navigate = useNavigate();
@@ -59,19 +61,13 @@ const ConnectionSelector: React.FC<{ ref?: React.Ref<RefHandler> }> = ({ ref }) 
 
     return (
       <span className={styles.selectOption}>
-        <ConnectionTypeIcon type={connection?.type} />
+        <DatabaseIcon type={connection?.type} />
         <EllipsisText text={connection?.name} />
       </span>
     );
   };
 
-  const handleEditConnection = (event: React.MouseEvent<HTMLSpanElement>, id: number) => {
-    event.stopPropagation();
-    setEditId(id);
-  };
-
-  const handleDelete = async (event: React.MouseEvent<HTMLSpanElement>, id: number) => {
-    event.stopPropagation();
+  const handleDelete = async (id: number) => {
     await deleteMutation.mutateAsync({ id: Number(id) });
     listQuery.refetch();
   };
@@ -94,21 +90,21 @@ const ConnectionSelector: React.FC<{ ref?: React.Ref<RefHandler> }> = ({ ref }) 
       <Select
         defaultValue={connectionId}
         fieldNames={{ value: 'id' }}
-        style={{ width: 300 }}
         options={listQuery.data}
+        className={styles.select}
         optionRender={option => (
           <span className={styles.selectOption}>
-            <ConnectionTypeIcon type={option.data.type} />
-            <EllipsisText text={option.data.name} width={200} />
-            <span className={styles.selecthandler}>
-              <EditOutlined
-                className={styles.icon}
-                onClick={e => handleEditConnection(e, option.data.id)}
-              />
-              <DeleteOutlined
-                className={styles.icon}
-                onClick={e => handleDelete(e, option.data.id)}
-              />
+            <DatabaseIcon type={option.data.type} />
+            <EllipsisText text={option.data.name} style={{ flexGrow: '1' }} />
+            <span className={styles.handler} onClick={e => e.stopPropagation()}>
+              <EditOutlined className={styles.icon} onClick={() => setEditId(option.data.id)} />
+              <Popconfirm
+                title={t('delete.title')}
+                description={t('delete.desc')}
+                onConfirm={() => handleDelete(option.data.id)}
+              >
+                <DeleteOutlined className={styles.icon} />
+              </Popconfirm>
             </span>
           </span>
         )}

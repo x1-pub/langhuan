@@ -13,7 +13,7 @@ import DBIcon from '@/assets/svg/db.svg?react';
 import ShellIcon from '@/assets/svg/shell.svg?react';
 import Editor from './components/editor';
 import { DatabaseContext, generateActiveId, IWind } from '@/utils/use-main';
-import { Confirmation } from '@/components/confirmation-modal';
+import DestructiveActionConfirm from '@/components/destructive-action-confirm';
 import EllipsisText from '@/components/ellipsis-text';
 import { trpc, RouterOutput } from '@/utils/trpc';
 import styles from './index.module.less';
@@ -21,7 +21,7 @@ import { EEditorType, TEditorData } from './components/types';
 
 type TTableList = RouterOutput['table']['getList'];
 
-const DBListLayout: React.FC = () => {
+const DatabaseLayout: React.FC = () => {
   const { connectionId: connectionIdString, connectionType: connectionTypeString } = useParams();
   const connectionId = Number(connectionIdString);
   const connectionType = String(connectionTypeString) as EConnectionType;
@@ -104,7 +104,7 @@ const DBListLayout: React.FC = () => {
                 className={styles.icon}
                 onClick={() => handleEditTable(db.name, item.name, item.comment)}
               />
-              <Confirmation
+              <DestructiveActionConfirm
                 matchText={`${db.name}.${item.name}`}
                 node={<DeleteOutlined className={styles.icon} />}
                 onConfirm={() => handleDeleteTable(db.name, item.name)}
@@ -121,7 +121,7 @@ const DBListLayout: React.FC = () => {
           className={styles.icon}
           onClick={e => handleEditDatabase(e, db.name, db.charset, db.collation)}
         />
-        <Confirmation
+        <DestructiveActionConfirm
           matchText={db.name}
           node={<DeleteOutlined className={styles.icon} />}
           onConfirm={() => handleDeleteDatabase(db.name)}
@@ -326,4 +326,4 @@ const DBListLayout: React.FC = () => {
   );
 };
 
-export default DBListLayout;
+export default DatabaseLayout;

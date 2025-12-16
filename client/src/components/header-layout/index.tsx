@@ -1,15 +1,15 @@
 import React, { useRef } from 'react';
 import { GithubOutlined } from '@ant-design/icons';
 import { Outlet, useLocation, useNavigate } from 'react-router';
+import { Typography } from 'antd';
+import { useTranslation } from 'react-i18next';
 
-import { ThemeController } from '@/components/theme';
-import { LocaleController } from '@/components/locale';
+import { ThemeToggle } from '@/components/theme';
+import { LocaleSwitcher } from '@/components/locale';
 import ConnectionSelector, { RefHandler } from './components/connection-selector';
 import ConnectionCreator from './components/connection-creator';
 import LogoImg from '@/assets/image/logo.png';
 import styles from './index.module.less';
-import { Typography } from 'antd';
-import { useTranslation } from 'react-i18next';
 
 const HeaderLayout: React.FC = () => {
   const { t } = useTranslation();
@@ -19,7 +19,7 @@ const HeaderLayout: React.FC = () => {
   const isWelcomePage = location.pathname === '/';
 
   const linkToGithub = () => {
-    window.open('https://github.com/CleverLiurx/langhuange');
+    window.open('https://github.com/x1-pub/langhuan');
   };
 
   const handleAfterCreate = () => {
@@ -47,8 +47,8 @@ const HeaderLayout: React.FC = () => {
             )}
           </div>
           <div className={styles.right}>
-            <ThemeController />
-            <LocaleController />
+            <ThemeToggle />
+            <LocaleSwitcher />
             <GithubOutlined className={styles.github} onClick={linkToGithub} />
           </div>
         </div>

@@ -3,7 +3,7 @@ import { Tooltip } from 'antd';
 import { AppstoreAddOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 
-import ConnectionModal from './connection-modal';
+import ConnectionModal from '../connection-editor';
 import styles from './index.module.less';
 
 interface DBCreatorProps {
