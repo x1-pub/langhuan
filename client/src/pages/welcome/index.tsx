@@ -15,7 +15,7 @@ const Welcome: React.FC = () => {
   const navigate = useNavigate();
 
   const openIssues = () => {
-    window.open('https://github.com/CleverLiurx/langhuange/issues/new');
+    window.open('https://github.com/x1-pub/langhuan/issues/new');
   };
 
   const handleStart = () => {

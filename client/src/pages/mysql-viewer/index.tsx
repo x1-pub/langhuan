@@ -2,7 +2,7 @@ import React from 'react';
 import { Tabs } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import ViewerTabs from '@/components/table-tabs';
+import TableSwitcher from '@/components/table-switcher';
 import TableData from './components/table-data';
 import TableDesign from './components/table-design';
 import TableDDL from './components/table-ddl';
@@ -35,11 +35,11 @@ const MysqlViewer: React.FC = () => {
   ];
 
   return (
-    <ViewerTabs>
+    <TableSwitcher>
       <div className={styles.mysqlWrap}>
         <Tabs className={styles.mysqlTabs} items={tabsItem} tabPosition="left" />
       </div>
-    </ViewerTabs>
+    </TableSwitcher>
   );
 };
 

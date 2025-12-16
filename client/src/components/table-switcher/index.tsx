@@ -4,7 +4,7 @@ import { Tabs, type TabsProps } from 'antd';
 import useMain, { generateActiveId } from '@/utils/use-main';
 import styles from './index.module.less';
 
-const TableTabs: React.FC<{ children: ReactNode }> = ({ children }) => {
+const TableSwitcher: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { wind, setWind, active, setActive } = useMain();
 
   const tabItems: TabsProps['items'] = useMemo(
@@ -51,4 +51,4 @@ const TableTabs: React.FC<{ children: ReactNode }> = ({ children }) => {
   );
 };
 
-export default TableTabs;
+export default TableSwitcher;

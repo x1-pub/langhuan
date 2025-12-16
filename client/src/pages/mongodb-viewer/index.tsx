@@ -1,13 +1,13 @@
 import React from 'react';
 
-import ViewerTabs from '@/components/table-tabs';
+import TableSwitcher from '@/components/table-switcher';
 import Viewer from './viewer';
 
 const MongodbViewer: React.FC = () => {
   return (
-    <ViewerTabs>
+    <TableSwitcher>
       <Viewer />
-    </ViewerTabs>
+    </TableSwitcher>
   );
 };
 
