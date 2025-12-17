@@ -5,7 +5,7 @@ import { EConnectionType } from '@packages/types/connection';
 
 const Welcome = lazy(() => import('@/pages/welcome'));
 const NotFound = lazy(() => import('@/pages/not-found'));
-const DatabaseLayout = lazy(() => import('@/components/database-layout'));
+const MenuLayout = lazy(() => import('@/components/menu-layout'));
 const HeaderLayout = lazy(() => import('@/components/header-layout'));
 const NotSelected = lazy(() => import('@/pages/not-selected'));
 const MysqlViewer = lazy(() => import('@/pages/mysql-viewer'));
@@ -33,7 +33,7 @@ const RouterRender: React.FC = () => (
     <Routes>
       <Route element={<HeaderLayout />}>
         <Route path="/" element={<Welcome />} />
-        <Route path="/:connectionType/:connectionId" element={<DatabaseLayout />}>
+        <Route path="/:connectionType/:connectionId" element={<MenuLayout />}>
           <Route path="/:connectionType/:connectionId" element={<DatabaseViewer />} />
         </Route>
         <Route path="/notselected" element={<NotSelected />} />
