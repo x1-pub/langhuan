@@ -1,0 +1,65 @@
+.dbTitle {
+  display: flex;
+  align-items: center;
+  fill: var(--theme-text-color);
+  height: 22px;
+}
+
+.tableWrap {
+  .tableTitle {
+    display: flex;
+    align-items: center;
+    height: 22px;
+    padding-left: 18px;
+    cursor: pointer;
+    fill: var(--theme-text-color);
+  }
+
+  &:hover .handler {
+    display: flex;
+  }
+}
+
+.handler {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  display: none;
+
+  .icon:hover {
+    color: var(--theme-main-color);
+  }
+}
+
+.collapseItem {
+  :global {
+    .langhuan-collapse-header {
+      display: flex !important;
+      align-items: center !important;
+    }
+
+    .langhuan-collapse-header:hover .langhuan-collapse-extra > div {
+      display: flex;
+    }
+
+    .langhuan-collapse-content-box {
+      padding: 0 !important;
+    }
+  }
+}
+
+.databaseIcon {
+  width: 12px;
+  padding-right: 8px;
+}
+
+.tableIcon {
+  width: 14px;
+  padding-right: 8px;
+}
+
+.active {
+  fill: var(--theme-main-color) !important;
+  color: var(--theme-main-color) !important;
+}
