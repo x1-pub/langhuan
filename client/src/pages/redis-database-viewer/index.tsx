@@ -1,14 +1,14 @@
 import React from 'react';
 
 import TableSwitcher from '@/components/table-switcher';
-import Viewer from './viewer';
+import RedisMain from './components';
 
-const MongodbViewer: React.FC = () => {
+const RedisDatabaseViewer: React.FC = () => {
   return (
     <TableSwitcher>
-      <Viewer />
+      <RedisMain />
     </TableSwitcher>
   );
 };
 
-export default MongodbViewer;
+export default RedisDatabaseViewer;

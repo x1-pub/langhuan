@@ -1,7 +1,7 @@
-import useMain from '@/utils/use-main';
+import useDatabaseWindows from '@/hooks/use-database-windows';
 
 const Viewer = () => {
-  const { connectionId, connectionType, wind, active } = useMain();
+  const { connectionId, connectionType, wind, active } = useDatabaseWindows();
   return (
     <div>
       <div>connectionId: {connectionId}</div>

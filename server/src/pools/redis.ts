@@ -44,9 +44,9 @@ class RedisManager {
         instance.lastUsed = Date.now();
       }
 
-      return instance.redis
+      return instance.redis;
     } catch (err) {
-      throw new TRPCError({ code: 'BAD_REQUEST', message: String(err) })
+      throw new TRPCError({ code: 'BAD_REQUEST', message: String(err) });
     }
   }
 

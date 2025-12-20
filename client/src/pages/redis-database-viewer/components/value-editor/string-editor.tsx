@@ -6,7 +6,7 @@ import EditableText from '@/components/editable-text';
 import { TRedisValue } from '@packages/types/redis';
 import { trpc } from '@/utils/trpc';
 import { useMutation } from '@tanstack/react-query';
-import useMain from '@/utils/use-main';
+import useDatabaseWindows from '@/hooks/use-database-windows';
 
 interface StringEditorProps {
   mode: 'add' | 'edit';
@@ -24,7 +24,7 @@ const StringEditor: React.FC<StringEditorProps> = ({
   onReload,
 }) => {
   const v = value[0][0];
-  const { connectionId, dbName } = useMain();
+  const { connectionId, dbName } = useDatabaseWindows();
   const { t } = useTranslation();
   const updateStringValueMutation = useMutation(trpc.redis.updateStringValue.mutationOptions());
 

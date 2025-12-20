@@ -5,13 +5,13 @@ import { useTranslation } from 'react-i18next';
 
 import TriggerModal from './trigger-modal';
 import styles from '../../index.module.less';
-import useMain from '@/utils/use-main';
+import useDatabaseWindows from '@/hooks/use-database-windows';
 import { trpc } from '@/utils/trpc';
 import { EMySQLTriggerEvent, EMySQLTriggerTiming, TMySQLTrigger } from '@packages/types/mysql';
 
 const TableTrigger: React.FC = () => {
   const { t } = useTranslation();
-  const { connectionId, dbName, tableName } = useMain();
+  const { connectionId, dbName, tableName } = useDatabaseWindows();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingTrigger, setEditingTrigger] = useState<TMySQLTrigger | null>(null);
 

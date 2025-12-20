@@ -7,7 +7,7 @@ import { useMutation } from '@tanstack/react-query';
 import styles from './index.module.less';
 import EditableText from '@/components/editable-text';
 import { TRedisValue } from '@packages/types/redis';
-import useMain from '@/utils/use-main';
+import useDatabaseWindows from '@/hooks/use-database-windows';
 import { trpc } from '@/utils/trpc';
 
 interface SetEditorProps {
@@ -29,7 +29,7 @@ const SetEditor: React.FC<SetEditorProps> = ({
 }) => {
   const { t } = useTranslation();
   const [newItem, setNewItem] = useState<TRedisValue>([[]]);
-  const { connectionId, dbName } = useMain();
+  const { connectionId, dbName } = useDatabaseWindows();
   const updateSetValueMutation = useMutation(trpc.redis.updateSetValue.mutationOptions());
 
   const handleChange = async (index: number, member: string) => {

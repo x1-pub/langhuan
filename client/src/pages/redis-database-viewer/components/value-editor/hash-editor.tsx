@@ -8,7 +8,7 @@ import EditableText from '@/components/editable-text';
 import styles from './index.module.less';
 import { trpc } from '@/utils/trpc';
 import { TRedisValue } from '@packages/types/redis';
-import useMain from '@/utils/use-main';
+import useDatabaseWindows from '@/hooks/use-database-windows';
 
 interface HashEditorProps {
   mode: 'add' | 'edit';
@@ -27,7 +27,7 @@ const HashEditor: React.FC<HashEditorProps> = ({
   onChange,
   onReload,
 }) => {
-  const { connectionId, dbName } = useMain();
+  const { connectionId, dbName } = useDatabaseWindows();
   const { t } = useTranslation();
   const [newItem, setNewItem] = useState<TRedisValue>([]);
   const updateHashValueMutation = useMutation(trpc.redis.updateHashValue.mutationOptions());

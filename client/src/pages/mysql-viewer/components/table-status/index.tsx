@@ -3,11 +3,11 @@ import { Descriptions } from 'antd';
 import type { DescriptionsProps } from 'antd';
 import { useQuery } from '@tanstack/react-query';
 
-import useMain from '@/utils/use-main';
+import useDatabaseWindows from '@/hooks/use-database-windows';
 import { trpc } from '@/utils/trpc';
 
 const TableSatus: React.FC = () => {
-  const { connectionId, dbName, tableName } = useMain();
+  const { connectionId, dbName, tableName } = useDatabaseWindows();
   const getTableStatusQuery = useQuery(
     trpc.mysql.getTableStatus.queryOptions({ connectionId, dbName, tableName }),
   );

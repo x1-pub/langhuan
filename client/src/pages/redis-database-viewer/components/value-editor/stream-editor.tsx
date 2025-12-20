@@ -9,7 +9,7 @@ import { useMutation } from '@tanstack/react-query';
 import EditableText from '@/components/editable-text';
 import styles from './index.module.less';
 import { TRedisValue } from '@packages/types/redis';
-import useMain from '@/utils/use-main';
+import useDatabaseWindows from '@/hooks/use-database-windows';
 import { trpc } from '@/utils/trpc';
 
 interface StreamEditorProps {
@@ -32,7 +32,7 @@ const StreamEditor: React.FC<StreamEditorProps> = ({
   const { t } = useTranslation();
   const [newEntryId, setNewEntryId] = useState<string>('*');
   const [newItem, setNewItem] = useState<[string, string][]>(mode === 'add' ? [['', '']] : []);
-  const { connectionId, dbName } = useMain();
+  const { connectionId, dbName } = useDatabaseWindows();
   const updateStreamValueMutation = useMutation(trpc.redis.updateStreamValue.mutationOptions());
 
   const [columns, data] = useMemo(() => {

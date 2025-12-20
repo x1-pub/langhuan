@@ -6,13 +6,19 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { EConnectionType } from '@packages/types/connection';
 import Editor from './components/editor';
-import { DatabaseContext, generateActiveId, IWind } from '@/utils/use-main';
+import {
+  DatabaseWindowsContext,
+  ESpecialWind,
+  generateActiveId,
+  IWind,
+} from '@/hooks/use-database-windows';
 import { trpc, RouterOutput } from '@/utils/trpc';
-import styles from './index.module.less';
 import { EEditorType, TEditorData } from './components/editor/types';
 import RedisDatabase from './components/redis-database';
 import MysqlDatabase from './components/mysql-database';
 import Actions from './components/actions';
+import MongoDBDatabase from './components/mongodb-database';
+import styles from './index.module.less';
 
 type TTableList = RouterOutput['table']['getList'];
 
@@ -124,10 +130,12 @@ const MenuLayout: React.FC = () => {
     setEditorData(undefined);
   };
 
-  const handleOpenTable = (dbName: string, tableName?: string) => {
-    const hasOpen = wind.find(p => p.dbName === dbName && p.tableName == tableName);
-    setWind(hasOpen ? wind : [{ dbName, tableName }, ...wind]);
-    const activeId = generateActiveId(dbName, tableName);
+  const handleOpenTable = (dbName: string, tableName?: string, specialWind?: ESpecialWind) => {
+    const activeId = generateActiveId(dbName, tableName, specialWind);
+    const hasOpen = wind.find(
+      p => generateActiveId(p.dbName, p.tableName, p.specialWind) === activeId,
+    );
+    setWind(hasOpen ? wind : [...wind, { dbName, tableName, specialWind }]);
     setActive(activeId);
   };
 
@@ -141,7 +149,7 @@ const MenuLayout: React.FC = () => {
 
   return (
     <div className={styles.menuWrapper}>
-      <DatabaseContext.Provider
+      <DatabaseWindowsContext.Provider
         value={{
           connectionId,
           connectionType,
@@ -182,6 +190,19 @@ const MenuLayout: React.FC = () => {
                 onEditorData={setEditorData}
               />
             )}
+            {connectionType === EConnectionType.MONGODB && (
+              <MongoDBDatabase
+                database={databaseListQuery.data}
+                tableMap={tableMap}
+                activeId={active}
+                className={styles.database}
+                onClickDatabase={handleOpenDatabase}
+                onClickTable={handleOpenTable}
+                onDeleteTable={handleDeleteTable}
+                onDeleteDatabase={handleDeleteDatabase}
+                onEditorData={setEditorData}
+              />
+            )}
           </div>
         </Spin>
         <Editor
@@ -194,7 +215,7 @@ const MenuLayout: React.FC = () => {
         <main className={styles.main}>
           <Outlet />
         </main>
-      </DatabaseContext.Provider>
+      </DatabaseWindowsContext.Provider>
     </div>
   );
 };

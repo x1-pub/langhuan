@@ -3,7 +3,7 @@ import { Modal, Form, Input, Select, Checkbox, Row, Col, Tooltip } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from '@tanstack/react-query';
 
-import useMain from '@/utils/use-main';
+import useDatabaseWindows from '@/hooks/use-database-windows';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import { EMySQLFieldDefaultType, IMySQLColumn, TMysqlBaseColumnInfo } from '@packages/types/mysql';
 import { trpc } from '@/utils/trpc';
@@ -141,7 +141,7 @@ const autoIncrementTypes = ['INT', 'INTEGER', 'BIGINT', 'TINYINT', 'SMALLINT', '
 
 const FieldEditor: React.FC<FieldEditorProps> = ({ editRow, visible, onSubmit, onCancel }) => {
   const { t } = useTranslation();
-  const { connectionId, dbName, tableName } = useMain();
+  const { connectionId, dbName, tableName } = useDatabaseWindows();
   const [form] = Form.useForm<TMysqlBaseColumnInfo>();
   const selectedType = Form.useWatch('fieldType', form);
   const charsetValue = Form.useWatch('charset', form);

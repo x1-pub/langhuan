@@ -6,11 +6,11 @@ import IndexManager from './components/index-manager';
 import ColumnsManager from './components/columns-manager';
 import TablePartition from './components/partition';
 import TableTrigger from './components/table-trigger';
-import useMain from '@/utils/use-main';
+import useDatabaseWindows from '@/hooks/use-database-windows';
 import { trpc } from '@/utils/trpc';
 
 const TableDesign: React.FC = () => {
-  const { connectionId, dbName, tableName } = useMain();
+  const { connectionId, dbName, tableName } = useDatabaseWindows();
 
   const getTableIndexQuery = useQuery(
     trpc.mysql.getTableIndex.queryOptions({ connectionId, dbName, tableName }),

@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import useMain from '@/utils/use-main';
+import useDatabaseWindows from '@/hooks/use-database-windows';
 import { Splitter, Input, Select, Button, Table, type TableProps, Segmented, Tooltip } from 'antd';
 import { useTranslation } from 'react-i18next';
 import {
@@ -31,7 +31,7 @@ interface IActive {
 }
 
 const RedisMain: React.FC = () => {
-  const { connectionId, dbName } = useMain();
+  const { connectionId, dbName } = useDatabaseWindows();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [tableType, setTableType] = useState<TRedisKeyViewType>('list');
