@@ -9,8 +9,8 @@ const MenuLayout = lazy(() => import('@/components/menu-layout'));
 const HeaderLayout = lazy(() => import('@/components/header-layout'));
 const NotSelected = lazy(() => import('@/pages/not-selected'));
 const MysqlViewer = lazy(() => import('@/pages/mysql-viewer'));
-const MongodbViewer = lazy(() => import('@/pages/mongodb-viewer'));
-const RedisViewer = lazy(() => import('@/pages/redis-viewer'));
+const MongodbCollectionViewer = lazy(() => import('@/pages/mongodb-collection-viewer'));
+const RedisDatabaseViewer = lazy(() => import('@/pages/redis-database-viewer'));
 const Shell = lazy(() => import('@/pages/shell'));
 
 const DatabaseViewer = () => {
@@ -20,9 +20,9 @@ const DatabaseViewer = () => {
     case EConnectionType.MYSQL:
       return <MysqlViewer />;
     case EConnectionType.REDIS:
-      return <RedisViewer />;
+      return <RedisDatabaseViewer />;
     case EConnectionType.MONGODB:
-      return <MongodbViewer />;
+      return <MongodbCollectionViewer />;
     default:
       return <NotFound />;
   }

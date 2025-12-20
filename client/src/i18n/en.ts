@@ -125,6 +125,9 @@ const en = {
     trigger: 'Trigger',
     status: 'Status',
     partition: 'Partition',
+    event: 'Event',
+    function: 'Function',
+    view: 'View',
   },
   redis: {
     allKeyTypes: 'All Key Types',

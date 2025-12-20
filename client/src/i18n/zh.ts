@@ -123,6 +123,9 @@ const zh = {
     trigger: '触发器',
     status: '表状态',
     partition: '分区',
+    event: '事件',
+    function: '函数',
+    view: '视图',
   },
   redis: {
     allKeyTypes: '所有类型',

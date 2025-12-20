@@ -9,7 +9,7 @@ import EditableText from '@/components/editable-text';
 import { TRedisValue } from '@packages/types/redis';
 import { trpc } from '@/utils/trpc';
 import { useMutation } from '@tanstack/react-query';
-import useMain from '@/utils/use-main';
+import useDatabaseWindows from '@/hooks/use-database-windows';
 
 interface ListEditorProps {
   mode: 'add' | 'edit';
@@ -30,7 +30,7 @@ const ListEditor: React.FC<ListEditorProps> = ({
 }) => {
   const { t } = useTranslation();
   const [newItem, setNewItem] = useState<TRedisValue>([[]]);
-  const { connectionId, dbName } = useMain();
+  const { connectionId, dbName } = useDatabaseWindows();
   const updateListValueMutation = useMutation(trpc.redis.updateListValue.mutationOptions());
 
   const handleChange = async (index: number, element: string) => {

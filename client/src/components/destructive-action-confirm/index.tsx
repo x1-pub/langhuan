@@ -33,6 +33,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   };
 
   const handleCancel = () => {
+    console.log(132);
     onCancel?.();
     setInputValue('');
   };
@@ -82,27 +83,16 @@ const DestructiveActionConfirm: React.FC<DestructiveActionConfirmProps> = ({
     setVisible(false);
   };
 
-  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setVisible(true);
-    event.stopPropagation();
-  };
-
   return (
-    <>
-      <span onClick={handleClick}>{node}</span>
-      <span
-        onClick={event => {
-          event.stopPropagation();
-        }}
-      >
-        <ConfirmationModal
-          visible={visible}
-          matchText={matchText}
-          onConfirm={handleConfirm}
-          onCancel={() => setVisible(false)}
-        />
-      </span>
-    </>
+    <span onClick={e => e.stopPropagation()}>
+      <span onClick={() => setVisible(true)}>{node}</span>
+      <ConfirmationModal
+        visible={visible}
+        matchText={matchText}
+        onConfirm={handleConfirm}
+        onCancel={() => setVisible(false)}
+      />
+    </span>
   );
 };
 

@@ -41,9 +41,9 @@ class MysqlManager {
         instance.lastUsed = Date.now();
       }
 
-      return instance.sequelize
+      return instance.sequelize;
     } catch (err) {
-      throw new TRPCError({ code: 'BAD_REQUEST', message: String(err) })
+      throw new TRPCError({ code: 'BAD_REQUEST', message: String(err) });
     }
   }
 

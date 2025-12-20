@@ -3,7 +3,7 @@ import { Modal, Form, Select, Checkbox } from 'antd';
 import { useMutation } from '@tanstack/react-query';
 import { Buffer } from 'buffer';
 
-import useMain from '@/utils/use-main';
+import useDatabaseWindows from '@/hooks/use-database-windows';
 import type { TMySQLCondition } from '@packages/types/mysql';
 import { EMySQLDataExportType } from '@packages/types/mysql';
 import { trpc } from '@/utils/trpc';
@@ -28,7 +28,7 @@ const formatOptions = [
 ];
 
 const ExportDataModal: React.FC<ExportModalProps> = props => {
-  const { connectionId, dbName, tableName } = useMain();
+  const { connectionId, dbName, tableName } = useDatabaseWindows();
   const { visible, condition, fields, onCancel, onOk } = props;
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm<ExportFormValues>();

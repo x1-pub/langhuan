@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import KeyTypeIcon from '../key-type-icon';
 import ValueEditor from '../value-editor';
 import { formatByteSize } from '@/utils/format-byte-size';
-import useMain from '@/utils/use-main';
+import useDatabaseWindows from '@/hooks/use-database-windows';
 import EditableText from '@/components/editable-text';
 import styles from './index.module.less';
 
@@ -32,7 +32,7 @@ const EditKeyBox: React.FC<EditKeyBoxProps> = ({
 }) => {
   const { type, key, ttl, size, value } = data;
   const { t } = useTranslation();
-  const { connectionId, dbName } = useMain();
+  const { connectionId, dbName } = useDatabaseWindows();
   const deleteKeyMutation = useMutation(trpc.redis.deleteKey.mutationOptions());
   const modifyTTLMutation = useMutation(trpc.redis.modifyTTL.mutationOptions());
   const modifyKeyMutation = useMutation(trpc.redis.modifyKey.mutationOptions());

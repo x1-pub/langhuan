@@ -4,7 +4,7 @@ import { PlusCircleOutlined, MinusCircleOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from '@tanstack/react-query';
 
-import useMain from '@/utils/use-main';
+import useDatabaseWindows from '@/hooks/use-database-windows';
 import { showSuccess } from '@/utils/global-notification';
 import EllipsisText from '@/components/ellipsis-text';
 import type { TMySQLCondition, IMySQLColumn, TMySQLProcessedData } from '@packages/types/mysql';
@@ -25,7 +25,7 @@ const BatchEditor: React.FC<BatchEditorProps> = ({ columns, condition, onOk, onC
   const [form, setForm] = useState<Record<string, TMySQLProcessedData>>({});
   const [fieldList, setFieldList] = useState<{ name: string; type: string }[]>([]);
   const { t } = useTranslation();
-  const { connectionId, dbName, tableName } = useMain();
+  const { connectionId, dbName, tableName } = useDatabaseWindows();
   const fieldOptions = columns.map(col => ({
     label: col.Field,
     value: col.Field,

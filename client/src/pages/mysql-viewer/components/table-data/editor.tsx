@@ -4,7 +4,7 @@ import { KeyOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from '@tanstack/react-query';
 
-import useMain from '@/utils/use-main';
+import useDatabaseWindows from '@/hooks/use-database-windows';
 import { showSuccess } from '@/utils/global-notification';
 import EllipsisText from '@/components/ellipsis-text';
 import type {
@@ -30,7 +30,7 @@ const Editor: React.FC<EditorProps> = ({ data = {}, columns, onOk, onCancel, sho
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState<Record<string, TMySQLProcessedData>>({});
   const { t } = useTranslation();
-  const { connectionId, dbName, tableName } = useMain();
+  const { connectionId, dbName, tableName } = useDatabaseWindows();
   const type = data && Object.keys(data).length ? 'update' : 'add';
 
   const batchUpdateDataMutation = useMutation(trpc.mysql.batchUpdateData.mutationOptions());

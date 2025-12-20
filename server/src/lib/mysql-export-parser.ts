@@ -48,7 +48,7 @@ interface IInsertQueryRes {
 }
 
 interface QueryGenerator {
-  insertQuery: (tableName: string, record: Record<string, TMySQLRawData>) => IInsertQueryRes
+  insertQuery: (tableName: string, record: Record<string, TMySQLRawData>) => IInsertQueryRes;
 }
 
 const isBit = (type: string) => type.toLocaleUpperCase().startsWith('BIT');
@@ -68,7 +68,10 @@ export const generateJSON = ({
   const json: Record<string, string | number | null>[] = [];
 
   records.forEach(record => {
-    const { bind } = (sequelize.getQueryInterface().queryGenerator as QueryGenerator).insertQuery(tableName, record);
+    const { bind } = (sequelize.getQueryInterface().queryGenerator as QueryGenerator).insertQuery(
+      tableName,
+      record,
+    );
 
     const values = bind.map((value, index) => {
       const type = fieldTypeMap[fields[index]];
@@ -123,7 +126,9 @@ export const generateSQL = ({
   );
 
   const sql = records.map(record => {
-    const { query, bind } = (sequelize.getQueryInterface().queryGenerator as QueryGenerator).insertQuery(tableName, record);
+    const { query, bind } = (
+      sequelize.getQueryInterface().queryGenerator as QueryGenerator
+    ).insertQuery(tableName, record);
 
     const values = bind.map((value, index) => {
       const type = fieldTypeMap[fields[index]];

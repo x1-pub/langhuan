@@ -4,7 +4,7 @@ import classNames from 'classnames';
 
 import DatabaseIcon from '@/assets/svg/db.svg?react';
 import { RouterOutput } from '@/utils/trpc';
-import { generateActiveId } from '@/utils/use-main';
+import { generateActiveId } from '@/hooks/use-database-windows';
 import styles from './index.module.less';
 
 type TTableList = RouterOutput['table']['getList'];

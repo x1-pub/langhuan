@@ -4,7 +4,7 @@ import { Button, Col, Divider, Form, Input, InputNumber, Row, Select, Tooltip } 
 
 import KeyTypeIcon from '../key-type-icon';
 import ValueEditor from '../value-editor';
-import useMain from '@/utils/use-main';
+import useDatabaseWindows from '@/hooks/use-database-windows';
 import styles from './index.module.less';
 import { useTranslation } from 'react-i18next';
 import { ERedisDataType, TRedisValue } from '@packages/types/redis';
@@ -24,7 +24,7 @@ interface AddKeyBoxProps {
 }
 
 const AddKeyBox: React.FC<AddKeyBoxProps> = ({ onAddSuccess, onCancel }) => {
-  const { connectionId, dbName } = useMain();
+  const { connectionId, dbName } = useDatabaseWindows();
   const [form] = Form.useForm<FieldType>();
   const { t } = useTranslation();
   const addValueMutation = useMutation(trpc.redis.addValue.mutationOptions());
@@ -45,7 +45,7 @@ const AddKeyBox: React.FC<AddKeyBoxProps> = ({ onAddSuccess, onCancel }) => {
     onAddSuccess?.(key, type);
   };
 
-  const handleChange = (changedValues: FieldType) => {
+  const handleChange = (changedValues: Partial<FieldType>) => {
     if (changedValues.type) {
       form.setFieldValue('value', undefined);
     }

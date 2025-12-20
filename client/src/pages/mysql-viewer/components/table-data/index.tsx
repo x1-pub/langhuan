@@ -12,7 +12,7 @@ import * as uuid from 'uuid';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
-import useMain from '@/utils/use-main';
+import useDatabaseWindows from '@/hooks/use-database-windows';
 import Editor from './editor';
 import BatchEditor from './batch-editor';
 import { measureTextWidth } from '@/utils/measure-text-width';
@@ -32,7 +32,8 @@ const MOCK_Table_ROW_KEY = '$langhuan.x1.pub-mock-mysql-uuid-key=string:bool_0G7
 
 const TableData: React.FC = () => {
   const { t } = useTranslation();
-  const { connectionId, dbName, tableName } = useMain();
+  const { connectionId, dbName, tableName } = useDatabaseWindows();
+  console.log(dbName, tableName);
   const [pagination, setPagination] = useState<TablePaginationConfig>();
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
   const [editRow, setEditRow] = useState<Record<string, TMySQLRawData>[]>();
@@ -55,7 +56,7 @@ const TableData: React.FC = () => {
     queryFn: () =>
       trpcClient.mysql.getTableData.query({ ...stableInput, whereClause: whereClauseRef.current! }),
     queryKey: ['mysql.getTableData', stableInput],
-    staleTime: 0,
+    staleTime: 5 * 60 * 1000,
     enabled: !!whereClauseRef.current,
   });
 
@@ -244,7 +245,7 @@ const TableData: React.FC = () => {
               <div>{t('mysql.whereTip2')}</div>
             </>
           }
-          styles={{ body: { width: '300px' } }}
+          styles={{ container: { width: '300px' } }}
         >
           <QuestionCircleOutlined className={styles.help} />
         </Tooltip>
