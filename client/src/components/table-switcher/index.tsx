@@ -69,7 +69,7 @@ const TableSwitcher: React.FC<ITableSwitcherProps> = ({ children }) => {
         children: typeof children === 'function' ? children(c) : children,
         forceRender: true,
       })),
-    [wind],
+    [wind, t],
   );
 
   const renderTabBar: TabsProps['renderTabBar'] = (props, DefaultTabBar) => (

@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import { Button, Card, Form, Input, Modal, Popconfirm, Space, Switch, Table, Tag } from 'antd';
+import { Button, Card, Col, Form, Input, Modal, Popconfirm, Row, Switch, Table, Tag } from 'antd';
 import type { TableColumnsType } from 'antd';
-import { EyeOutlined, PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 
 import styles from './index.module.less';
 
@@ -38,6 +38,7 @@ const MysqlFunction: React.FC = () => {
       comment: '生成 uuid 字符串',
     },
   ]);
+  const { t } = useTranslation();
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<TModalMode>('create');
   const [editing, setEditing] = useState<IFunctionItem | null>(null);
@@ -76,42 +77,29 @@ const MysqlFunction: React.FC = () => {
         ellipsis: true,
       },
       {
-        title: '操作',
-        width: 200,
-        render: (_, record) => (
-          <Space size="small">
+        title: t('table.operation'),
+        key: 'action',
+        width: 140,
+        render: (_: unknown, record) => (
+          <>
             <Button
               className={styles.columnActionBtn}
-              type="link"
-              icon={<EyeOutlined />}
-              onClick={() => handleView(record)}
-            >
-              查看
-            </Button>
-            <Button
-              className={styles.columnActionBtn}
-              type="link"
-              icon={<EditOutlined />}
+              color="cyan"
+              variant="link"
               onClick={() => handleEdit(record)}
             >
-              编辑
+              {t('button.edit')}
             </Button>
             <Popconfirm
-              title="确认删除?"
-              okText="删除"
-              cancelText="取消"
+              title={t('delete.title')}
+              description={t('delete.desc')}
               onConfirm={() => handleDelete(record.name)}
             >
-              <Button
-                className={styles.columnActionBtn}
-                type="link"
-                danger
-                icon={<DeleteOutlined />}
-              >
-                删除
+              <Button className={styles.columnActionBtn} color="danger" variant="link">
+                {t('button.delete')}
               </Button>
             </Popconfirm>
-          </Space>
+          </>
         ),
       },
     ],
@@ -125,13 +113,6 @@ const MysqlFunction: React.FC = () => {
       form.resetFields();
       setModalOpen(false);
     }
-  };
-
-  const handleView = (record: IFunctionItem) => {
-    setModalMode('view');
-    setEditing(record);
-    form.setFieldsValue(record);
-    setModalOpen(true);
   };
 
   const handleEdit = (record: IFunctionItem) => {
@@ -174,10 +155,10 @@ const MysqlFunction: React.FC = () => {
     <div className={styles.wrapper}>
       <Card
         className={styles.card}
-        title="函数管理"
+        title={t('mysql.function')}
         extra={
-          <Button color="cyan" variant="link" icon={<PlusOutlined />} onClick={handleCreateClick}>
-            新增
+          <Button color="cyan" variant="link" onClick={handleCreateClick}>
+            {t('button.add')}
           </Button>
         }
       >
@@ -186,7 +167,6 @@ const MysqlFunction: React.FC = () => {
           columns={columns}
           dataSource={data}
           pagination={false}
-          size="middle"
           onRow={record => ({
             onDoubleClick: () => handleEdit(record),
           })}
@@ -202,7 +182,7 @@ const MysqlFunction: React.FC = () => {
           form.resetFields();
         }}
         onOk={handleSave}
-        okText={modalMode === 'view' ? '关闭' : '保存'}
+        width={700}
       >
         <Form<TFormValue>
           layout="vertical"
@@ -210,34 +190,34 @@ const MysqlFunction: React.FC = () => {
           disabled={modalMode === 'view'}
           initialValues={{ deterministic: true, definer: 'root@%' }}
         >
-          <Form.Item
-            label="函数名"
-            name="name"
-            rules={[{ required: true, message: '请输入函数名' }]}
-          >
-            <Input placeholder="例如 add_tax" />
-          </Form.Item>
-          <Form.Item
-            label="返回类型"
-            name="returns"
-            rules={[{ required: true, message: '请输入返回类型' }]}
-          >
-            <Input placeholder="DECIMAL(10,2)" />
-          </Form.Item>
-          <Form.Item label="定义者" name="definer">
-            <Input placeholder="root@%" />
-          </Form.Item>
-          <Form.Item label="确定性" name="deterministic" valuePropName="checked">
-            <Switch checkedChildren="DETERMINISTIC" unCheckedChildren="NOT" />
-          </Form.Item>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item label="函数名" name="name" rules={[{ required: true }]}>
+                <Input placeholder="例如 add_tax" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="返回类型" name="returns" rules={[{ required: true }]}>
+                <Input placeholder="DECIMAL(10,2)" />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item label="确定性" name="deterministic" valuePropName="checked">
+                <Switch checkedChildren="DETERMINISTIC" unCheckedChildren="NOT" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="定义者" name="definer">
+                <Input placeholder="root@%" />
+              </Form.Item>
+            </Col>
+          </Row>
           <Form.Item label="备注" name="comment">
             <Input placeholder="可选" />
           </Form.Item>
-          <Form.Item
-            label="定义（SQL）"
-            name="definition"
-            rules={[{ required: true, message: '请输入函数定义' }]}
-          >
+          <Form.Item label="定义（SQL）" name="definition" rules={[{ required: true }]}>
             <Input.TextArea
               placeholder={'BEGIN\n  -- your sql here\nEND'}
               autoSize={{ minRows: 4, maxRows: 10 }}

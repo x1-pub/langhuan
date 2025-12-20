@@ -33,7 +33,6 @@ const MOCK_Table_ROW_KEY = '$langhuan.x1.pub-mock-mysql-uuid-key=string:bool_0G7
 const TableData: React.FC = () => {
   const { t } = useTranslation();
   const { connectionId, dbName, tableName } = useDatabaseWindows();
-  console.log(dbName, tableName);
   const [pagination, setPagination] = useState<TablePaginationConfig>();
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
   const [editRow, setEditRow] = useState<Record<string, TMySQLRawData>[]>();
