@@ -33,7 +33,6 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   };
 
   const handleCancel = () => {
-    console.log(132);
     onCancel?.();
     setInputValue('');
   };

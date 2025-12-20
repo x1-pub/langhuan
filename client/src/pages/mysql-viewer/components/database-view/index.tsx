@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import { Button, Card, Form, Input, Modal, Popconfirm, Select, Space, Table, Tag } from 'antd';
+import { Button, Card, Col, Form, Input, Modal, Popconfirm, Row, Select, Table, Tag } from 'antd';
 import type { TableColumnsType } from 'antd';
-import { EyeOutlined, PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 
 import styles from './index.module.less';
 
@@ -44,6 +44,7 @@ const MysqlView: React.FC = () => {
       comment: '订单汇总视图',
     },
   ]);
+  const { t } = useTranslation();
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<TModalMode>('create');
   const [editing, setEditing] = useState<IViewItem | null>(null);
@@ -79,42 +80,29 @@ const MysqlView: React.FC = () => {
         ellipsis: true,
       },
       {
-        title: '操作',
-        width: 200,
-        render: (_, record) => (
-          <Space size="small">
+        title: t('table.operation'),
+        key: 'action',
+        width: 140,
+        render: (_: unknown, record) => (
+          <>
             <Button
               className={styles.columnActionBtn}
-              type="link"
-              icon={<EyeOutlined />}
-              onClick={() => handleView(record)}
-            >
-              查看
-            </Button>
-            <Button
-              className={styles.columnActionBtn}
-              type="link"
-              icon={<EditOutlined />}
+              color="cyan"
+              variant="link"
               onClick={() => handleEdit(record)}
             >
-              编辑
+              {t('button.edit')}
             </Button>
             <Popconfirm
-              title="确认删除?"
-              okText="删除"
-              cancelText="取消"
+              title={t('delete.title')}
+              description={t('delete.desc')}
               onConfirm={() => handleDelete(record.name)}
             >
-              <Button
-                className={styles.columnActionBtn}
-                type="link"
-                danger
-                icon={<DeleteOutlined />}
-              >
-                删除
+              <Button className={styles.columnActionBtn} color="danger" variant="link">
+                {t('button.delete')}
               </Button>
             </Popconfirm>
-          </Space>
+          </>
         ),
       },
     ],
@@ -128,13 +116,6 @@ const MysqlView: React.FC = () => {
       form.resetFields();
       setModalOpen(false);
     }
-  };
-
-  const handleView = (record: IViewItem) => {
-    setModalMode('view');
-    setEditing(record);
-    form.setFieldsValue(record);
-    setModalOpen(true);
   };
 
   const handleEdit = (record: IViewItem) => {
@@ -177,19 +158,18 @@ const MysqlView: React.FC = () => {
     <div className={styles.wrapper}>
       <Card
         className={styles.card}
-        title="视图管理"
+        title={t('mysql.view')}
         extra={
-          <Button color="cyan" variant="link" icon={<PlusOutlined />} onClick={handleCreateClick}>
-            新增
+          <Button color="cyan" variant="link" onClick={handleCreateClick}>
+            {t('button.add')}
           </Button>
         }
       >
         <Table<IViewItem>
-          rowKey={record => record.name}
+          rowKey="name"
           columns={columns}
           dataSource={data}
           pagination={false}
-          size="middle"
           onRow={record => ({
             onDoubleClick: () => handleEdit(record),
           })}
@@ -205,51 +185,54 @@ const MysqlView: React.FC = () => {
           form.resetFields();
         }}
         onOk={handleSave}
-        okText={modalMode === 'view' ? '关闭' : '保存'}
+        width={700}
       >
         <Form<TFormValue>
           layout="vertical"
           form={form}
-          disabled={modalMode === 'view'}
           initialValues={{ checkOption: 'CASCADED', security: 'DEFINER', definer: 'root@%' }}
         >
-          <Form.Item
-            label="视图名"
-            name="name"
-            rules={[{ required: true, message: '请输入视图名' }]}
-          >
-            <Input placeholder="例如 active_users" />
-          </Form.Item>
-          <Form.Item label="定义者" name="definer">
-            <Input placeholder="root@%" />
-          </Form.Item>
-          <Form.Item label="Check Option" name="checkOption" rules={[{ required: true }]}>
-            <Select
-              options={[
-                { value: 'CASCADED', label: 'CASCADED' },
-                { value: 'LOCAL', label: 'LOCAL' },
-              ]}
-            />
-          </Form.Item>
-          <Form.Item label="Security" name="security" rules={[{ required: true }]}>
-            <Select
-              options={[
-                { value: 'DEFINER', label: 'DEFINER' },
-                { value: 'INVOKER', label: 'INVOKER' },
-              ]}
-            />
-          </Form.Item>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item label="视图名" name="name" rules={[{ required: true }]}>
+                <Input placeholder="例如 active_users" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="定义者" name="definer">
+                <Input placeholder="root@%" />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item label="Check Option" name="checkOption" rules={[{ required: true }]}>
+                <Select
+                  options={[
+                    { value: 'CASCADED', label: 'CASCADED' },
+                    { value: 'LOCAL', label: 'LOCAL' },
+                  ]}
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="Security" name="security" rules={[{ required: true }]}>
+                <Select
+                  options={[
+                    { value: 'DEFINER', label: 'DEFINER' },
+                    { value: 'INVOKER', label: 'INVOKER' },
+                  ]}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
           <Form.Item label="Algorithm" name="algorithm">
             <Input placeholder="UNDEFINED / MERGE / TEMPTABLE" />
           </Form.Item>
           <Form.Item label="备注" name="comment">
             <Input placeholder="可选" />
           </Form.Item>
-          <Form.Item
-            label="定义（SQL）"
-            name="definition"
-            rules={[{ required: true, message: '请输入视图定义' }]}
-          >
+          <Form.Item label="定义（SQL）" name="definition" rules={[{ required: true }]}>
             <Input.TextArea
               placeholder={'SELECT * FROM ...'}
               autoSize={{ minRows: 4, maxRows: 10 }}
