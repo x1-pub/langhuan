@@ -110,7 +110,7 @@ const MySQLRawDataEditor: React.FC<MySQLRawDataEditorProps> = ({
     return (
       <DatePicker
         defaultValue={defaultValue}
-        onChange={newValue => handleChange(newValue.format(format))}
+        onChange={newValue => handleChange(newValue?.format(format))}
         showTime={[EMySQLPureType.TIMESTAMP, EMySQLPureType.DATETIME].includes(pureType)}
         format={format}
         // @ts-expect-error PickMode

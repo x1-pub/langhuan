@@ -192,7 +192,7 @@ const FieldEditor: React.FC<FieldEditorProps> = ({ editRow, visible, onSubmit, o
   };
 
   // 处理表单值变化
-  const handleValuesChange = (changedValues: TMysqlBaseColumnInfo) => {
+  const handleValuesChange = (changedValues: Partial<TMysqlBaseColumnInfo>) => {
     if ('defaultValueType' in changedValues) {
       // 当切换默认值类型时清空自定义值
       if (changedValues.defaultValueType !== 'CUSTOM') {
