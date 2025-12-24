@@ -78,7 +78,8 @@ const MongoDBDatabase: React.FC<IMongoDBDatabaseProps> = props => {
               <li key={table.name} className={styles.tableWrap}>
                 <span
                   className={classNames(styles.tableTitle, {
-                    [styles.active]: activeId === generateActiveId(db.name, table.name),
+                    [styles.active]:
+                      activeId === generateActiveId({ dbName: db.name, tableName: table.name }),
                   })}
                   onClick={() => onClickTable?.(db.name, table.name)}
                 >

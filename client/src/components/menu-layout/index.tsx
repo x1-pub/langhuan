@@ -51,7 +51,7 @@ const MenuLayout: React.FC = () => {
       onSuccess(_data, variables) {
         const omitPreDBWind = wind.filter(w => w.dbName !== variables.dbName);
         setWind(omitPreDBWind);
-        const activeId = generateActiveId(omitPreDBWind[0]?.dbName, omitPreDBWind[0]?.tableName);
+        const activeId = generateActiveId(omitPreDBWind[0]);
         setActive(activeId);
         setTableMap(t => omit(t, variables.dbName));
         queryClient.invalidateQueries(databaseListQuery);
@@ -65,10 +65,7 @@ const MenuLayout: React.FC = () => {
           w => !(w.tableName === variables.tableName && w.dbName === variables.dbName),
         );
         setWind(omitPreTableWind);
-        const activeId = generateActiveId(
-          omitPreTableWind[0]?.dbName,
-          omitPreTableWind[0]?.tableName,
-        );
+        const activeId = generateActiveId(omitPreTableWind[0]);
         setActive(activeId);
         tableListMutation.mutateAsync(variables);
       },
@@ -107,10 +104,7 @@ const MenuLayout: React.FC = () => {
         w => !(w.tableName === editorData!.tableName && w.dbName === editorData!.dbName),
       );
       setWind(omitPreTableWind);
-      const activeId = generateActiveId(
-        omitPreTableWind[0]?.dbName,
-        omitPreTableWind[0]?.tableName,
-      );
+      const activeId = generateActiveId(omitPreTableWind[0]);
       setActive(activeId);
       tableListMutation.mutateAsync({
         type: connectionType,
@@ -122,7 +116,7 @@ const MenuLayout: React.FC = () => {
     if (editorData!.type === EEditorType.EDIT_DB) {
       const omitPreDBWind = wind.filter(w => w.dbName !== editorData!.dbName);
       setWind(omitPreDBWind);
-      const activeId = generateActiveId(omitPreDBWind[0]?.dbName, omitPreDBWind[0]?.tableName);
+      const activeId = generateActiveId(omitPreDBWind[0]);
       setActive(activeId);
       databaseListQuery.refetch();
     }
@@ -131,10 +125,8 @@ const MenuLayout: React.FC = () => {
   };
 
   const handleOpenTable = (dbName: string, tableName?: string, specialWind?: ESpecialWind) => {
-    const activeId = generateActiveId(dbName, tableName, specialWind);
-    const hasOpen = wind.find(
-      p => generateActiveId(p.dbName, p.tableName, p.specialWind) === activeId,
-    );
+    const activeId = generateActiveId({ dbName, tableName, specialWind });
+    const hasOpen = wind.find(p => generateActiveId(p) === activeId);
     setWind(hasOpen ? wind : [...wind, { dbName, tableName, specialWind }]);
     setActive(activeId);
   };

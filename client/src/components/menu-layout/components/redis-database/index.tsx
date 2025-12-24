@@ -31,7 +31,7 @@ const RedisDatabase: React.FC<IRedisDatabaseProps> = ({
         <List.Item>
           <span
             className={classNames(styles.redis, {
-              [styles.active]: activeId === generateActiveId(item.name),
+              [styles.active]: activeId === generateActiveId({ dbName: item.name }),
             })}
             onClick={() => onClick?.(item.name)}
           >

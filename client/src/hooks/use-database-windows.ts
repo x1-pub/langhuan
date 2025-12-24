@@ -34,12 +34,8 @@ export const DatabaseWindowsContext = createContext<IDatabaseWindowsContext>({
   setActive: () => {},
 });
 
-export const generateActiveId = (
-  dbName: string,
-  tableName: string = 'NO_TABLE',
-  specialWind?: ESpecialWind,
-) => {
-  return `${dbName}${CONNECTOR}${tableName}${CONNECTOR}${specialWind || ''}`;
+export const generateActiveId = (wind: IWind) => {
+  return `${wind.dbName}${CONNECTOR}${wind.tableName || 'NO_TABLE'}${CONNECTOR}${wind.specialWind || ''}`;
 };
 
 export const parseActiveId = (activeId: string) => {
