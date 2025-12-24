@@ -64,7 +64,7 @@ const TableSwitcher: React.FC<ITableSwitcherProps> = ({ children }) => {
   const tabItems: TabsProps['items'] = useMemo(
     () =>
       wind.map(c => ({
-        key: generateActiveId(c.dbName, c.tableName, c.specialWind),
+        key: generateActiveId(c),
         label: renderTabItemLabel(c),
         children: typeof children === 'function' ? children(c) : children,
         forceRender: true,
@@ -84,10 +84,10 @@ const TableSwitcher: React.FC<ITableSwitcherProps> = ({ children }) => {
       return;
     }
 
-    const list = wind.filter(w => generateActiveId(w.dbName, w.tableName) !== targetKey);
+    const list = wind.filter(w => generateActiveId(w) !== targetKey);
     setWind(list);
     if (targetKey === active) {
-      const activeId = generateActiveId(list[0]?.dbName, list[0]?.tableName);
+      const activeId = generateActiveId(list[0]);
       setActive(activeId);
     }
   };

@@ -97,7 +97,8 @@ const MysqlDatabase: React.FC<IMysqlDatabaseProps> = props => {
               <span
                 className={classNames(styles.tableTitle, {
                   [styles.active]:
-                    activeId === generateActiveId(db.name, undefined, ESpecialWind.MYSQL_FUNCTION),
+                    activeId ===
+                    generateActiveId({ dbName: db.name, specialWind: ESpecialWind.MYSQL_FUNCTION }),
                 })}
                 onClick={() => onClickTable?.(db.name, undefined, ESpecialWind.MYSQL_FUNCTION)}
               >
@@ -109,7 +110,8 @@ const MysqlDatabase: React.FC<IMysqlDatabaseProps> = props => {
               <span
                 className={classNames(styles.tableTitle, {
                   [styles.active]:
-                    activeId === generateActiveId(db.name, undefined, ESpecialWind.MYSQL_VIEW),
+                    activeId ===
+                    generateActiveId({ dbName: db.name, specialWind: ESpecialWind.MYSQL_VIEW }),
                 })}
                 onClick={() => onClickTable?.(db.name, undefined, ESpecialWind.MYSQL_VIEW)}
               >
@@ -121,7 +123,8 @@ const MysqlDatabase: React.FC<IMysqlDatabaseProps> = props => {
               <span
                 className={classNames(styles.tableTitle, {
                   [styles.active]:
-                    activeId === generateActiveId(db.name, undefined, ESpecialWind.MYSQL_ENENT),
+                    activeId ===
+                    generateActiveId({ dbName: db.name, specialWind: ESpecialWind.MYSQL_ENENT }),
                 })}
                 onClick={() => onClickTable?.(db.name, undefined, ESpecialWind.MYSQL_ENENT)}
               >
@@ -133,7 +136,8 @@ const MysqlDatabase: React.FC<IMysqlDatabaseProps> = props => {
               <li key={table.name} className={styles.tableWrap}>
                 <span
                   className={classNames(styles.tableTitle, {
-                    [styles.active]: activeId === generateActiveId(db.name, table.name),
+                    [styles.active]:
+                      activeId === generateActiveId({ dbName: db.name, tableName: table.name }),
                   })}
                   onClick={() => onClickTable?.(db.name, table.name)}
                 >
