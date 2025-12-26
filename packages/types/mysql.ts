@@ -128,6 +128,18 @@ export enum EMySQLTriggerTiming {
 
 export type TMySQLTrigger = z.infer<typeof MySQLBaseTrigger>;
 
+export enum EMysqlFunctionDataAccess {
+  CONTAINS_SQL = 'CONTAINS SQL',
+  NO_SQL = 'NO SQL',
+  READS_SQL_DATA = 'READS SQL DATA',
+  MODIFIES_SQL_DATA = 'MODIFIES SQL DATA',
+}
+
+export enum EMysqlFunctionSecurity {
+  DEFINER = 'DEFINER',
+  INVOKER = 'INVOKER',
+}
+
 export enum EMySQLPureType {
   // 字符串类型
   CHAR = 'char',

@@ -80,15 +80,16 @@ const TableSwitcher: React.FC<ITableSwitcherProps> = ({ children }) => {
     targetKey: React.MouseEvent | React.KeyboardEvent | string,
     action: string,
   ) => {
-    if (action === 'add') {
-      return;
-    }
+    if (action === 'add') return;
 
     const list = wind.filter(w => generateActiveId(w) !== targetKey);
     setWind(list);
-    if (targetKey === active) {
+
+    if (list.length > 0) {
       const activeId = generateActiveId(list[0]);
       setActive(activeId);
+    } else {
+      setActive('');
     }
   };
 

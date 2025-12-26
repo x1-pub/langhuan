@@ -11,5 +11,5 @@
       "@packages/*": ["../packages/*"]
     }
   },
-  "include": ["src/index.ts"]
+  "include": ["src/**/*.ts"]
 }

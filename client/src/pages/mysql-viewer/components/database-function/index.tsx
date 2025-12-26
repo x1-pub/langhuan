@@ -1,83 +1,115 @@
 import React, { useMemo, useState } from 'react';
-import { Button, Card, Col, Form, Input, Modal, Popconfirm, Row, Switch, Table, Tag } from 'antd';
+import {
+  Button,
+  Card,
+  Col,
+  Form,
+  Input,
+  Modal,
+  Popconfirm,
+  Row,
+  Select,
+  Switch,
+  Table,
+  Tag,
+} from 'antd';
 import type { TableColumnsType } from 'antd';
 import { useTranslation } from 'react-i18next';
+import { useQuery, useMutation } from '@tanstack/react-query';
 
+import { trpc, RouterInput } from '@/utils/trpc';
+import useDatabaseWindows from '@/hooks/use-database-windows';
+import { EMysqlFunctionDataAccess, EMysqlFunctionSecurity } from '@packages/types/mysql';
+import MySQLColumnTypeSelector from '@/components/mysql-column-type-selector';
 import styles from './index.module.less';
 
-interface IFunctionItem {
-  name: string;
-  returns: string;
-  deterministic: boolean;
-  definer: string;
-  definition: string;
-  comment?: string;
-}
-
-type TModalMode = 'create' | 'edit' | 'view';
-
-type TFormValue = IFunctionItem;
+type TFormValue = Omit<RouterInput['mysql']['createFunction'], 'connectionId' | 'dbName'>;
 
 const MysqlFunction: React.FC = () => {
-  const [data, setData] = useState<IFunctionItem[]>([
-    {
-      name: 'add_tax',
-      returns: 'DECIMAL(10,2)',
-      deterministic: true,
-      definer: 'root@%',
-      definition:
-        'BEGIN\n  DECLARE result DECIMAL(10,2);\n  SET result = amount * 1.06;\n  RETURN result;\nEND',
-      comment: '税额计算函数',
-    },
-    {
-      name: 'uuid_short_str',
-      returns: 'VARCHAR(32)',
-      deterministic: false,
-      definer: 'app@localhost',
-      definition: 'BEGIN\n  RETURN REPLACE(UUID(), "-", "");\nEND',
-      comment: '生成 uuid 字符串',
-    },
-  ]);
   const { t } = useTranslation();
+  const { connectionId, dbName } = useDatabaseWindows();
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState<TModalMode>('create');
-  const [editing, setEditing] = useState<IFunctionItem | null>(null);
+  const [editing, setEditing] = useState<TFormValue | null>(null);
   const [form] = Form.useForm<TFormValue>();
 
-  const columns: TableColumnsType<IFunctionItem> = useMemo(
+  const getFunctionsQuery = useQuery(
+    trpc.mysql.getFunctions.queryOptions({
+      connectionId,
+      dbName,
+    }),
+  );
+
+  const createFunctionMutation = useMutation(
+    trpc.mysql.createFunction.mutationOptions({
+      onSuccess: () => getFunctionsQuery.refetch(),
+    }),
+  );
+
+  const updateFunctionMutation = useMutation(
+    trpc.mysql.updateFunction.mutationOptions({
+      onSuccess: () => getFunctionsQuery.refetch(),
+    }),
+  );
+
+  const deleteFunctionMutation = useMutation(
+    trpc.mysql.deleteFunction.mutationOptions({
+      onSuccess: () => getFunctionsQuery.refetch(),
+    }),
+  );
+
+  const handleCreateClick = () => {
+    setEditing(null);
+    form.resetFields();
+    form.setFieldsValue({
+      deterministic: true,
+      params: [],
+    });
+    setModalOpen(true);
+  };
+
+  const columns: TableColumnsType<TFormValue> = useMemo(
     () => [
       {
         title: '函数名',
         dataIndex: 'name',
-        width: 180,
       },
       {
         title: '返回类型',
         dataIndex: 'returns',
-        width: 160,
       },
       {
         title: '确定性',
         dataIndex: 'deterministic',
-        width: 120,
+        width: 140,
         render: value => (
-          <Tag color={value ? 'success' : 'default'}>
-            {value ? 'DETERMINISTIC' : 'NOT DETERMINISTIC'}
+          <Tag color={value === false ? 'default' : 'success'}>
+            {value === false ? 'NO' : 'YES'}
           </Tag>
         ),
       },
       {
-        title: '定义者',
-        dataIndex: 'definer',
-        width: 160,
+        title: '数据选项',
+        dataIndex: 'sqlDataAccess',
+      },
+      {
+        title: 'SQL安全性',
+        dataIndex: 'security',
       },
       {
         title: '备注',
         dataIndex: 'comment',
+        maxWidth: 200,
         ellipsis: true,
       },
       {
-        title: t('table.operation'),
+        title: (
+          <>
+            {t('table.operation')}
+            <Button color="cyan" variant="link" onClick={handleCreateClick}>
+              {t('button.add')}
+            </Button>
+          </>
+        ),
         key: 'action',
         width: 140,
         render: (_: unknown, record) => (
@@ -103,11 +135,11 @@ const MysqlFunction: React.FC = () => {
         ),
       },
     ],
-    [],
+    [t],
   );
 
-  const handleDelete = (name: string) => {
-    setData(prev => prev.filter(item => item.name !== name));
+  const handleDelete = async (name: string) => {
+    await deleteFunctionMutation.mutateAsync({ connectionId, dbName, name });
     if (editing?.name === name) {
       setEditing(null);
       form.resetFields();
@@ -115,35 +147,28 @@ const MysqlFunction: React.FC = () => {
     }
   };
 
-  const handleEdit = (record: IFunctionItem) => {
-    setModalMode('edit');
+  const handleEdit = (record: TFormValue) => {
     setEditing(record);
-    form.setFieldsValue(record);
-    setModalOpen(true);
-  };
-
-  const handleCreateClick = () => {
-    setModalMode('create');
-    setEditing(null);
-    form.resetFields();
-    form.setFieldsValue({ deterministic: true, definer: 'root@%' } as TFormValue);
+    form.setFieldsValue({
+      ...record,
+      deterministic: record.deterministic !== false,
+    });
     setModalOpen(true);
   };
 
   const handleSave = async () => {
-    if (modalMode === 'view') {
-      setModalOpen(false);
-      setEditing(null);
-      form.resetFields();
-      return;
-    }
-
     const values = await form.validateFields();
+    const payload = {
+      connectionId,
+      dbName,
+      ...values,
+      deterministic: values.deterministic !== false,
+    };
 
-    if (modalMode === 'edit' && editing) {
-      setData(prev => prev.map(item => (item.name === editing.name ? values : item)));
+    if (editing) {
+      await updateFunctionMutation.mutateAsync({ ...payload, oldName: editing.name });
     } else {
-      setData(prev => [values, ...prev]);
+      await createFunctionMutation.mutateAsync(payload);
     }
 
     setModalOpen(false);
@@ -153,28 +178,20 @@ const MysqlFunction: React.FC = () => {
 
   return (
     <div className={styles.wrapper}>
-      <Card
-        className={styles.card}
-        title={t('mysql.function')}
-        extra={
-          <Button color="cyan" variant="link" onClick={handleCreateClick}>
-            {t('button.add')}
-          </Button>
-        }
-      >
-        <Table<IFunctionItem>
-          rowKey={record => record.name}
-          columns={columns}
-          dataSource={data}
-          pagination={false}
-          onRow={record => ({
-            onDoubleClick: () => handleEdit(record),
-          })}
-        />
-      </Card>
+      <Table<TFormValue>
+        rowKey={record => record.name}
+        columns={columns}
+        dataSource={getFunctionsQuery.data}
+        loading={getFunctionsQuery.isLoading}
+        pagination={false}
+        onRow={record => ({
+          onDoubleClick: () => handleEdit(record),
+        })}
+        scroll={{ y: '200px' }}
+      />
 
       <Modal
-        title={modalMode === 'view' ? '查看函数' : modalMode === 'edit' ? '编辑函数' : '新建函数'}
+        title={editing ? '编辑函数' : '新建函数'}
         open={modalOpen}
         onCancel={() => {
           setModalOpen(false);
@@ -182,46 +199,117 @@ const MysqlFunction: React.FC = () => {
           form.resetFields();
         }}
         onOk={handleSave}
-        width={700}
+        width={780}
+        confirmLoading={
+          createFunctionMutation.isPending ||
+          updateFunctionMutation.isPending ||
+          deleteFunctionMutation.isPending
+        }
       >
-        <Form<TFormValue>
-          layout="vertical"
-          form={form}
-          disabled={modalMode === 'view'}
-          initialValues={{ deterministic: true, definer: 'root@%' }}
-        >
+        <Form<TFormValue> layout="vertical" form={form}>
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item label="函数名" name="name" rules={[{ required: true }]}>
-                <Input placeholder="例如 add_tax" />
+                <Input />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item label="返回类型" name="returns" rules={[{ required: true }]}>
-                <Input placeholder="DECIMAL(10,2)" />
+              <Form.Item label="具有确定性" name="deterministic" valuePropName="checked">
+                <Switch checkedChildren="YES" unCheckedChildren="NO" />
               </Form.Item>
             </Col>
           </Row>
+
+          <Form.Item label="返回类型" name="returns" rules={[{ required: true }]}>
+            <MySQLColumnTypeSelector />
+          </Form.Item>
+
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item label="确定性" name="deterministic" valuePropName="checked">
-                <Switch checkedChildren="DETERMINISTIC" unCheckedChildren="NOT" />
+              <Form.Item label="SQL安全性" name="security">
+                <Select
+                  allowClear
+                  options={Object.values(EMysqlFunctionSecurity).map(o => ({
+                    label: o.toLocaleUpperCase(),
+                    value: o.toLocaleUpperCase(),
+                  }))}
+                />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item label="定义者" name="definer">
-                <Input placeholder="root@%" />
+              <Form.Item label="数据选项" name="sqlDataAccess">
+                <Select
+                  allowClear
+                  options={Object.values(EMysqlFunctionDataAccess).map(o => ({
+                    label: o.toLocaleUpperCase(),
+                    value: o.toLocaleUpperCase(),
+                  }))}
+                />
               </Form.Item>
             </Col>
           </Row>
-          <Form.Item label="备注" name="comment">
-            <Input placeholder="可选" />
-          </Form.Item>
-          <Form.Item label="定义（SQL）" name="definition" rules={[{ required: true }]}>
+
+          <Form.List name="params">
+            {(fields, { add, remove }) => (
+              <Card
+                size="small"
+                title="参数"
+                style={{ marginBottom: 12 }}
+                extra={
+                  <Button color="cyan" variant="link" onClick={() => add()}>
+                    添加参数
+                  </Button>
+                }
+              >
+                {fields.length === 0 && <div style={{ color: '#888' }}>无参数函数请留空</div>}
+                {fields.map(field => (
+                  <Row gutter={12} key={field.key}>
+                    <Col span={10}>
+                      <Form.Item
+                        {...field}
+                        label="名称"
+                        name={[field.name, 'name']}
+                        rules={[{ required: true }]}
+                        key={field.key}
+                      >
+                        <Input placeholder="arg1" />
+                      </Form.Item>
+                    </Col>
+                    <Col span={11}>
+                      <Form.Item
+                        {...field}
+                        label="类型"
+                        name={[field.name, 'type']}
+                        rules={[{ required: true }]}
+                        key={field.key}
+                      >
+                        <MySQLColumnTypeSelector />
+                      </Form.Item>
+                    </Col>
+                    <Col span={3} style={{ display: 'flex', alignItems: 'center' }}>
+                      <Button danger type="link" onClick={() => remove(field.name)}>
+                        删除
+                      </Button>
+                    </Col>
+                  </Row>
+                ))}
+              </Card>
+            )}
+          </Form.List>
+
+          <Form.Item
+            label="函数体"
+            name="body"
+            rules={[{ required: true, message: '请输入函数体' }]}
+          >
             <Input.TextArea
-              placeholder={'BEGIN\n  -- your sql here\nEND'}
-              autoSize={{ minRows: 4, maxRows: 10 }}
+              placeholder={'BEGIN\n  -- your sql here\n  RETURN 0;\nEND'}
+              autoSize={{ minRows: 6, maxRows: 14 }}
             />
+          </Form.Item>
+
+          <Form.Item label="备注" name="comment">
+            <Input />
           </Form.Item>
         </Form>
       </Modal>

@@ -7,6 +7,8 @@ import {
   EMySQLOrder,
   EMySQLTriggerEvent,
   EMySQLTriggerTiming,
+  EMysqlFunctionDataAccess,
+  EMysqlFunctionSecurity,
 } from '../types/mysql';
 
 export const MySQLProcessedDataSchema = z.union([
@@ -32,7 +34,6 @@ const ConditionItemSchema = z.record(z.string(), MySQLProcessedDataSchema);
 export const MysqlBaseColumnInfoSchema = z.object({
   fieldName: z.string(),
   fieldType: z.string(),
-  fieldExtra: z.string().optional(),
   allowNull: z.boolean().optional(),
   defaultValue: z.string().optional(),
   defaultValueType: z.enum(Object.values(EMySQLFieldDefaultType)).optional(),
@@ -126,5 +127,35 @@ export const DeleteTriggerSchema = MySQLBaseSchema.extend({
 });
 
 export const UpdateTriggerSchema = AddTriggerSchema.extend({
+  oldName: z.string(),
+});
+
+export const GetFunctionsSchema = z.object({
+  connectionId: z.int(),
+  dbName: z.string(),
+});
+
+export const DeleteFunctionSchema = GetFunctionsSchema.extend({
+  name: z.string(),
+});
+
+export const BaseFunctionSchema = DeleteFunctionSchema.extend({
+  params: z
+    .array(
+      z.object({
+        name: z.string(),
+        type: z.string(),
+      }),
+    )
+    .optional(),
+  returns: z.string(),
+  deterministic: z.boolean().optional(),
+  sqlDataAccess: z.enum(Object.values(EMysqlFunctionDataAccess)).optional(),
+  body: z.string(),
+  comment: z.string().optional(),
+  security: z.enum(Object.values(EMysqlFunctionSecurity)).optional(),
+});
+
+export const UpdateFunctionSchema = BaseFunctionSchema.extend({
   oldName: z.string(),
 });
