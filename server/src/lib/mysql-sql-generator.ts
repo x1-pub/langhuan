@@ -98,7 +98,6 @@ const generateMySQLBaseColumnInfoSQL = (
 ) => {
   const {
     fieldType,
-    fieldExtra,
     allowNull,
     defaultValue,
     defaultValueType,
@@ -111,12 +110,6 @@ const generateMySQLBaseColumnInfoSQL = (
     collation,
     comment,
   } = input;
-
-  // 构建类型部分
-  let typeStr = fieldType;
-  if (fieldExtra) {
-    typeStr += `(${fieldExtra})`;
-  }
 
   const attributes: string[] = [];
 
@@ -164,7 +157,7 @@ const generateMySQLBaseColumnInfoSQL = (
     attributes.push(`COMMENT ${v}`);
   }
 
-  return `${typeStr} ${attributes.join(' ')}`;
+  return `${fieldType} ${attributes.join(' ')}`;
 };
 
 export const generateMySQLAddColumnSQL = (
@@ -189,3 +182,50 @@ export const generateMySQLUpdateColumnSQL = (
 
   return `ALTER TABLE ${escapedTableName} CHANGE COLUMN ${escapedOldFieldName} ${escapedFieldName} ${base}`;
 };
+
+export const generateMySQLGetFunctionsSQL = () => `
+  SELECT
+    r.ROUTINE_SCHEMA                             AS db_name,
+    r.ROUTINE_NAME                               AS function_name,
+    GROUP_CONCAT(
+      CONCAT(
+        CASE WHEN p.PARAMETER_MODE IS NULL THEN '' ELSE ' ' END,
+        p.PARAMETER_NAME, ' ',
+        p.DTD_IDENTIFIER
+      )
+      ORDER BY p.ORDINAL_POSITION
+      SEPARATOR ', '
+    )                                            AS params,
+    r.DTD_IDENTIFIER                             AS returns,
+    r.IS_DETERMINISTIC                           AS is_deterministic,
+    r.SQL_DATA_ACCESS                            AS sql_data_access,
+    r.SECURITY_TYPE                              AS security_type,
+    r.DEFINER                                    AS definer,
+    r.ROUTINE_COMMENT                            AS comment,
+    r.ROUTINE_DEFINITION                         AS body,
+    r.CREATED                                    AS created_at,
+    r.LAST_ALTERED                               AS updated_at
+  FROM
+    information_schema.ROUTINES r
+    LEFT JOIN information_schema.PARAMETERS p
+      ON  p.SPECIFIC_SCHEMA = r.ROUTINE_SCHEMA
+      AND p.SPECIFIC_NAME  = r.ROUTINE_NAME
+      AND p.ROUTINE_TYPE   = 'FUNCTION'
+  WHERE
+    r.ROUTINE_SCHEMA = ?
+    AND r.ROUTINE_TYPE = 'FUNCTION'
+  GROUP BY
+    r.ROUTINE_SCHEMA,
+    r.ROUTINE_NAME,
+    r.DTD_IDENTIFIER,
+    r.IS_DETERMINISTIC,
+    r.SQL_DATA_ACCESS,
+    r.SECURITY_TYPE,
+    r.DEFINER,
+    r.ROUTINE_COMMENT,
+    r.ROUTINE_DEFINITION,
+    r.CREATED,
+    r.LAST_ALTERED
+  ORDER BY
+    r.ROUTINE_NAME;
+`;

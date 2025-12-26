@@ -2,7 +2,7 @@ import { QueryCache, QueryClient } from '@tanstack/react-query';
 import { createTRPCOptionsProxy } from '@trpc/tanstack-react-query';
 import { createTRPCClient, httpBatchLink, TRPCClientErrorLike } from '@trpc/client';
 
-import type { inferRouterOutputs } from '@trpc/server';
+import type { inferRouterOutputs, inferRouterInputs } from '@trpc/server';
 import type { AppRouter } from '../../../server/src/router';
 import { showError } from './global-notification';
 
@@ -21,6 +21,8 @@ export const trpcClient = createTRPCClient<AppRouter>({
 });
 
 export type RouterOutput = inferRouterOutputs<AppRouter>;
+export type RouterInput = inferRouterInputs<AppRouter>;
+
 export const queryClient = new QueryClient({
   queryCache: new QueryCache({
     onError: extractError,

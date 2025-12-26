@@ -7,6 +7,7 @@ import useDatabaseWindows from '@/hooks/use-database-windows';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import { EMySQLFieldDefaultType, IMySQLColumn, TMysqlBaseColumnInfo } from '@packages/types/mysql';
 import { trpc } from '@/utils/trpc';
+import MySQLColumnTypeSelector from '@/components/mysql-column-type-selector';
 
 interface FieldEditorProps {
   editRow?: IMySQLColumn;
@@ -14,56 +15,6 @@ interface FieldEditorProps {
   onSubmit: () => void;
   onCancel: () => void;
 }
-
-// 类型选项
-const FIELD_TYPES = [
-  'INT',
-  'FLOAT',
-  'DOUBLE',
-  'CHAR',
-  'VARCHAR',
-  'TEXT',
-  'JSON',
-  'DATETIME',
-  'TIMESTAMP',
-  'YEAR',
-  'TIME',
-  'DATE',
-
-  'TINYTEXT',
-  'MEDIUMTEXT',
-  'LONGTEXT',
-  'ENUM',
-  'SET',
-
-  'TINYINT',
-  'SMALLINT',
-  'MEDIUMINT',
-  'INTEGER',
-  'BIGINT',
-  'DECIMAL',
-  'NUMERIC',
-  'BOOLEAN',
-  'BOOL',
-  'REAL',
-  'BIT',
-
-  'BINARY',
-  'VARBINARY',
-  'BLOB',
-  'MEDIUMBLOB',
-  'TINYBLOB',
-  'LONGBLOB',
-
-  'GEOMETRY',
-  'POINT',
-  'LINESTRING',
-  'POLYGON',
-  'MULTIPOINT',
-  'MULTILINESTRING',
-  'MULTIPOLYGON',
-  'GEOMCOLLECTION',
-];
 
 // 字符集和排序规则选项
 const CHARSET_OPTIONS = [
@@ -83,28 +34,6 @@ const COLLATION_OPTIONS = {
   ],
   latin1: [{ value: 'latin1_swedish_ci', label: 'latin1_swedish_ci' }],
 };
-
-// 显示长度的字段类型
-const needLengthTypes = [
-  'TINYINT',
-  'SMALLINT',
-  'MEDIUMINT',
-  'INT',
-  'INTEGER',
-  'BIGINT',
-  'BIT',
-  'CHAR',
-  'VARCHAR',
-];
-
-// 显示精度的字段类型
-const needPrecisionTypes = ['FLOAT', 'DOUBLE', 'DECIMAL', 'NUMERIC', 'REAL', 'BINARY'];
-
-// 显示枚举值的字段类型
-const needEnumTypes = ['ENUM', 'SET'];
-
-// 必须填长度的字段
-const varTypes = ['VARCHAR', 'VARBINARY'];
 
 // 显示无符号/补零
 const needFillZeroTypes = [
@@ -145,7 +74,6 @@ const FieldEditor: React.FC<FieldEditorProps> = ({ editRow, visible, onSubmit, o
   const [form] = Form.useForm<TMysqlBaseColumnInfo>();
   const selectedType = Form.useWatch('fieldType', form);
   const charsetValue = Form.useWatch('charset', form);
-  const fieldExtraValue = Form.useWatch('fieldExtra', form);
   const defaultValueType = Form.useWatch('defaultValueType', form);
 
   const addColumnMutation = useMutation(trpc.mysql.addColumn.mutationOptions());
@@ -236,18 +164,14 @@ const FieldEditor: React.FC<FieldEditorProps> = ({ editRow, visible, onSubmit, o
         defaultForm.comment = Comment;
       }
       if (Type) {
-        const [allType, ...rest] = Type.split(' ');
+        const [fullType, ...rest] = Type.split(' ');
         if (rest.includes('unsigned')) {
           defaultForm.unsigned = true;
         }
         if (rest.includes('zerofill')) {
           defaultForm.zerofill = true;
         }
-        const [, type = '', extra] = allType.match(/(.+)\((.+)\)/) || [];
-        defaultForm.fieldType = (type || Type).toLocaleUpperCase();
-        if (extra) {
-          defaultForm.fieldExtra = extra;
-        }
+        defaultForm.fieldType = fullType;
       }
       form.setFieldsValue(defaultForm);
     }
@@ -288,39 +212,10 @@ const FieldEditor: React.FC<FieldEditorProps> = ({ editRow, visible, onSubmit, o
 
           <Col span={12}>
             <Form.Item label={t('table.type')} name="fieldType" rules={[{ required: true }]}>
-              <Select showSearch options={FIELD_TYPES.map(t => ({ value: t, label: t }))} />
+              <MySQLColumnTypeSelector />
             </Form.Item>
           </Col>
         </Row>
-
-        {[...needLengthTypes, ...needPrecisionTypes, ...needEnumTypes, ...varTypes].includes(
-          selectedType,
-        ) && (
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                label={t('table.columnTypeAA')}
-                name="fieldExtra"
-                tooltip={
-                  <div>
-                    <div>{t('table.e1')}:</div>
-                    <div>1. {t('table.e2')}</div>
-                    <div>2. {t('table.e3')}</div>
-                    <div>3. {t('table.e4')}</div>
-                  </div>
-                }
-                rules={[{ required: varTypes.includes(selectedType) }]}
-              >
-                <Input autoComplete="off" />
-              </Form.Item>
-            </Col>
-            {!!fieldExtraValue && (
-              <Col span={12}>
-                <Form.Item label=" ">{`${selectedType}(${fieldExtraValue})`}</Form.Item>
-              </Col>
-            )}
-          </Row>
-        )}
 
         <Row gutter={16}>
           <Col span={6}>
@@ -328,7 +223,6 @@ const FieldEditor: React.FC<FieldEditorProps> = ({ editRow, visible, onSubmit, o
               <Checkbox>{t('table.allowNull')}</Checkbox>
             </Form.Item>
           </Col>
-
           {autoIncrementTypes.includes(selectedType) && (
             <Col span={6}>
               <Form.Item name="autoIncrement" valuePropName="checked">

@@ -1,11 +1,10 @@
 .wrapper {
   padding: 10px;
-}
 
-.card {
   :global {
-    .langhuan-card-body {
-      padding: 5px;
+    .langhuan-table-container > .langhuan-table-body {
+      overflow: auto scroll !important;
+      max-height: calc(100vh - 195px) !important;
     }
   }
 }
