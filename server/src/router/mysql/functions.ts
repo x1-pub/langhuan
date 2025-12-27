@@ -11,16 +11,10 @@ import { protectedProcedure, router } from '../../trpc';
 import { escapedMySQLName } from '../../lib/utils';
 import { EMysqlFunctionDataAccess, EMysqlFunctionSecurity } from '@packages/types/mysql';
 
-interface IOriginFunctionParam {
-  name?: string;
-  type?: string;
-  mode?: string;
-}
-
 interface IOriginFunction {
   function_name: string;
   returns: string;
-  params?: string | IOriginFunctionParam[];
+  params_raw?: string | null;
   is_deterministic: 'YES' | 'NO';
   sql_data_access: EMysqlFunctionDataAccess;
   security_type: EMysqlFunctionSecurity;
@@ -29,17 +23,20 @@ interface IOriginFunction {
   body: string;
 }
 
+const FUNCTION_PARAMS_SEPARATOR = '{LANGHUAN_FUNCTION_PARAMS_SEPARATOR_18sdfl1a9012klnz@12309}';
 const GET_FUNCTIONS_SQL = `
   SELECT
     r.ROUTINE_SCHEMA AS db_name,
     r.ROUTINE_NAME AS function_name,
-    JSON_ARRAYAGG(
-      JSON_OBJECT(
-        'name', p.PARAMETER_NAME,
-        'mode', COALESCE(p.PARAMETER_MODE, ''),
-        'type', p.DTD_IDENTIFIER
-      ) ORDER BY p.ORDINAL_POSITION
-    ) AS params,
+    GROUP_CONCAT(
+      CONCAT(
+        CASE WHEN p.PARAMETER_MODE IS NULL THEN '' ELSE ' ' END,
+        p.PARAMETER_NAME, ' ',
+        p.DTD_IDENTIFIER
+      )
+      ORDER BY p.ORDINAL_POSITION
+      SEPARATOR '${FUNCTION_PARAMS_SEPARATOR}'
+    ) AS params_raw,
     r.DTD_IDENTIFIER AS returns,
     r.IS_DETERMINISTIC AS is_deterministic,
     r.SQL_DATA_ACCESS AS sql_data_access,
@@ -71,22 +68,19 @@ const GET_FUNCTIONS_SQL = `
   ORDER BY r.ROUTINE_NAME;
 `;
 
-const parseParams = (raw: IOriginFunction['params']) => {
+const parseParams = (raw: IOriginFunction['params_raw']) => {
   if (!raw) return undefined;
-  try {
-    const arr: IOriginFunctionParam[] = Array.isArray(raw)
-      ? raw
-      : typeof raw === 'string'
-        ? JSON.parse(raw)
-        : [];
-    const cleaned = arr
-      .filter(Boolean)
-      .map(p => ({ name: p.name || '', type: p.type || '' }))
-      .filter(p => p.name || p.type);
-    return cleaned.length ? cleaned : undefined;
-  } catch {
-    return undefined;
-  }
+  const cleaned = `${raw}`
+    .split(FUNCTION_PARAMS_SEPARATOR)
+    .map(s => s.trim())
+    .filter(Boolean)
+    .map(str => {
+      const idx = str.indexOf(' ');
+      if (idx === -1) return { name: str, type: '' };
+      return { name: str.slice(0, idx), type: str.slice(idx + 1) };
+    })
+    .filter(p => p.name || p.type);
+  return cleaned.length ? cleaned : undefined;
 };
 
 const mysqlFunctionsRouter = router({
@@ -99,6 +93,8 @@ const mysqlFunctionsRouter = router({
       type: QueryTypes.SELECT,
     });
 
+    console.log(functions);
+
     const result: z.infer<typeof BaseFunctionSchema>[] = functions.map(fun => ({
       connectionId,
       dbName,
@@ -109,7 +105,7 @@ const mysqlFunctionsRouter = router({
       sqlDataAccess: fun.sql_data_access,
       comment: fun.comment,
       security: fun.security_type,
-      params: parseParams(fun.params),
+      params: parseParams(fun.params_raw),
     }));
 
     return result;
