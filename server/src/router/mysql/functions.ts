@@ -93,8 +93,6 @@ const mysqlFunctionsRouter = router({
       type: QueryTypes.SELECT,
     });
 
-    console.log(functions);
-
     const result: z.infer<typeof BaseFunctionSchema>[] = functions.map(fun => ({
       connectionId,
       dbName,
