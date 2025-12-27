@@ -5,6 +5,8 @@ import mysqlDataRouter from './data';
 import mysqlColumnRouter from './column';
 import mysqlTriggersRouter from './triggers';
 import mysqlIndexesRouter from './indexes';
+import mysqlEventsRouter from './events';
+import mysqlViewsRouter from './views';
 
 const mysqlRouter = mergeRouters(
   mysqlFunctionsRouter,
@@ -12,6 +14,8 @@ const mysqlRouter = mergeRouters(
   mysqlColumnRouter,
   mysqlTriggersRouter,
   mysqlIndexesRouter,
+  mysqlEventsRouter,
+  mysqlViewsRouter,
   mysqlOthersRouter,
 );
 

@@ -1,57 +1,70 @@
 import React, { useMemo, useState } from 'react';
-import { Button, Card, Col, Form, Input, Modal, Popconfirm, Row, Switch, Table, Tag } from 'antd';
+import { Button, Col, Form, Input, Modal, Popconfirm, Row, Switch, Table, Tag } from 'antd';
 import type { TableColumnsType } from 'antd';
 import { useTranslation } from 'react-i18next';
+import { useQuery, useMutation } from '@tanstack/react-query';
 
+import { trpc, RouterInput, RouterOutput } from '@/utils/trpc';
+import useDatabaseWindows from '@/hooks/use-database-windows';
+import { EMySQLEventStatus } from '@packages/types/mysql';
 import styles from './index.module.less';
 
-type TEventStatus = 'ENABLED' | 'DISABLED';
+type TFormValue = Omit<
+  RouterInput['mysql']['createEvent'],
+  'connectionId' | 'dbName' | 'status'
+> & {
+  status: boolean;
+};
 
-type TFormValue = Omit<IEventItem, 'status'> & { status: boolean };
-
-type TModalMode = 'create' | 'edit' | 'view';
-
-interface IEventItem {
-  name: string;
-  schedule: string;
-  status: TEventStatus;
-  definer: string;
-  definition: string;
-  comment?: string;
-}
+type TEventItem = RouterOutput['mysql']['getEvents'][number];
 
 const MysqlEvent: React.FC = () => {
-  const [data, setData] = useState<IEventItem[]>([
-    {
-      name: 'daily_cleanup',
-      schedule: 'EVERY 1 DAY STARTS CURRENT_TIMESTAMP',
-      status: 'ENABLED',
-      definer: 'root@%',
-      definition:
-        'BEGIN\n  -- 清理 7 天前的日志\n  DELETE FROM audit_logs WHERE created_at < DATE_SUB(NOW(), INTERVAL 7 DAY);\nEND',
-      comment: '定时清理历史日志',
-    },
-    {
-      name: 'hourly_refresh_cache',
-      schedule: 'EVERY 1 HOUR',
-      status: 'DISABLED',
-      definer: 'app@localhost',
-      definition: 'BEGIN\n  CALL refresh_materialized_views();\nEND',
-      comment: '刷新缓存视图',
-    },
-  ]);
   const { t } = useTranslation();
+  const { connectionId, dbName } = useDatabaseWindows();
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState<TModalMode>('create');
-  const [editing, setEditing] = useState<IEventItem | null>(null);
+  const [editing, setEditing] = useState<TEventItem | null>(null);
   const [form] = Form.useForm<TFormValue>();
 
-  const columns: TableColumnsType<IEventItem> = useMemo(
+  const getEventsQuery = useQuery(
+    trpc.mysql.getEvents.queryOptions({
+      connectionId,
+      dbName,
+    }),
+  );
+
+  const createEventMutation = useMutation(
+    trpc.mysql.createEvent.mutationOptions({
+      onSuccess: () => getEventsQuery.refetch(),
+    }),
+  );
+
+  const updateEventMutation = useMutation(
+    trpc.mysql.updateEvent.mutationOptions({
+      onSuccess: () => getEventsQuery.refetch(),
+    }),
+  );
+
+  const deleteEventMutation = useMutation(
+    trpc.mysql.deleteEvent.mutationOptions({
+      onSuccess: () => getEventsQuery.refetch(),
+    }),
+  );
+
+  const handleCreateClick = () => {
+    setEditing(null);
+    form.resetFields();
+    form.setFieldsValue({
+      status: true,
+      definer: 'root@%',
+    });
+    setModalOpen(true);
+  };
+
+  const columns: TableColumnsType<TEventItem> = useMemo(
     () => [
       {
         title: '事件名',
         dataIndex: 'name',
-        width: 180,
       },
       {
         title: '调度',
@@ -62,9 +75,7 @@ const MysqlEvent: React.FC = () => {
         dataIndex: 'status',
         width: 120,
         render: value => (
-          <Tag color={value === 'ENABLED' ? 'success' : 'default'}>
-            {value === 'ENABLED' ? '启用' : '禁用'}
-          </Tag>
+          <Tag color={value === EMySQLEventStatus.ENABLED ? 'success' : 'default'}>{value}</Tag>
         ),
       },
       {
@@ -78,7 +89,14 @@ const MysqlEvent: React.FC = () => {
         ellipsis: true,
       },
       {
-        title: t('table.operation'),
+        title: (
+          <>
+            {t('table.operation')}
+            <Button color="cyan" variant="link" onClick={handleCreateClick}>
+              {t('button.add')}
+            </Button>
+          </>
+        ),
         key: 'action',
         width: 140,
         render: (_: unknown, record) => (
@@ -104,11 +122,11 @@ const MysqlEvent: React.FC = () => {
         ),
       },
     ],
-    [],
+    [t],
   );
 
-  const handleDelete = (name: string) => {
-    setData(prev => prev.filter(item => item.name !== name));
+  const handleDelete = async (name: string) => {
+    await deleteEventMutation.mutateAsync({ connectionId, dbName, name });
     if (editing?.name === name) {
       setEditing(null);
       form.resetFields();
@@ -116,39 +134,28 @@ const MysqlEvent: React.FC = () => {
     }
   };
 
-  const handleEdit = (record: IEventItem) => {
-    setModalMode('edit');
+  const handleEdit = (record: TEventItem) => {
     setEditing(record);
-    form.setFieldsValue({ ...record, status: record.status === 'ENABLED' });
-    setModalOpen(true);
-  };
-
-  const handleCreateClick = () => {
-    setModalMode('create');
-    setEditing(null);
-    form.resetFields();
-    form.setFieldsValue({ status: true, definer: 'root@%' });
+    form.setFieldsValue({
+      ...record,
+      status: record.status !== EMySQLEventStatus.DISABLED,
+    });
     setModalOpen(true);
   };
 
   const handleSave = async () => {
-    if (modalMode === 'view') {
-      setModalOpen(false);
-      setEditing(null);
-      form.resetFields();
-      return;
-    }
-
     const values = await form.validateFields();
-    const next: IEventItem = {
+    const payload: RouterInput['mysql']['createEvent'] = {
+      connectionId,
+      dbName,
       ...values,
-      status: values.status ? 'ENABLED' : 'DISABLED',
-    } as IEventItem;
+      status: values.status ? EMySQLEventStatus.ENABLED : EMySQLEventStatus.DISABLED,
+    };
 
-    if (modalMode === 'edit' && editing) {
-      setData(prev => prev.map(item => (item.name === editing.name ? next : item)));
+    if (editing) {
+      await updateEventMutation.mutateAsync({ ...payload, oldName: editing.name });
     } else {
-      setData(prev => [next, ...prev]);
+      await createEventMutation.mutateAsync(payload);
     }
 
     setModalOpen(false);
@@ -158,28 +165,20 @@ const MysqlEvent: React.FC = () => {
 
   return (
     <div className={styles.wrapper}>
-      <Card
-        className={styles.card}
-        title={t('mysql.event')}
-        extra={
-          <Button color="cyan" variant="link" onClick={handleCreateClick}>
-            {t('button.add')}
-          </Button>
-        }
-      >
-        <Table<IEventItem>
-          rowKey={record => record.name}
-          columns={columns}
-          dataSource={data}
-          pagination={false}
-          onRow={record => ({
-            onDoubleClick: () => handleEdit(record),
-          })}
-        />
-      </Card>
+      <Table<TEventItem>
+        rowKey={record => record.name}
+        columns={columns}
+        dataSource={getEventsQuery.data}
+        loading={getEventsQuery.isLoading}
+        pagination={false}
+        onRow={record => ({
+          onDoubleClick: () => handleEdit(record),
+        })}
+        scroll={{ y: '200px' }}
+      />
 
       <Modal
-        title={modalMode === 'view' ? '查看事件' : modalMode === 'edit' ? '编辑事件' : '新建事件'}
+        title={editing ? '编辑事件' : '新建事件'}
         open={modalOpen}
         onCancel={() => {
           setModalOpen(false);
@@ -187,46 +186,51 @@ const MysqlEvent: React.FC = () => {
           form.resetFields();
         }}
         onOk={handleSave}
-        width={700}
+        width={780}
+        confirmLoading={
+          createEventMutation.isPending ||
+          updateEventMutation.isPending ||
+          deleteEventMutation.isPending
+        }
       >
         <Form<TFormValue>
           layout="vertical"
           form={form}
-          disabled={modalMode === 'view'}
           initialValues={{ status: true, definer: 'root@%' }}
         >
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item label="事件名" name="name" rules={[{ required: true }]}>
-                <Input placeholder="例如 daily_cleanup" />
+                <Input />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item label="调度" name="schedule" rules={[{ required: true }]}>
-                <Input placeholder="EVERY 1 DAY STARTS CURRENT_TIMESTAMP" />
+              <Form.Item label="启用" name="status" valuePropName="checked">
+                <Switch checkedChildren="YES" unCheckedChildren="NO" />
               </Form.Item>
             </Col>
           </Row>
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item label="状态" name="status" valuePropName="checked">
-                <Switch checkedChildren="启用" unCheckedChildren="禁用" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item label="定义者" name="definer">
-                <Input placeholder="root@%" />
-              </Form.Item>
-            </Col>
-          </Row>
-          <Form.Item label="备注" name="comment">
-            <Input placeholder="可选" />
+
+          <Form.Item label="调度" name="schedule" rules={[{ required: true }]}>
+            <Input.TextArea
+              placeholder={'EVERY 1 DAY STARTS CURRENT_TIMESTAMP'}
+              autoSize={{ minRows: 2, maxRows: 4 }}
+            />
           </Form.Item>
+
+          <Form.Item label="定义者" name="definer">
+            <Input placeholder="root@%" />
+          </Form.Item>
+
           <Form.Item label="定义（SQL）" name="definition" rules={[{ required: true }]}>
             <Input.TextArea
-              placeholder={'BEGIN\n  -- your sql here\nEND'}
-              autoSize={{ minRows: 4, maxRows: 10 }}
+              placeholder={'BEGIN\n  -- your sql here\n  CALL your_procedure();\nEND'}
+              autoSize={{ minRows: 6, maxRows: 14 }}
             />
+          </Form.Item>
+
+          <Form.Item label="备注" name="comment">
+            <Input />
           </Form.Item>
         </Form>
       </Modal>
