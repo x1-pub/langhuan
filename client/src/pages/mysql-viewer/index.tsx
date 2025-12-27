@@ -12,6 +12,7 @@ import { ESpecialWind, IWind } from '@/hooks/use-database-windows';
 import MysqlEvent from './components/database-event';
 import MysqlView from './components/database-view';
 import MysqlFunction from './components/database-function';
+import TableTriggers from './components/table-triggers';
 
 const MysqlViewer: React.FC = () => {
   const { t } = useTranslation();
@@ -26,6 +27,11 @@ const MysqlViewer: React.FC = () => {
       label: t('mysql.design'),
       key: 'table-design',
       children: <TableDesign />,
+    },
+    {
+      label: t('mysql.trigger'),
+      key: 'table-trigger',
+      children: <TableTriggers />,
     },
     {
       label: t('mysql.ddl'),

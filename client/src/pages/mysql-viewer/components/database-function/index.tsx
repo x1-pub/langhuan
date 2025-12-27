@@ -111,7 +111,7 @@ const MysqlFunction: React.FC = () => {
           </>
         ),
         key: 'action',
-        width: 140,
+        width: 170,
         render: (_: unknown, record) => (
           <>
             <Button
@@ -187,7 +187,7 @@ const MysqlFunction: React.FC = () => {
         onRow={record => ({
           onDoubleClick: () => handleEdit(record),
         })}
-        scroll={{ y: '200px' }}
+        scroll={{ y: 'calc(100vh - 195px)' }}
       />
 
       <Modal
