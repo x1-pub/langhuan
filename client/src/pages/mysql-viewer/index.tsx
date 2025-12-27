@@ -13,6 +13,7 @@ import MysqlEvent from './components/database-event';
 import MysqlView from './components/database-view';
 import MysqlFunction from './components/database-function';
 import TableTriggers from './components/table-triggers';
+import TablePartition from './components/table-partition';
 
 const MysqlViewer: React.FC = () => {
   const { t } = useTranslation();
@@ -32,6 +33,11 @@ const MysqlViewer: React.FC = () => {
       label: t('mysql.trigger'),
       key: 'table-trigger',
       children: <TableTriggers />,
+    },
+    {
+      label: t('mysql.partition'),
+      key: 'table-partition',
+      children: <TablePartition />,
     },
     {
       label: t('mysql.ddl'),

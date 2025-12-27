@@ -132,6 +132,20 @@ export const UpdateTriggerSchema = AddTriggerSchema.extend({
   oldName: z.string(),
 });
 
+export const GetPartitionsSchema = MySQLBaseSchema;
+
+export const AddPartitionSchema = MySQLBaseSchema.extend({
+  definition: z.string(),
+});
+
+export const DeletePartitionSchema = MySQLBaseSchema.extend({
+  name: z.string(),
+});
+
+export const UpdatePartitionSchema = AddPartitionSchema.extend({
+  oldName: z.string(),
+});
+
 export const GetFunctionsSchema = z.object({
   connectionId: z.int(),
   dbName: z.string(),

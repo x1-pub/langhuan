@@ -128,6 +128,19 @@ export enum EMySQLTriggerTiming {
 
 export type TMySQLTrigger = z.infer<typeof MySQLBaseTrigger>;
 
+export interface IMySQLPartition {
+  name: string;
+  method: string | null;
+  expression: string | null;
+  description: string | null;
+  rows: number | null;
+  dataLength: number | null;
+  indexLength: number | null;
+  comment?: string | null;
+  createTime?: string | Date | null;
+  updateTime?: string | Date | null;
+}
+
 export enum EMySQLEventStatus {
   ENABLED = 'ENABLED',
   DISABLED = 'DISABLED',
