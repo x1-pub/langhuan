@@ -98,7 +98,6 @@ const generateMySQLBaseColumnInfoSQL = (
 ) => {
   const {
     fieldType,
-    fieldExtra,
     allowNull,
     defaultValue,
     defaultValueType,
@@ -111,12 +110,6 @@ const generateMySQLBaseColumnInfoSQL = (
     collation,
     comment,
   } = input;
-
-  // 构建类型部分
-  let typeStr = fieldType;
-  if (fieldExtra) {
-    typeStr += `(${fieldExtra})`;
-  }
 
   const attributes: string[] = [];
 
@@ -164,7 +157,7 @@ const generateMySQLBaseColumnInfoSQL = (
     attributes.push(`COMMENT ${v}`);
   }
 
-  return `${typeStr} ${attributes.join(' ')}`;
+  return `${fieldType} ${attributes.join(' ')}`;
 };
 
 export const generateMySQLAddColumnSQL = (

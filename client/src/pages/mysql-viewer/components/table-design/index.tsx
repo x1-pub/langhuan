@@ -4,13 +4,11 @@ import { useQuery } from '@tanstack/react-query';
 
 import IndexManager from './components/index-manager';
 import ColumnsManager from './components/columns-manager';
-import TablePartition from './components/partition';
-import TableTrigger from './components/table-trigger';
-import useMain from '@/utils/use-main';
+import useDatabaseWindows from '@/hooks/use-database-windows';
 import { trpc } from '@/utils/trpc';
 
 const TableDesign: React.FC = () => {
-  const { connectionId, dbName, tableName } = useMain();
+  const { connectionId, dbName, tableName } = useDatabaseWindows();
 
   const getTableIndexQuery = useQuery(
     trpc.mysql.getTableIndex.queryOptions({ connectionId, dbName, tableName }),
@@ -26,7 +24,7 @@ const TableDesign: React.FC = () => {
 
   return (
     <div>
-      <Space direction="vertical" size={16} style={{ width: '100%' }}>
+      <Space orientation="vertical" size={12} style={{ width: '100%' }}>
         <IndexManager
           data={getTableIndexQuery.data || []}
           columns={getTableColumnsQuery.data || []}
@@ -37,8 +35,6 @@ const TableDesign: React.FC = () => {
           index={getTableIndexQuery.data || []}
           onOk={refresh}
         />
-        <TablePartition />
-        <TableTrigger />
       </Space>
     </div>
   );

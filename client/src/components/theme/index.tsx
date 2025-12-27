@@ -1,2 +1,2 @@
 export { default as ThemeProvider } from './provider';
-export { default as ThemeController } from './controller';
+export { default as ThemeToggle } from './controller';

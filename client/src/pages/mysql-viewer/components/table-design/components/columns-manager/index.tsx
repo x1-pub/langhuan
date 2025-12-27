@@ -16,7 +16,7 @@ import { useMutation } from '@tanstack/react-query';
 
 import FieldEditor from '../field-editor';
 import styles from '../../index.module.less';
-import useMain from '@/utils/use-main';
+import useDatabaseWindows from '@/hooks/use-database-windows';
 import { IMySQLColumn, IMySQLTableIndex } from '@packages/types/mysql';
 import PrimaryIcon from '../primary-icon';
 import { trpc } from '@/utils/trpc';
@@ -51,7 +51,7 @@ interface ColumnsManagerProps {
 const ColumnsManager: React.FC<ColumnsManagerProps> = props => {
   const { index, data, onOk } = props;
   const { t } = useTranslation();
-  const { connectionId, dbName, tableName } = useMain();
+  const { connectionId, dbName, tableName } = useDatabaseWindows();
   const [dataOrder, setDataOrder] = useState<IMySQLColumn[]>([]);
   const [visible, setVisible] = useState(false);
   const [editRow, setEditRow] = useState<IMySQLColumn>();

@@ -7,6 +7,10 @@ import {
   EMySQLOrder,
   EMySQLTriggerEvent,
   EMySQLTriggerTiming,
+  EMySQLEventStatus,
+  EMySQLViewCheckOption,
+  EMysqlFunctionDataAccess,
+  EMysqlFunctionSecurity,
 } from '../types/mysql';
 
 export const MySQLProcessedDataSchema = z.union([
@@ -32,7 +36,6 @@ const ConditionItemSchema = z.record(z.string(), MySQLProcessedDataSchema);
 export const MysqlBaseColumnInfoSchema = z.object({
   fieldName: z.string(),
   fieldType: z.string(),
-  fieldExtra: z.string().optional(),
   allowNull: z.boolean().optional(),
   defaultValue: z.string().optional(),
   defaultValueType: z.enum(Object.values(EMySQLFieldDefaultType)).optional(),
@@ -126,5 +129,92 @@ export const DeleteTriggerSchema = MySQLBaseSchema.extend({
 });
 
 export const UpdateTriggerSchema = AddTriggerSchema.extend({
+  oldName: z.string(),
+});
+
+export const GetPartitionsSchema = MySQLBaseSchema;
+
+export const AddPartitionSchema = MySQLBaseSchema.extend({
+  definition: z.string(),
+});
+
+export const DeletePartitionSchema = MySQLBaseSchema.extend({
+  name: z.string(),
+});
+
+export const UpdatePartitionSchema = AddPartitionSchema.extend({
+  oldName: z.string(),
+});
+
+export const GetFunctionsSchema = z.object({
+  connectionId: z.int(),
+  dbName: z.string(),
+});
+
+export const DeleteFunctionSchema = GetFunctionsSchema.extend({
+  name: z.string(),
+});
+
+export const BaseFunctionSchema = DeleteFunctionSchema.extend({
+  params: z
+    .array(
+      z.object({
+        name: z.string(),
+        type: z.string(),
+      }),
+    )
+    .optional(),
+  returns: z.string(),
+  deterministic: z.boolean().optional(),
+  sqlDataAccess: z.enum(Object.values(EMysqlFunctionDataAccess)).optional(),
+  body: z.string(),
+  comment: z.string().optional(),
+  security: z.enum(Object.values(EMysqlFunctionSecurity)).optional(),
+});
+
+export const UpdateFunctionSchema = BaseFunctionSchema.extend({
+  oldName: z.string(),
+});
+
+export const GetEventsSchema = z.object({
+  connectionId: z.int(),
+  dbName: z.string(),
+});
+
+export const DeleteEventSchema = GetEventsSchema.extend({
+  name: z.string(),
+});
+
+export const BaseEventSchema = DeleteEventSchema.extend({
+  schedule: z.string(),
+  status: z.enum(Object.values(EMySQLEventStatus)).optional(),
+  definer: z.string().optional(),
+  definition: z.string(),
+  comment: z.string().optional(),
+});
+
+export const UpdateEventSchema = BaseEventSchema.extend({
+  oldName: z.string(),
+});
+
+export const GetViewsSchema = z.object({
+  connectionId: z.int(),
+  dbName: z.string(),
+});
+
+export const DeleteViewSchema = GetViewsSchema.extend({
+  name: z.string(),
+});
+
+export const BaseViewSchema = DeleteViewSchema.extend({
+  definer: z.string().optional(),
+  checkOption: z.enum(Object.values(EMySQLViewCheckOption)).optional(),
+  security: z.enum(Object.values(EMysqlFunctionSecurity)).optional(),
+  algorithm: z.string().optional(),
+  definition: z.string(),
+  comment: z.string().optional(),
+});
+
+export const UpdateViewSchema = BaseViewSchema.extend({
   oldName: z.string(),
 });

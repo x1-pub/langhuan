@@ -41,7 +41,7 @@ export const getMySQLPureType = (type: string) => {
     throw new Error('MySQL 类型参数不能为空，且必须是字符串类型');
   }
 
-  const pureType = type.split('(')[0].trim().toLowerCase();
+  const pureType = type.split(/\s|\(/)[0].trim().toLowerCase();
 
   const supportedTypes = Object.values(EMySQLPureType) as string[];
   if (!supportedTypes.includes(pureType)) {

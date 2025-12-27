@@ -8,7 +8,7 @@ import storage, { THTME_KEY } from '@/utils/storage';
 import { Theme } from './constants';
 import styles from './index.module.less';
 
-const ThemeController: React.FC = () => {
+const ThemeToggle: React.FC = () => {
   const { isDarkMode, setThemeMode } = useThemeMode();
   const { t } = useTranslation();
 
@@ -44,7 +44,6 @@ const ThemeController: React.FC = () => {
 
   useEffect(() => {
     initTheme();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -68,4 +67,4 @@ const ThemeController: React.FC = () => {
   );
 };
 
-export default ThemeController;
+export default ThemeToggle;

@@ -34,14 +34,14 @@ export function getStatementType(sql: string) {
 
 export function getMysqlDBNameFromMetadata(metadata: unknown) {
   if (!metadata || typeof metadata !== 'object') {
-    return
+    return;
   }
 
   if (!(metadata as Metadata).stateChanges || !(metadata as Metadata).stateChanges?.schema) {
-    return
+    return;
   }
 
-  return (metadata as Metadata).stateChanges!.schema
+  return (metadata as Metadata).stateChanges!.schema;
 }
 
 export function formatQueryResult(results: unknown[]) {
@@ -60,7 +60,7 @@ export function formatQueryResult(results: unknown[]) {
 }
 
 export function formatNonQueryResult(type: ReturnType<typeof getStatementType>, metadata: unknown) {
-  const md = metadata as Metadata || {}
+  const md = (metadata as Metadata) || {};
 
   switch (type) {
     case 'update':

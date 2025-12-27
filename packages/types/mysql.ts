@@ -128,6 +128,41 @@ export enum EMySQLTriggerTiming {
 
 export type TMySQLTrigger = z.infer<typeof MySQLBaseTrigger>;
 
+export interface IMySQLPartition {
+  name: string;
+  method: string | null;
+  expression: string | null;
+  description: string | null;
+  rows: number | null;
+  dataLength: number | null;
+  indexLength: number | null;
+  comment?: string | null;
+  createTime?: string | Date | null;
+  updateTime?: string | Date | null;
+}
+
+export enum EMySQLEventStatus {
+  ENABLED = 'ENABLED',
+  DISABLED = 'DISABLED',
+}
+
+export enum EMySQLViewCheckOption {
+  CASCADED = 'CASCADED',
+  LOCAL = 'LOCAL',
+}
+
+export enum EMysqlFunctionDataAccess {
+  CONTAINS_SQL = 'CONTAINS SQL',
+  NO_SQL = 'NO SQL',
+  READS_SQL_DATA = 'READS SQL DATA',
+  MODIFIES_SQL_DATA = 'MODIFIES SQL DATA',
+}
+
+export enum EMysqlFunctionSecurity {
+  DEFINER = 'DEFINER',
+  INVOKER = 'INVOKER',
+}
+
 export enum EMySQLPureType {
   // 字符串类型
   CHAR = 'char',

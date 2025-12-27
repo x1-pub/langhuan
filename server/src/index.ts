@@ -9,7 +9,7 @@ import { appRouter } from './router';
 
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
-const fastify = Fastify({ logger: false });
+const fastify = Fastify({ logger: true });
 
 async function main() {
   await fastify.register(cors, {

@@ -11,7 +11,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ConfigProvider
         prefixCls="langhuan"
-        theme={{ token: { colorPrimary: '#54BEC1' }, cssVar: true }}
+        theme={{ token: { colorPrimary: '#54BEC1' }, cssVar: { prefix: 'langhuan' } }}
       >
         <LocaleProvider>
           <ThemeProvider>

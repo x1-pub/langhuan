@@ -1,0 +1,81 @@
+.dbTitle {
+  display: flex;
+  align-items: center;
+  fill: var(--theme-text-color);
+  height: 22px;
+}
+
+.tableWrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 16px;
+  cursor: pointer;
+  line-height: 22px;
+
+  .tableTitle {
+    display: flex;
+    align-items: center;
+    padding-left: 18px;
+    fill: var(--theme-text-color);
+  }
+
+  &:hover .handler {
+    display: flex;
+  }
+
+  &:first-of-type {
+    padding-top: 0;
+  }
+
+  &:last-of-type {
+    padding-bottom: 0;
+  }
+}
+
+.handler {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  justify-content: space-between;
+  display: none;
+
+  .icon:hover {
+    color: var(--theme-main-color);
+  }
+}
+
+.collapseItem {
+  :global {
+    .langhuan-collapse-header {
+      display: flex !important;
+      align-items: center !important;
+      padding: 7px 16px !important;
+    }
+
+    .langhuan-collapse-header:hover .langhuan-collapse-extra > div {
+      display: flex;
+    }
+
+    .langhuan-collapse-body {
+      padding: 0 !important;
+    }
+  }
+}
+
+.databaseIcon {
+  width: 12px;
+  padding-right: 8px;
+}
+
+.tableIcon {
+  width: 14px;
+  height: 14px;
+  padding-right: 8px;
+}
+
+.active {
+  fill: var(--theme-main-color) !important;
+  color: var(--theme-main-color) !important;
+}

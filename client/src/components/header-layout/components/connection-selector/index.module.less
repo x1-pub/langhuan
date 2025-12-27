@@ -1,0 +1,28 @@
+.select {
+  width: 300px;
+}
+
+.selectOption {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.handler {
+  display: none;
+  gap: 9px;
+  flex-shrink: 1;
+  justify-content: flex-end;
+
+  .icon {
+    cursor: pointer;
+  }
+
+  .icon:hover {
+    color: var(--theme-main-color);
+  }
+}
+
+&:hover .handler {
+  display: flex;
+}

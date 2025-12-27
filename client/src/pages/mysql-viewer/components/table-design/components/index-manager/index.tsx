@@ -17,7 +17,7 @@ import { useTranslation } from 'react-i18next';
 import { useMutation } from '@tanstack/react-query';
 
 import styles from '../../index.module.less';
-import useMain from '@/utils/use-main';
+import useDatabaseWindows from '@/hooks/use-database-windows';
 import EllipsisText from '@/components/ellipsis-text';
 import { dealIndexData, getTypeFromIndexData } from '../../utils';
 import {
@@ -59,7 +59,7 @@ const indexTypeOptions = [
 const IndexManager: React.FC<IndexManagerProps> = props => {
   const { data, columns, onOk } = props;
   const { t } = useTranslation();
-  const { connectionId, dbName, tableName } = useMain();
+  const { connectionId, dbName, tableName } = useDatabaseWindows();
   const [open, setOpen] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [editIndex, setEditIndex] = useState<IMySQLTableIndex>();

@@ -1,0 +1,27 @@
+.tabbar {
+  margin-bottom: 0 !important;
+
+  :global {
+    .langhuan-tabs-nav-list .langhuan-tabs-tab {
+      margin: 10px;
+      padding: 6px 10px;
+      border: 1px solid var(--langhuan-color-border) !important;
+      border-radius: 10px !important;
+    }
+
+    .langhuan-tabs-nav-list div[role='tab'][aria-selected='true'] {
+      fill: var(--theme-main-color);
+    }
+  }
+}
+
+.tabLabel {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.icon {
+  width: 14px;
+  height: 14px;
+}
