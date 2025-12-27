@@ -1,61 +1,65 @@
 import React, { useMemo, useState } from 'react';
-import { Button, Card, Col, Form, Input, Modal, Popconfirm, Row, Select, Table, Tag } from 'antd';
+import { Button, Col, Form, Input, Modal, Popconfirm, Row, Select, Table, Tag } from 'antd';
 import type { TableColumnsType } from 'antd';
 import { useTranslation } from 'react-i18next';
+import { useQuery, useMutation } from '@tanstack/react-query';
 
+import { trpc, RouterInput, RouterOutput } from '@/utils/trpc';
+import useDatabaseWindows from '@/hooks/use-database-windows';
+import { EMySQLViewCheckOption, EMysqlFunctionSecurity } from '@packages/types/mysql';
 import styles from './index.module.less';
 
-type TCheckOption = 'CASCADED' | 'LOCAL';
-type TSecurity = 'DEFINER' | 'INVOKER';
-
-type TModalMode = 'create' | 'edit' | 'view';
-
-type TFormValue = IViewItem;
-
-interface IViewItem {
-  name: string;
-  definer: string;
-  checkOption: TCheckOption;
-  security: TSecurity;
-  algorithm?: string;
-  definition: string;
-  comment?: string;
-}
+type TFormValue = Omit<RouterInput['mysql']['createView'], 'connectionId' | 'dbName'>;
+type TViewItem = RouterOutput['mysql']['getViews'][number];
 
 const MysqlView: React.FC = () => {
-  const [data, setData] = useState<IViewItem[]>([
-    {
-      name: 'active_users',
-      definer: 'root@%',
-      checkOption: 'CASCADED',
-      security: 'DEFINER',
-      algorithm: 'UNDEFINED',
-      definition: 'SELECT id, username, last_login FROM users WHERE status = "active"',
-      comment: '当前活跃用户',
-    },
-    {
-      name: 'order_summary',
-      definer: 'app@localhost',
-      checkOption: 'LOCAL',
-      security: 'INVOKER',
-      algorithm: 'MERGE',
-      definition:
-        'SELECT user_id, COUNT(*) as total_orders, SUM(amount) as total_amount FROM orders GROUP BY user_id',
-      comment: '订单汇总视图',
-    },
-  ]);
   const { t } = useTranslation();
+  const { connectionId, dbName } = useDatabaseWindows();
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState<TModalMode>('create');
-  const [editing, setEditing] = useState<IViewItem | null>(null);
+  const [editing, setEditing] = useState<TViewItem | null>(null);
   const [form] = Form.useForm<TFormValue>();
 
-  const columns: TableColumnsType<IViewItem> = useMemo(
+  const getViewsQuery = useQuery(
+    trpc.mysql.getViews.queryOptions({
+      connectionId,
+      dbName,
+    }),
+  );
+
+  const createViewMutation = useMutation(
+    trpc.mysql.createView.mutationOptions({
+      onSuccess: () => getViewsQuery.refetch(),
+    }),
+  );
+
+  const updateViewMutation = useMutation(
+    trpc.mysql.updateView.mutationOptions({
+      onSuccess: () => getViewsQuery.refetch(),
+    }),
+  );
+
+  const deleteViewMutation = useMutation(
+    trpc.mysql.deleteView.mutationOptions({
+      onSuccess: () => getViewsQuery.refetch(),
+    }),
+  );
+
+  const handleCreateClick = () => {
+    setEditing(null);
+    form.resetFields();
+    form.setFieldsValue({
+      definer: 'root@%',
+      checkOption: EMySQLViewCheckOption.CASCADED,
+      security: EMysqlFunctionSecurity.DEFINER,
+    });
+    setModalOpen(true);
+  };
+
+  const columns: TableColumnsType<TViewItem> = useMemo(
     () => [
       {
         title: '视图名',
         dataIndex: 'name',
-        width: 180,
       },
       {
         title: '定义者',
@@ -65,14 +69,18 @@ const MysqlView: React.FC = () => {
       {
         title: 'Check Option',
         dataIndex: 'checkOption',
-        width: 140,
+        width: 160,
         render: value => <Tag color="processing">{value}</Tag>,
       },
       {
         title: 'Security',
         dataIndex: 'security',
         width: 140,
-        render: value => <Tag color={value === 'DEFINER' ? 'success' : 'default'}>{value}</Tag>,
+        render: value => (
+          <Tag color={value === EMysqlFunctionSecurity.DEFINER ? 'success' : 'default'}>
+            {value}
+          </Tag>
+        ),
       },
       {
         title: '备注',
@@ -80,7 +88,14 @@ const MysqlView: React.FC = () => {
         ellipsis: true,
       },
       {
-        title: t('table.operation'),
+        title: (
+          <>
+            {t('table.operation')}
+            <Button color="cyan" variant="link" onClick={handleCreateClick}>
+              {t('button.add')}
+            </Button>
+          </>
+        ),
         key: 'action',
         width: 140,
         render: (_: unknown, record) => (
@@ -106,11 +121,11 @@ const MysqlView: React.FC = () => {
         ),
       },
     ],
-    [],
+    [t],
   );
 
-  const handleDelete = (name: string) => {
-    setData(prev => prev.filter(item => item.name !== name));
+  const handleDelete = async (name: string) => {
+    await deleteViewMutation.mutateAsync({ connectionId, dbName, name });
     if (editing?.name === name) {
       setEditing(null);
       form.resetFields();
@@ -118,35 +133,24 @@ const MysqlView: React.FC = () => {
     }
   };
 
-  const handleEdit = (record: IViewItem) => {
-    setModalMode('edit');
+  const handleEdit = (record: TViewItem) => {
     setEditing(record);
     form.setFieldsValue(record);
     setModalOpen(true);
   };
 
-  const handleCreateClick = () => {
-    setModalMode('create');
-    setEditing(null);
-    form.resetFields();
-    form.setFieldsValue({ checkOption: 'CASCADED', security: 'DEFINER', definer: 'root@%' });
-    setModalOpen(true);
-  };
-
   const handleSave = async () => {
-    if (modalMode === 'view') {
-      setModalOpen(false);
-      setEditing(null);
-      form.resetFields();
-      return;
-    }
-
     const values = await form.validateFields();
+    const payload: RouterInput['mysql']['createView'] = {
+      connectionId,
+      dbName,
+      ...values,
+    };
 
-    if (modalMode === 'edit' && editing) {
-      setData(prev => prev.map(item => (item.name === editing.name ? values : item)));
+    if (editing) {
+      await updateViewMutation.mutateAsync({ ...payload, oldName: editing.name });
     } else {
-      setData(prev => [values, ...prev]);
+      await createViewMutation.mutateAsync(payload);
     }
 
     setModalOpen(false);
@@ -156,28 +160,20 @@ const MysqlView: React.FC = () => {
 
   return (
     <div className={styles.wrapper}>
-      <Card
-        className={styles.card}
-        title={t('mysql.view')}
-        extra={
-          <Button color="cyan" variant="link" onClick={handleCreateClick}>
-            {t('button.add')}
-          </Button>
-        }
-      >
-        <Table<IViewItem>
-          rowKey="name"
-          columns={columns}
-          dataSource={data}
-          pagination={false}
-          onRow={record => ({
-            onDoubleClick: () => handleEdit(record),
-          })}
-        />
-      </Card>
+      <Table<TViewItem>
+        rowKey={record => record.name}
+        columns={columns}
+        dataSource={getViewsQuery.data}
+        loading={getViewsQuery.isLoading}
+        pagination={false}
+        onRow={record => ({
+          onDoubleClick: () => handleEdit(record),
+        })}
+        scroll={{ y: '200px' }}
+      />
 
       <Modal
-        title={modalMode === 'view' ? '查看视图' : modalMode === 'edit' ? '编辑视图' : '新建视图'}
+        title={editing ? '编辑视图' : '新建视图'}
         open={modalOpen}
         onCancel={() => {
           setModalOpen(false);
@@ -185,17 +181,26 @@ const MysqlView: React.FC = () => {
           form.resetFields();
         }}
         onOk={handleSave}
-        width={700}
+        width={780}
+        confirmLoading={
+          createViewMutation.isPending ||
+          updateViewMutation.isPending ||
+          deleteViewMutation.isPending
+        }
       >
         <Form<TFormValue>
           layout="vertical"
           form={form}
-          initialValues={{ checkOption: 'CASCADED', security: 'DEFINER', definer: 'root@%' }}
+          initialValues={{
+            definer: 'root@%',
+            checkOption: EMySQLViewCheckOption.CASCADED,
+            security: EMysqlFunctionSecurity.DEFINER,
+          }}
         >
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item label="视图名" name="name" rules={[{ required: true }]}>
-                <Input placeholder="例如 active_users" />
+                <Input />
               </Form.Item>
             </Col>
             <Col span={12}>
@@ -204,38 +209,44 @@ const MysqlView: React.FC = () => {
               </Form.Item>
             </Col>
           </Row>
+
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item label="Check Option" name="checkOption" rules={[{ required: true }]}>
+              <Form.Item label="Check Option" name="checkOption">
                 <Select
-                  options={[
-                    { value: 'CASCADED', label: 'CASCADED' },
-                    { value: 'LOCAL', label: 'LOCAL' },
-                  ]}
+                  allowClear
+                  options={Object.values(EMySQLViewCheckOption).map(value => ({
+                    label: value,
+                    value,
+                  }))}
                 />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item label="Security" name="security" rules={[{ required: true }]}>
+              <Form.Item label="Security" name="security">
                 <Select
-                  options={[
-                    { value: 'DEFINER', label: 'DEFINER' },
-                    { value: 'INVOKER', label: 'INVOKER' },
-                  ]}
+                  allowClear
+                  options={Object.values(EMysqlFunctionSecurity).map(value => ({
+                    label: value,
+                    value,
+                  }))}
                 />
               </Form.Item>
             </Col>
           </Row>
+
           <Form.Item label="Algorithm" name="algorithm">
             <Input placeholder="UNDEFINED / MERGE / TEMPTABLE" />
           </Form.Item>
+
           <Form.Item label="备注" name="comment">
-            <Input placeholder="可选" />
+            <Input />
           </Form.Item>
+
           <Form.Item label="定义（SQL）" name="definition" rules={[{ required: true }]}>
             <Input.TextArea
               placeholder={'SELECT * FROM ...'}
-              autoSize={{ minRows: 4, maxRows: 10 }}
+              autoSize={{ minRows: 6, maxRows: 14 }}
             />
           </Form.Item>
         </Form>

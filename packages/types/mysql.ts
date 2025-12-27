@@ -128,6 +128,16 @@ export enum EMySQLTriggerTiming {
 
 export type TMySQLTrigger = z.infer<typeof MySQLBaseTrigger>;
 
+export enum EMySQLEventStatus {
+  ENABLED = 'ENABLED',
+  DISABLED = 'DISABLED',
+}
+
+export enum EMySQLViewCheckOption {
+  CASCADED = 'CASCADED',
+  LOCAL = 'LOCAL',
+}
+
 export enum EMysqlFunctionDataAccess {
   CONTAINS_SQL = 'CONTAINS SQL',
   NO_SQL = 'NO SQL',
