@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
-import { Table, Button, Popconfirm, Tooltip, Tag, Card } from 'antd';
+import { Table, Button, Popconfirm, Tooltip, Tag } from 'antd';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
-import TriggerModal from './trigger-modal';
-import styles from '../../index.module.less';
+import { EMySQLTriggerEvent, EMySQLTriggerTiming, TMySQLTrigger } from '@packages/types/mysql';
 import useDatabaseWindows from '@/hooks/use-database-windows';
 import { trpc } from '@/utils/trpc';
-import { EMySQLTriggerEvent, EMySQLTriggerTiming, TMySQLTrigger } from '@packages/types/mysql';
+import TriggerModal from './modal';
+import styles from '../../index.module.less';
 
-const TableTrigger: React.FC = () => {
+const TableTriggers: React.FC = () => {
   const { t } = useTranslation();
   const { connectionId, dbName, tableName } = useDatabaseWindows();
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -22,25 +22,27 @@ const TableTrigger: React.FC = () => {
   const deleteTriggerMutation = useMutation(trpc.mysql.deleteTrigger.mutationOptions());
   const updateTriggerMutation = useMutation(trpc.mysql.updateTrigger.mutationOptions());
 
+  const handleAdd = () => {
+    setEditingTrigger(null);
+    setIsModalVisible(true);
+  };
+
   const columns = [
     {
       title: t('table.name'),
       dataIndex: 'name',
       key: 'name',
-      width: 180,
     },
     {
       title: t('table.event'),
       dataIndex: 'event',
       key: 'event',
-      width: 100,
       render: (event: EMySQLTriggerEvent) => <Tag color={getEventColor(event)}>{event}</Tag>,
     },
     {
       title: t('table.timing'),
       dataIndex: 'timing',
       key: 'timing',
-      width: 100,
       render: (timing: EMySQLTriggerTiming) => <Tag color={getTimingColor(timing)}>{timing}</Tag>,
     },
     {
@@ -55,9 +57,16 @@ const TableTrigger: React.FC = () => {
       ),
     },
     {
-      title: t('table.operation'),
+      title: (
+        <>
+          {t('table.operation')}
+          <Button color="cyan" variant="link" onClick={handleAdd}>
+            {t('button.add')}
+          </Button>
+        </>
+      ),
       key: 'action',
-      width: 140,
+      width: 170,
       render: (_: unknown, record: TMySQLTrigger) => (
         <>
           <Button
@@ -99,11 +108,6 @@ const TableTrigger: React.FC = () => {
     return colorMap[timing] || 'default';
   };
 
-  const handleAdd = () => {
-    setEditingTrigger(null);
-    setIsModalVisible(true);
-  };
-
   const handleEdit = (trigger: TMySQLTrigger) => {
     setEditingTrigger(trigger);
     setIsModalVisible(true);
@@ -137,37 +141,28 @@ const TableTrigger: React.FC = () => {
   };
 
   return (
-    <>
-      <Card
-        className={styles.card}
-        title={t('mysql.trigger')}
-        extra={
-          <Button color="cyan" variant="link" onClick={handleAdd}>
-            {t('button.add')}
-          </Button>
-        }
-      >
-        <Table
-          columns={columns}
-          dataSource={getTriggersQuery.data}
-          rowKey="name"
-          loading={getTriggersQuery.isLoading}
-          pagination={false}
-          onRow={record => ({
-            onDoubleClick: () => handleEdit(record),
-          })}
-        />
+    <div className={styles.wrapper}>
+      <Table
+        columns={columns}
+        dataSource={getTriggersQuery.data}
+        rowKey="name"
+        loading={getTriggersQuery.isLoading}
+        pagination={false}
+        onRow={record => ({
+          onDoubleClick: () => handleEdit(record),
+        })}
+        scroll={{ y: 'calc(100vh - 195px)' }}
+      />
 
-        <TriggerModal
-          visible={isModalVisible}
-          editingTrigger={editingTrigger}
-          loading={updateTriggerMutation.isPending || addTriggerMutation.isPending}
-          onCancel={handleModalCancel}
-          onSubmit={handleModalSubmit}
-        />
-      </Card>
-    </>
+      <TriggerModal
+        visible={isModalVisible}
+        editingTrigger={editingTrigger}
+        loading={updateTriggerMutation.isPending || addTriggerMutation.isPending}
+        onCancel={handleModalCancel}
+        onSubmit={handleModalSubmit}
+      />
+    </div>
   );
 };
 
-export default TableTrigger;
+export default TableTriggers;
