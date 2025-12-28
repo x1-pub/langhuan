@@ -1,11 +1,13 @@
-import React from 'react';
+import React, { Suspense } from 'react';
+import { Spin } from 'antd';
 import { useQuery } from '@tanstack/react-query';
 
 import useDatabaseWindows from '@/hooks/use-database-windows';
 import { useThemeMode } from 'antd-style';
-import CodeEditor from '@/components/code-editor';
 import styles from './index.module.less';
 import { trpc } from '@/utils/trpc';
+
+const LazyCodeEditor = React.lazy(() => import('@/components/code-editor'));
 
 const TableDDL: React.FC = () => {
   const { isDarkMode } = useThemeMode();
@@ -17,12 +19,14 @@ const TableDDL: React.FC = () => {
 
   return (
     <div className={styles.tableDdl}>
-      <CodeEditor
-        value={getTableDDLQuery.data}
-        theme={isDarkMode ? 'vs-dark' : 'vs'}
-        readOnly={true}
-        language="sql"
-      />
+      <Suspense fallback={<Spin className={styles.spin} />}>
+        <LazyCodeEditor
+          value={getTableDDLQuery.data}
+          theme={isDarkMode ? 'vs-dark' : 'vs'}
+          readOnly={true}
+          language="sql"
+        />
+      </Suspense>
     </div>
   );
 };
