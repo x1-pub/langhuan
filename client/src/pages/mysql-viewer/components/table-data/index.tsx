@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Tooltip,
   Button,
@@ -6,6 +6,7 @@ import {
   Popconfirm,
   type TablePaginationConfig,
   type TableProps,
+  Spin,
 } from 'antd';
 import { QuestionCircleOutlined, WarningOutlined } from '@ant-design/icons';
 import * as uuid from 'uuid';
@@ -19,12 +20,13 @@ import { measureTextWidth } from '@/utils/measure-text-width';
 import { showSuccess } from '@/utils/global-notification';
 import EllipsisText from '@/components/ellipsis-text';
 import ExportDataModal from './export';
-import CodeEditor from '@/components/code-editor';
 import styles from './index.module.less';
 import { trpc, trpcClient } from '@/utils/trpc';
 import type { TMySQLRawData, TMySQLCondition } from '@packages/types/mysql';
 import MySQLRawDataDisplay from '@/components/mysql-raw-data-display';
 import { getConditionValue, getMySQLPureType } from '@/utils/mysql-generator';
+
+const LazyCodeEditor = React.lazy(() => import('@/components/code-editor'));
 
 const DEFAULT_PAGE_SIZE = 20;
 const DEFAULT_WHERE_CLAUSE = 'WHERE 1 = 1';
@@ -225,13 +227,15 @@ const TableData: React.FC = () => {
     <div>
       <div className={styles.textBox}>
         <div className={styles.editor}>
-          <CodeEditor
-            language="sql"
-            showLineNumbers={false}
-            value={whereClause}
-            onChange={setWhereClause}
-            fields={getTableDataQuery.data?.columns.map(col => col.Field)}
-          />
+          <Suspense fallback={<Spin size="small" className={styles.spin} />}>
+            <LazyCodeEditor
+              language="sql"
+              showLineNumbers={false}
+              value={whereClause}
+              onChange={setWhereClause}
+              fields={getTableDataQuery.data?.columns.map(col => col.Field)}
+            />
+          </Suspense>
         </div>
         <Tooltip
           placement="right"
