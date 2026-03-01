@@ -47,8 +47,8 @@ const ConnectionSelector: React.FC<{ ref?: React.Ref<RefHandler> }> = ({ ref }) 
 
     const path = `/${connection.type}/${connection.id}`;
     if (path !== location.pathname) {
-      // TODO: why not use 'navigate(path)'? bug: connectionId is out of sync with wind
-      window.location.href = path;
+      // Keep full-page navigation to avoid stale route params in long-lived layout state.
+      window.location.assign(path);
     }
   };
 
@@ -83,7 +83,7 @@ const ConnectionSelector: React.FC<{ ref?: React.Ref<RefHandler> }> = ({ ref }) 
 
   useEffect(() => {
     handleSelectedConnectionIdChange(Number(connectionId));
-  }, [listQuery.data]);
+  }, [listQuery.data, connectionId]);
 
   return (
     <>

@@ -1,11 +1,13 @@
 import { CreateFastifyContextOptions } from '@trpc/server/adapters/fastify';
 import { drizzle } from 'drizzle-orm/mysql2';
+import { inArray } from 'drizzle-orm';
 import dotenv from 'dotenv';
 import path from 'path';
 
 import mysql from './pools/mysql';
 import redis from './pools/redis';
 import mongodb from './pools/mongodb';
+import pgsql from './pools/pgsql';
 import * as schema from './schema';
 import { TRPCError } from '@trpc/server';
 import { EConnectionType } from '@packages/types/connection';
@@ -36,13 +38,13 @@ const createContext = async ({ req, res }: CreateFastifyContextOptions) => {
             and(
               eq(table.creator, uid),
               eq(table.id, connectionId),
-              eq(table.type, EConnectionType.MYSQL),
+              inArray(table.type, [EConnectionType.MYSQL, EConnectionType.MARIADB]),
             ),
         });
         if (!instance) {
           throw new TRPCError({
             code: 'NOT_FOUND',
-            message: `The MySQL connection instance (ID: ${connectionId}) does not exist.`,
+            message: `The MySQL/MariaDB connection instance (ID: ${connectionId}) does not exist.`,
           });
         }
         return mysql.getInstance({
@@ -52,6 +54,39 @@ const createContext = async ({ req, res }: CreateFastifyContextOptions) => {
           username: instance.username,
           password: instance.password,
           database: databaseName,
+          pageId,
+        });
+      },
+
+      /**
+       * 根据连接 ID 获取 PostgreSQL 连接池实例
+       * @param connectionId 连接 ID
+       * @param databaseName 可选数据库名称
+       * @param pageId 可选页面 ID，用于区分不同数据库实例
+       * @returns PostgreSQL 连接池实例
+       */
+      getPgsqlInstance: async (connectionId: number, databaseName?: string, pageId?: string) => {
+        const instance = await db.query.connectionsTable.findFirst({
+          where: (table, { and, eq }) =>
+            and(
+              eq(table.creator, uid),
+              eq(table.id, connectionId),
+              eq(table.type, EConnectionType.PGSQL),
+            ),
+        });
+        if (!instance) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: `The PostgreSQL connection instance (ID: ${connectionId}) does not exist.`,
+          });
+        }
+        return pgsql.getInstance({
+          uid,
+          host: instance.host,
+          port: instance.port,
+          username: instance.username,
+          password: instance.password,
+          database: databaseName || instance.database || 'postgres',
           pageId,
         });
       },

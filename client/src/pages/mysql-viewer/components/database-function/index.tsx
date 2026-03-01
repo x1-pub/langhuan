@@ -70,15 +70,15 @@ const MysqlFunction: React.FC = () => {
   const columns: TableColumnsType<TFormValue> = useMemo(
     () => [
       {
-        title: '函数名',
+        title: t('mysql.functionName'),
         dataIndex: 'name',
       },
       {
-        title: '返回类型',
+        title: t('mysql.functionReturns'),
         dataIndex: 'returns',
       },
       {
-        title: '确定性',
+        title: t('mysql.functionDeterministic'),
         dataIndex: 'deterministic',
         width: 140,
         render: value => (
@@ -88,15 +88,15 @@ const MysqlFunction: React.FC = () => {
         ),
       },
       {
-        title: '数据选项',
+        title: t('mysql.functionSqlDataAccess'),
         dataIndex: 'sqlDataAccess',
       },
       {
-        title: 'SQL安全性',
+        title: t('mysql.functionSecurity'),
         dataIndex: 'security',
       },
       {
-        title: '备注',
+        title: t('table.comment'),
         dataIndex: 'comment',
         maxWidth: 200,
         ellipsis: true,
@@ -191,7 +191,7 @@ const MysqlFunction: React.FC = () => {
       />
 
       <Modal
-        title={editing ? '编辑函数' : '新建函数'}
+        title={editing ? t('mysql.editFunction') : t('mysql.createFunction')}
         open={modalOpen}
         onCancel={() => {
           setModalOpen(false);
@@ -209,24 +209,28 @@ const MysqlFunction: React.FC = () => {
         <Form<TFormValue> layout="vertical" form={form}>
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item label="函数名" name="name" rules={[{ required: true }]}>
+              <Form.Item label={t('mysql.functionName')} name="name" rules={[{ required: true }]}>
                 <Input />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item label="具有确定性" name="deterministic" valuePropName="checked">
+              <Form.Item
+                label={t('mysql.functionHasDeterministic')}
+                name="deterministic"
+                valuePropName="checked"
+              >
                 <Switch checkedChildren="YES" unCheckedChildren="NO" />
               </Form.Item>
             </Col>
           </Row>
 
-          <Form.Item label="返回类型" name="returns" rules={[{ required: true }]}>
+          <Form.Item label={t('mysql.functionReturns')} name="returns" rules={[{ required: true }]}>
             <MySQLColumnTypeSelector />
           </Form.Item>
 
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item label="SQL安全性" name="security">
+              <Form.Item label={t('mysql.functionSecurity')} name="security">
                 <Select
                   allowClear
                   options={Object.values(EMysqlFunctionSecurity).map(o => ({
@@ -237,7 +241,7 @@ const MysqlFunction: React.FC = () => {
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item label="数据选项" name="sqlDataAccess">
+              <Form.Item label={t('mysql.functionSqlDataAccess')} name="sqlDataAccess">
                 <Select
                   allowClear
                   options={Object.values(EMysqlFunctionDataAccess).map(o => ({
@@ -253,21 +257,23 @@ const MysqlFunction: React.FC = () => {
             {(fields, { add, remove }) => (
               <Card
                 size="small"
-                title="参数"
+                title={t('mysql.functionParameters')}
                 style={{ marginBottom: 12 }}
                 extra={
                   <Button color="cyan" variant="link" onClick={() => add()}>
-                    添加参数
+                    {t('mysql.functionAddParameter')}
                   </Button>
                 }
               >
-                {fields.length === 0 && <div style={{ color: '#888' }}>无参数函数请留空</div>}
+                {fields.length === 0 && (
+                  <div style={{ color: '#888' }}>{t('mysql.functionNoParameterTip')}</div>
+                )}
                 {fields.map(field => (
                   <Row gutter={12} key={field.key}>
                     <Col span={10}>
                       <Form.Item
                         {...field}
-                        label="名称"
+                        label={t('table.name')}
                         name={[field.name, 'name']}
                         rules={[{ required: true }]}
                         key={field.key}
@@ -278,7 +284,7 @@ const MysqlFunction: React.FC = () => {
                     <Col span={11}>
                       <Form.Item
                         {...field}
-                        label="类型"
+                        label={t('table.type')}
                         name={[field.name, 'type']}
                         rules={[{ required: true }]}
                         key={field.key}
@@ -288,7 +294,7 @@ const MysqlFunction: React.FC = () => {
                     </Col>
                     <Col span={3} style={{ display: 'flex', alignItems: 'center' }}>
                       <Button danger type="link" onClick={() => remove(field.name)}>
-                        删除
+                        {t('button.delete')}
                       </Button>
                     </Col>
                   </Row>
@@ -298,9 +304,9 @@ const MysqlFunction: React.FC = () => {
           </Form.List>
 
           <Form.Item
-            label="函数体"
+            label={t('mysql.functionBody')}
             name="body"
-            rules={[{ required: true, message: '请输入函数体' }]}
+            rules={[{ required: true, message: t('mysql.functionBodyRequired') }]}
           >
             <Input.TextArea
               placeholder={'BEGIN\n  -- your sql here\n  RETURN 0;\nEND'}
@@ -308,7 +314,7 @@ const MysqlFunction: React.FC = () => {
             />
           </Form.Item>
 
-          <Form.Item label="备注" name="comment">
+          <Form.Item label={t('table.comment')} name="comment">
             <Input />
           </Form.Item>
         </Form>

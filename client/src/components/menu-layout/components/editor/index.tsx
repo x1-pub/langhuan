@@ -31,12 +31,14 @@ const Editor: React.FC<EditorProps> = props => {
   const updateDatabaseMutation = useMutation(trpc.database.update.mutationOptions());
   const createTableMutation = useMutation(trpc.table.create.mutationOptions());
   const updateTableMutation = useMutation(trpc.table.update.mutationOptions());
+  const isPgsql = type === EConnectionType.PGSQL;
+  const localePrefix = isPgsql ? 'pgsql' : 'mysql';
 
   const modalTitleMap = {
-    [EEditorType.CREATE_DB]: t('mysql.createDb'),
-    [EEditorType.CREATE_TABLE]: t('mysql.createTable'),
-    [EEditorType.EDIT_DB]: t('mysql.editDb'),
-    [EEditorType.EDIT_TABLE]: t('mysql.editTable'),
+    [EEditorType.CREATE_DB]: t(`${localePrefix}.createDb`),
+    [EEditorType.CREATE_TABLE]: t(`${localePrefix}.createTable`),
+    [EEditorType.EDIT_DB]: t(`${localePrefix}.editDb`),
+    [EEditorType.EDIT_TABLE]: t(`${localePrefix}.editTable`),
   };
 
   const handleSubmit = async () => {
@@ -108,10 +110,10 @@ const Editor: React.FC<EditorProps> = props => {
 
   useEffect(() => {
     initForm();
-  }, [data]);
+  }, [data, form]);
 
   if (!data) {
-    return;
+    return null;
   }
 
   return (
@@ -128,9 +130,9 @@ const Editor: React.FC<EditorProps> = props => {
         <Row gutter={16}>
           <Col span={24}>
             <Form.Item
-              label="名字"
+              label={t('table.name')}
               name="name"
-              rules={[{ required: true, message: '请输入字段名称' }]}
+              rules={[{ required: true, message: t(`${localePrefix}.editorNameRequired`) }]}
             >
               <Input disabled={data?.type === EEditorType.EDIT_DB} autoComplete="off" />
             </Form.Item>
@@ -139,26 +141,27 @@ const Editor: React.FC<EditorProps> = props => {
         {[EEditorType.CREATE_TABLE, EEditorType.EDIT_TABLE].includes(data.type) && (
           <Row gutter={16}>
             <Col span={24}>
-              <Form.Item label="备注" name="comment">
+              <Form.Item label={t('table.comment')} name="comment">
                 <Input autoComplete="off" />
               </Form.Item>
             </Col>
           </Row>
         )}
-        {[EEditorType.CREATE_DB, EEditorType.EDIT_DB].includes(data.type) && (
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item label="字符集" name="charset">
-                <Input autoComplete="off" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item label="排序规则" name="collation">
-                <Input autoComplete="off" />
-              </Form.Item>
-            </Col>
-          </Row>
-        )}
+        {[EConnectionType.MYSQL, EConnectionType.MARIADB].includes(type) &&
+          [EEditorType.CREATE_DB, EEditorType.EDIT_DB].includes(data.type) && (
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item label={t('table.charset')} name="charset">
+                  <Input autoComplete="off" />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item label={t('table.collation')} name="collation">
+                  <Input autoComplete="off" />
+                </Form.Item>
+              </Col>
+            </Row>
+          )}
       </Form>
     </Modal>
   );

@@ -5,8 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "pnpm exec eslint src --ext .ts,.tsx --max-warnings=0",
+    "lint:fix": "pnpm exec eslint src --ext .ts,.tsx --fix",
     "build": "tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "format": "pnpm exec prettier --write \"src/**/*.{ts,tsx,less,css,md}\"",
+    "format:check": "pnpm exec prettier --check \"src/**/*.{ts,tsx,less,css,md}\""
   },
   "dependencies": {
     "@ant-design/icons": "^6.1.0",

@@ -1,25 +1,19 @@
-import { ConfigProvider } from 'antd';
-import { QueryClientProvider } from '@tanstack/react-query';
+import { lazy, Suspense } from 'react';
+import { BrowserRouter, Route, Routes } from 'react-router';
 
-import { queryClient } from './utils/trpc';
-import { ThemeProvider } from './components/theme';
-import { LocaleProvider } from './components/locale';
-import RouterRender from './routes';
+const HomeEntry = lazy(() => import('./app/home-entry'));
+const StudioEntry = lazy(() => import('./app/studio-entry'));
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <ConfigProvider
-        prefixCls="langhuan"
-        theme={{ token: { colorPrimary: '#54BEC1' }, cssVar: { prefix: 'langhuan' } }}
-      >
-        <LocaleProvider>
-          <ThemeProvider>
-            <RouterRender />
-          </ThemeProvider>
-        </LocaleProvider>
-      </ConfigProvider>
-    </QueryClientProvider>
+    <BrowserRouter>
+      <Suspense fallback={null}>
+        <Routes>
+          <Route path="/" element={<HomeEntry />} />
+          <Route path="/*" element={<StudioEntry />} />
+        </Routes>
+      </Suspense>
+    </BrowserRouter>
   );
 }
 

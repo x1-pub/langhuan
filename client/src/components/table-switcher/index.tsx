@@ -26,7 +26,7 @@ const TableSwitcher: React.FC<ITableSwitcherProps> = ({ children }) => {
     const { dbName, tableName, specialWind } = item;
 
     switch (specialWind) {
-      case ESpecialWind.MYSQL_ENENT:
+      case ESpecialWind.MYSQL_EVENT:
         return (
           <span className={styles.tabLabel}>
             <ClockIcon className={styles.icon} />
@@ -45,6 +45,27 @@ const TableSwitcher: React.FC<ITableSwitcherProps> = ({ children }) => {
           <span className={styles.tabLabel}>
             <GlassesIcon className={styles.icon} />
             {`${t('mysql.view')}(${dbName})`}
+          </span>
+        );
+      case ESpecialWind.PGSQL_FUNCTION:
+        return (
+          <span className={styles.tabLabel}>
+            <FunctionIcon className={styles.icon} />
+            {`${t('pgsql.function')}(${dbName})`}
+          </span>
+        );
+      case ESpecialWind.PGSQL_VIEW:
+        return (
+          <span className={styles.tabLabel}>
+            <GlassesIcon className={styles.icon} />
+            {`${t('pgsql.view')}(${dbName})`}
+          </span>
+        );
+      case ESpecialWind.PGSQL_EVENT:
+        return (
+          <span className={styles.tabLabel}>
+            <ClockIcon className={styles.icon} />
+            {`${t('pgsql.event')}(${dbName})`}
           </span>
         );
       default:

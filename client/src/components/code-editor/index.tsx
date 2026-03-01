@@ -1,13 +1,13 @@
 import React, { useEffect, useRef } from 'react';
 import Editor, { loader } from '@monaco-editor/react';
-import * as monaco from 'monaco-editor';
+import type * as Monaco from 'monaco-editor/esm/vs/editor/editor.api';
+import { useTranslation } from 'react-i18next';
 
-import { SQL_FUNTIONS, SQL_KEYWORDS } from './constants';
+import { monaco } from './monaco';
+import { SQL_FUNCTIONS, SQL_KEYWORDS } from './constants';
 
 loader.config({
-  paths: {
-    vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs',
-  },
+  monaco,
 });
 
 interface CodeEditorProps {
@@ -21,6 +21,7 @@ interface CodeEditorProps {
 }
 
 const CodeEditor: React.FC<CodeEditorProps> = props => {
+  const { t, i18n } = useTranslation();
   const {
     theme = 'vs',
     language = 'sql',
@@ -31,10 +32,10 @@ const CodeEditor: React.FC<CodeEditorProps> = props => {
     onChange,
   } = props;
 
-  const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
-  const completionProviderRef = useRef<monaco.IDisposable | null>(null);
+  const editorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null);
+  const completionProviderRef = useRef<Monaco.IDisposable | null>(null);
 
-  const registerCompletionProvider = (monacoInstance: typeof monaco) => {
+  const registerCompletionProvider = (monacoInstance: typeof Monaco) => {
     if (completionProviderRef.current) {
       completionProviderRef.current.dispose();
     }
@@ -49,32 +50,29 @@ const CodeEditor: React.FC<CodeEditorProps> = props => {
           endColumn: word.endColumn,
         };
 
-        const suggestions: monaco.languages.CompletionItem[] = [
-          // SQL关键字
+        const suggestions: Monaco.languages.CompletionItem[] = [
           ...SQL_KEYWORDS.map(keyword => ({
             label: keyword,
             kind: monacoInstance.languages.CompletionItemKind.Keyword,
             insertText: keyword,
             range: range,
-            detail: 'SQL关键字',
+            detail: t('codeEditor.detail.sqlKeyword'),
           })),
-          // SQL函数
-          ...SQL_FUNTIONS.map(func => ({
+          ...SQL_FUNCTIONS.map(func => ({
             label: func.name,
             kind: monacoInstance.languages.CompletionItemKind.Function,
             insertText: func.insertText,
             range: range,
-            detail: func.detail,
-            documentation: func.documentation,
-            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+            detail: t(func.detailKey),
+            documentation: t(func.documentationKey),
+            insertTextRules: monacoInstance.languages.CompletionItemInsertTextRule.InsertAsSnippet,
           })),
-          // 动态字段
           ...fields.map(field => ({
             label: field,
             kind: monacoInstance.languages.CompletionItemKind.Field,
             insertText: field,
             range: range,
-            detail: '表字段',
+            detail: t('codeEditor.detail.tableField'),
           })),
         ];
 
@@ -84,15 +82,13 @@ const CodeEditor: React.FC<CodeEditorProps> = props => {
   };
 
   const handleEditorDidMount = (
-    editor: monaco.editor.IStandaloneCodeEditor,
-    monacoInstance: typeof monaco,
+    editor: Monaco.editor.IStandaloneCodeEditor,
+    monacoInstance: typeof Monaco,
   ) => {
     editorRef.current = editor;
 
-    // 初始注册智能提示Provider
     registerCompletionProvider(monacoInstance);
 
-    // 设置SQL语言配置
     monacoInstance.languages.setLanguageConfiguration('sql', {
       comments: {
         lineComment: '--',
@@ -118,12 +114,21 @@ const CodeEditor: React.FC<CodeEditorProps> = props => {
   };
 
   useEffect(() => {
-    if (editorRef.current) {
-      if (window.monaco) {
-        registerCompletionProvider(window.monaco);
-      }
+    if (!editorRef.current) {
+      return;
     }
-  }, [fields]);
+
+    let disposed = false;
+    void loader.init().then(monacoInstance => {
+      if (!disposed) {
+        registerCompletionProvider(monacoInstance);
+      }
+    });
+
+    return () => {
+      disposed = true;
+    };
+  }, [fields, i18n.language]);
 
   useEffect(() => {
     return () => {

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Collapse } from 'antd';
 import classNames from 'classnames';
+import { useTranslation } from 'react-i18next';
 
 import DatabaseIcon from '@/assets/svg/db.svg?react';
 import TableIcon from '@/assets/svg/table.svg?react';
@@ -30,6 +31,7 @@ interface IMysqlDatabaseProps {
 }
 
 const MysqlDatabase: React.FC<IMysqlDatabaseProps> = props => {
+  const { t } = useTranslation();
   const {
     database,
     tableMap,
@@ -83,7 +85,7 @@ const MysqlDatabase: React.FC<IMysqlDatabaseProps> = props => {
       ghost={true}
       onChange={onClickDatabase}
       expandIconPlacement="start"
-      items={database?.map(db => ({
+      items={database?.map((db: { name: string; charset?: string; collation?: string }) => ({
         key: db.name,
         label: (
           <span className={styles.dbTitle}>
@@ -103,7 +105,7 @@ const MysqlDatabase: React.FC<IMysqlDatabaseProps> = props => {
                 onClick={() => onClickTable?.(db.name, undefined, ESpecialWind.MYSQL_FUNCTION)}
               >
                 <FunctionIcon className={styles.tableIcon} />
-                函数
+                {t('mysql.function')}
               </span>
             </li>
             <li className={styles.tableWrap}>
@@ -116,7 +118,7 @@ const MysqlDatabase: React.FC<IMysqlDatabaseProps> = props => {
                 onClick={() => onClickTable?.(db.name, undefined, ESpecialWind.MYSQL_VIEW)}
               >
                 <GlassesIcon className={styles.tableIcon} />
-                视图
+                {t('mysql.view')}
               </span>
             </li>
             <li className={styles.tableWrap}>
@@ -124,15 +126,15 @@ const MysqlDatabase: React.FC<IMysqlDatabaseProps> = props => {
                 className={classNames(styles.tableTitle, {
                   [styles.active]:
                     activeId ===
-                    generateActiveId({ dbName: db.name, specialWind: ESpecialWind.MYSQL_ENENT }),
+                    generateActiveId({ dbName: db.name, specialWind: ESpecialWind.MYSQL_EVENT }),
                 })}
-                onClick={() => onClickTable?.(db.name, undefined, ESpecialWind.MYSQL_ENENT)}
+                onClick={() => onClickTable?.(db.name, undefined, ESpecialWind.MYSQL_EVENT)}
               >
                 <ClockIcon className={styles.tableIcon} />
-                事件
+                {t('mysql.event')}
               </span>
             </li>
-            {(tableMap?.[db.name] || []).map(table => (
+            {(tableMap?.[db.name] || []).map((table: { name: string; comment?: string }) => (
               <li key={table.name} className={styles.tableWrap}>
                 <span
                   className={classNames(styles.tableTitle, {

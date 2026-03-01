@@ -45,7 +45,7 @@ class MongoDBManager {
   }
 
   changeInstance(config: IConnectionPoolConfig, connection: Connection) {
-    const key = JSON.stringify(config);
+    const key = JSON.stringify(removeNullAndUndefined(config));
     const instance = this.mongooseInstances.get(key);
     if (!instance) {
       return;

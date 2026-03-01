@@ -15,12 +15,20 @@ const connectionTypeOptions = [
     value: EConnectionType.MYSQL,
   },
   {
+    label: 'MariaDB',
+    value: EConnectionType.MARIADB,
+  },
+  {
     label: 'Redis',
     value: EConnectionType.REDIS,
   },
   {
     label: 'MongoDB',
     value: EConnectionType.MONGODB,
+  },
+  {
+    label: 'PostgreSQL',
+    value: EConnectionType.PGSQL,
   },
 ];
 
@@ -40,6 +48,8 @@ const ConnectionModal: React.FC<IConnectionModal> = props => {
   const { t } = useTranslation();
   const [form] = Form.useForm<ICreateConnection>();
   const connectionType = Form.useWatch('type', form);
+  const shouldShowDatabaseField =
+    connectionType === EConnectionType.MONGODB || connectionType === EConnectionType.PGSQL;
   const title = t(`button.${id ? 'update' : 'add'}`);
 
   const detailQuery = useQuery(
@@ -157,8 +167,16 @@ const ConnectionModal: React.FC<IConnectionModal> = props => {
             </Form.Item>
           </Col>
         </Row>
-        {connectionType === 'mongodb' && (
-          <Form.Item label={t('connection.authDB')} name="database" rules={[]}>
+        {shouldShowDatabaseField && (
+          <Form.Item
+            label={
+              connectionType === EConnectionType.MONGODB
+                ? t('connection.authDB')
+                : t('connection.defaultDB')
+            }
+            name="database"
+            rules={[]}
+          >
             <Input autoComplete="off" />
           </Form.Item>
         )}

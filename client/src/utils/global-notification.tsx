@@ -1,4 +1,5 @@
 import { notification } from 'antd';
+import i18n from '@/i18n';
 
 interface NotificationParams {
   title?: string;
@@ -8,7 +9,7 @@ interface NotificationParams {
 
 export const showError = ({ title, message, sql }: NotificationParams) => {
   const payload = {
-    message: title || 'UNKNOWN_ERROR',
+    message: title || i18n.t('notification.unknownError'),
     description: (
       <>
         <div style={{ fontSize: '12px' }}>{message}</div>
@@ -22,9 +23,9 @@ export const showError = ({ title, message, sql }: NotificationParams) => {
   notification.error(payload);
 };
 
-export const showSuccess = (content: string = 'Execution successful') => {
+export const showSuccess = (content: string = i18n.t('notification.executionSuccessful')) => {
   const payload = {
-    message: 'SUCCESS',
+    message: i18n.t('notification.success'),
     description: content,
     showProgress: true,
     pauseOnHover: false,

@@ -12,8 +12,25 @@ import styles from './index.module.less';
 
 import { RouterOutput, trpc } from '@/utils/trpc';
 import { useMutation } from '@tanstack/react-query';
+import { ERedisDataType } from '@packages/types/redis';
 
 type TRedisValue = RouterOutput['redis']['getValue'];
+
+const getRedisValueLength = (type: ERedisDataType, value: TRedisValue['value']): number => {
+  switch (type) {
+    case ERedisDataType.STRING:
+      return value[0]?.[0]?.length ?? 0;
+    case ERedisDataType.LIST:
+    case ERedisDataType.SET:
+      return value[0]?.length ?? 0;
+    case ERedisDataType.HASH:
+    case ERedisDataType.ZSET:
+    case ERedisDataType.STREAM:
+      return value.length;
+    default:
+      return 0;
+  }
+};
 
 interface EditKeyBoxProps {
   data: TRedisValue;
@@ -57,6 +74,8 @@ const EditKeyBox: React.FC<EditKeyBoxProps> = ({
     onModifyKey(newKey);
   };
 
+  const valueLength = getRedisValueLength(type, value);
+
   return (
     <div className={styles.editBoxWrap}>
       <div className={styles.editBoxHeader}>
@@ -75,9 +94,11 @@ const EditKeyBox: React.FC<EditKeyBoxProps> = ({
             <span>
               {t('redis.keySize')}: {formatByteSize(size)}
             </span>
-            <span>{t('redis.length')}: 111</span>
+            <span>
+              {t('redis.length')}: {valueLength}
+            </span>
             <span style={{ display: 'flex', alignItems: 'center' }}>
-              <span>TTL:</span>
+              <span>{t('redis.ttl')}:</span>
               <EditableText value={String(ttl)} onChange={handleModifyTTL} />
             </span>
           </div>

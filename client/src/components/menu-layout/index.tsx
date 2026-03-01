@@ -18,6 +18,7 @@ import RedisDatabase from './components/redis-database';
 import MysqlDatabase from './components/mysql-database';
 import Actions from './components/actions';
 import MongoDBDatabase from './components/mongodb-database';
+import PgsqlDatabase from './components/pgsql-database';
 import styles from './index.module.less';
 
 type TTableList = RouterOutput['table']['getList'];
@@ -32,6 +33,8 @@ const MenuLayout: React.FC = () => {
   const [wind, setWind] = useState<IWind[]>([]);
   const [tableMap, setTableMap] = useState<Record<string, TTableList>>({});
   const [editorData, setEditorData] = useState<TEditorData>();
+  const getFirstActiveId = (windows: IWind[]) =>
+    windows.length ? generateActiveId(windows[0]) : '';
 
   const databaseListQuery = useQuery(
     trpc.database.getList.queryOptions({ type: connectionType, connectionId }),
@@ -51,8 +54,7 @@ const MenuLayout: React.FC = () => {
       onSuccess(_data, variables) {
         const omitPreDBWind = wind.filter(w => w.dbName !== variables.dbName);
         setWind(omitPreDBWind);
-        const activeId = generateActiveId(omitPreDBWind[0]);
-        setActive(activeId);
+        setActive(getFirstActiveId(omitPreDBWind));
         setTableMap(t => omit(t, variables.dbName));
         queryClient.invalidateQueries(databaseListQuery);
       },
@@ -65,8 +67,7 @@ const MenuLayout: React.FC = () => {
           w => !(w.tableName === variables.tableName && w.dbName === variables.dbName),
         );
         setWind(omitPreTableWind);
-        const activeId = generateActiveId(omitPreTableWind[0]);
-        setActive(activeId);
+        setActive(getFirstActiveId(omitPreTableWind));
         tableListMutation.mutateAsync(variables);
       },
     }),
@@ -104,8 +105,7 @@ const MenuLayout: React.FC = () => {
         w => !(w.tableName === editorData!.tableName && w.dbName === editorData!.dbName),
       );
       setWind(omitPreTableWind);
-      const activeId = generateActiveId(omitPreTableWind[0]);
-      setActive(activeId);
+      setActive(getFirstActiveId(omitPreTableWind));
       tableListMutation.mutateAsync({
         type: connectionType,
         connectionId,
@@ -116,8 +116,7 @@ const MenuLayout: React.FC = () => {
     if (editorData!.type === EEditorType.EDIT_DB) {
       const omitPreDBWind = wind.filter(w => w.dbName !== editorData!.dbName);
       setWind(omitPreDBWind);
-      const activeId = generateActiveId(omitPreDBWind[0]);
-      setActive(activeId);
+      setActive(getFirstActiveId(omitPreDBWind));
       databaseListQuery.refetch();
     }
 
@@ -169,7 +168,7 @@ const MenuLayout: React.FC = () => {
                 onClick={handleOpenTable}
               />
             )}
-            {connectionType === EConnectionType.MYSQL && (
+            {[EConnectionType.MYSQL, EConnectionType.MARIADB].includes(connectionType) && (
               <MysqlDatabase
                 database={databaseListQuery.data}
                 tableMap={tableMap}
@@ -184,6 +183,19 @@ const MenuLayout: React.FC = () => {
             )}
             {connectionType === EConnectionType.MONGODB && (
               <MongoDBDatabase
+                database={databaseListQuery.data}
+                tableMap={tableMap}
+                activeId={active}
+                className={styles.database}
+                onClickDatabase={handleOpenDatabase}
+                onClickTable={handleOpenTable}
+                onDeleteTable={handleDeleteTable}
+                onDeleteDatabase={handleDeleteDatabase}
+                onEditorData={setEditorData}
+              />
+            )}
+            {connectionType === EConnectionType.PGSQL && (
+              <PgsqlDatabase
                 database={databaseListQuery.data}
                 tableMap={tableMap}
                 activeId={active}

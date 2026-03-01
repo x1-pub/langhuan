@@ -1,7 +1,8 @@
-import React, { useState, useRef, useEffect, type KeyboardEvent } from 'react';
+import React, { useState, useRef, useEffect, useMemo, type KeyboardEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import styles from './index.module.less';
-import { KEYWORDS, LANG_HUAN, TITLE_PREFIX, WELCOME } from './constants';
+import { KEYWORDS, LANG_HUAN } from './constants';
 import { ansiToHtml } from './ansi-parser';
 import { EConnectionType } from '@packages/types/connection';
 
@@ -18,11 +19,51 @@ interface CommandHistory {
 }
 
 const TerminalV2: React.FC<TerminalProps> = props => {
-  const { title = 'Terminal', prompt = '>', type, onExecuteCommand } = props;
+  const { t, i18n } = useTranslation();
+  const { title, prompt = '>', type, onExecuteCommand } = props;
   const [currentInput, setCurrentInput] = useState('');
   const [commandHistory, setCommandHistory] = useState<CommandHistory[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
-  const [output, setOutput] = useState<string[]>([...WELCOME[type], LANG_HUAN]);
+  const welcomeOutput = useMemo(() => {
+    if (type === EConnectionType.MYSQL) {
+      return [
+        t('terminal.welcome.mysql.line1'),
+        t('terminal.welcome.mysql.line2'),
+        t('terminal.welcome.mysql.line3'),
+      ];
+    }
+
+    if (type === EConnectionType.MARIADB) {
+      return [
+        t('terminal.welcome.mariadb.line1'),
+        t('terminal.welcome.mariadb.line2'),
+        t('terminal.welcome.mariadb.line3'),
+      ];
+    }
+
+    if (type === EConnectionType.PGSQL) {
+      return [
+        t('terminal.welcome.pgsql.line1'),
+        t('terminal.welcome.pgsql.line2'),
+        t('terminal.welcome.pgsql.line3'),
+      ];
+    }
+
+    if (type === EConnectionType.REDIS) {
+      return [t('terminal.welcome.redis.line1'), t('terminal.welcome.redis.line2')];
+    }
+
+    return [
+      t('terminal.welcome.mongodb.line1'),
+      t('terminal.welcome.mongodb.line2'),
+      '',
+      t('terminal.welcome.mongodb.line3'),
+      t('terminal.welcome.mongodb.line4'),
+      '',
+    ];
+  }, [i18n.language, t, type]);
+
+  const [output, setOutput] = useState<string[]>(() => [...welcomeOutput, LANG_HUAN]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedSuggestion, setSelectedSuggestion] = useState(0);
@@ -32,6 +73,10 @@ const TerminalV2: React.FC<TerminalProps> = props => {
 
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setOutput([...welcomeOutput, LANG_HUAN]);
+  }, [welcomeOutput]);
 
   useEffect(() => {
     if (inputRef.current) {
@@ -267,7 +312,10 @@ const TerminalV2: React.FC<TerminalProps> = props => {
       if (!trimmedInput) return;
 
       // 检查是否以分号结尾
-      if (type === 'mysql' && !trimmedInput.endsWith(';')) {
+      if (
+        [EConnectionType.MYSQL, EConnectionType.MARIADB, EConnectionType.PGSQL].includes(type) &&
+        !trimmedInput.endsWith(';')
+      ) {
         // 不以分号结尾，在光标位置插入换行
         const textarea = e.target as HTMLTextAreaElement;
         const cursorPos = textarea.selectionStart;
@@ -332,7 +380,7 @@ const TerminalV2: React.FC<TerminalProps> = props => {
     setHistoryIndex(-1);
 
     // 添加到输出
-    setOutput(prev => [...prev, `${prompt} ${cleanedCommand}`, '正在执行...']);
+    setOutput(prev => [...prev, `${prompt} ${cleanedCommand}`, t('terminal.executing')]);
 
     // 清空输入
     setCurrentInput('');
@@ -351,7 +399,7 @@ const TerminalV2: React.FC<TerminalProps> = props => {
       });
     } catch (error) {
       // 处理错误
-      const errorMessage = `\x1b[31m错误: ${error instanceof Error ? error.message : '未知错误'}\x1b[0m`;
+      const errorMessage = `\x1b[31m${t('terminal.errorPrefix')}: ${error instanceof Error ? error.message : t('terminal.unknownError')}\x1b[0m`;
       setOutput(prev => {
         const newOutput = [...prev];
         newOutput[newOutput.length - 1] = errorMessage;
@@ -367,13 +415,15 @@ const TerminalV2: React.FC<TerminalProps> = props => {
   return (
     <div className={styles.terminalContainer} onClick={handleTerminalClick}>
       <div className={styles.terminalHeader}>
-        <div className={styles.terminalTitle}>{`${TITLE_PREFIX[type]}(${title})`}</div>
+        <div className={styles.terminalTitle}>
+          {`${t(`terminal.titlePrefix.${type}`)}(${title || t('terminal.title')})`}
+        </div>
         <div className={styles.terminalControls}>
           <button
             className={`${styles.terminalBtn} ${styles.clear}`}
-            onClick={() => setOutput([''])}
+            onClick={() => setOutput([...welcomeOutput, LANG_HUAN])}
           >
-            清空
+            {t('terminal.clear')}
           </button>
         </div>
       </div>

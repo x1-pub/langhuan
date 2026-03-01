@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Popover } from 'antd';
 import { ThemeMode, useThemeMode } from 'antd-style';
 import { useTranslation } from 'react-i18next';
@@ -11,20 +11,30 @@ import styles from './index.module.less';
 const ThemeToggle: React.FC = () => {
   const { isDarkMode, setThemeMode } = useThemeMode();
   const { t } = useTranslation();
+  const [activeTheme, setActiveTheme] = useState<Theme>(Theme.AUTO);
+  const [open, setOpen] = useState(false);
 
   const handleThemeChange = (v: ThemeMode) => {
+    if (v === activeTheme) {
+      setOpen(false);
+      return;
+    }
     setThemeMode(v);
     storage.set(THTME_KEY, v);
+    setActiveTheme(v as Theme);
+    setOpen(false);
   };
 
   const initTheme = () => {
     const theme = storage.get(THTME_KEY);
     if (Object.values(Theme).includes(theme as Theme)) {
       setThemeMode(theme as ThemeMode);
+      setActiveTheme(theme as Theme);
       return;
     }
     storage.set(THTME_KEY, Theme.AUTO);
     setThemeMode(Theme.AUTO);
+    setActiveTheme(Theme.AUTO);
   };
 
   const changeScrollBarColor = (dark: boolean) => {
@@ -52,18 +62,43 @@ const ThemeToggle: React.FC = () => {
 
   const content = (
     <div className={styles.list}>
-      <span onClick={() => handleThemeChange(Theme.AUTO)}>{t('themeAuto')}</span>
-      <span onClick={() => handleThemeChange(Theme.LIGHT)}>{t('themeLight')}</span>
-      <span onClick={() => handleThemeChange(Theme.DARK)}>{t('themeDark')}</span>
+      <button
+        type="button"
+        aria-pressed={activeTheme === Theme.AUTO}
+        className={`${styles.item} ${activeTheme === Theme.AUTO ? styles.active : ''}`}
+        onClick={() => handleThemeChange(Theme.AUTO)}
+      >
+        {t('themeAuto')}
+      </button>
+      <button
+        type="button"
+        aria-pressed={activeTheme === Theme.LIGHT}
+        className={`${styles.item} ${activeTheme === Theme.LIGHT ? styles.active : ''}`}
+        onClick={() => handleThemeChange(Theme.LIGHT)}
+      >
+        {t('themeLight')}
+      </button>
+      <button
+        type="button"
+        aria-pressed={activeTheme === Theme.DARK}
+        className={`${styles.item} ${activeTheme === Theme.DARK ? styles.active : ''}`}
+        onClick={() => handleThemeChange(Theme.DARK)}
+      >
+        {t('themeDark')}
+      </button>
     </div>
   );
 
   return (
-    <>
-      <Popover content={content}>
-        <SunOutlined className={styles.icon} />
-      </Popover>
-    </>
+    <Popover
+      content={content}
+      trigger="click"
+      placement="bottom"
+      open={open}
+      onOpenChange={setOpen}
+    >
+      <SunOutlined className={styles.icon} />
+    </Popover>
   );
 };
 

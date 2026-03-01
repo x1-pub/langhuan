@@ -83,7 +83,7 @@ const AddKeyBox: React.FC<AddKeyBoxProps> = ({ onAddSuccess, onCancel }) => {
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item<FieldType> label="TTL" name="ttl">
+              <Form.Item<FieldType> label={t('redis.ttl')} name="ttl">
                 <InputNumber style={{ width: '100%' }} />
               </Form.Item>
             </Col>
@@ -92,7 +92,7 @@ const AddKeyBox: React.FC<AddKeyBoxProps> = ({ onAddSuccess, onCancel }) => {
             <Input />
           </Form.Item>
           <Divider className={styles.divider} />
-          <Form.Item<FieldType> label="" name="value">
+          <Form.Item<FieldType> name="value">
             <ValueEditor mode="add" type={typeValue} />
           </Form.Item>
         </Form>

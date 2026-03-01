@@ -63,15 +63,15 @@ const MysqlEvent: React.FC = () => {
   const columns: TableColumnsType<TEventItem> = useMemo(
     () => [
       {
-        title: '事件名',
+        title: t('mysql.eventName'),
         dataIndex: 'name',
       },
       {
-        title: '调度',
+        title: t('mysql.eventSchedule'),
         dataIndex: 'schedule',
       },
       {
-        title: '状态',
+        title: t('mysql.eventStatus'),
         dataIndex: 'status',
         width: 120,
         render: value => (
@@ -79,12 +79,12 @@ const MysqlEvent: React.FC = () => {
         ),
       },
       {
-        title: '定义者',
+        title: t('mysql.viewDefiner'),
         dataIndex: 'definer',
         width: 160,
       },
       {
-        title: '备注',
+        title: t('table.comment'),
         dataIndex: 'comment',
         ellipsis: true,
       },
@@ -178,7 +178,7 @@ const MysqlEvent: React.FC = () => {
       />
 
       <Modal
-        title={editing ? '编辑事件' : '新建事件'}
+        title={editing ? t('mysql.editEvent') : t('mysql.createEvent')}
         open={modalOpen}
         onCancel={() => {
           setModalOpen(false);
@@ -200,36 +200,40 @@ const MysqlEvent: React.FC = () => {
         >
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item label="事件名" name="name" rules={[{ required: true }]}>
+              <Form.Item label={t('mysql.eventName')} name="name" rules={[{ required: true }]}>
                 <Input />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item label="启用" name="status" valuePropName="checked">
+              <Form.Item label={t('mysql.eventEnabled')} name="status" valuePropName="checked">
                 <Switch checkedChildren="YES" unCheckedChildren="NO" />
               </Form.Item>
             </Col>
           </Row>
 
-          <Form.Item label="调度" name="schedule" rules={[{ required: true }]}>
+          <Form.Item label={t('mysql.eventSchedule')} name="schedule" rules={[{ required: true }]}>
             <Input.TextArea
               placeholder={'EVERY 1 DAY STARTS CURRENT_TIMESTAMP'}
               autoSize={{ minRows: 2, maxRows: 4 }}
             />
           </Form.Item>
 
-          <Form.Item label="定义者" name="definer">
+          <Form.Item label={t('mysql.viewDefiner')} name="definer">
             <Input placeholder="root@%" />
           </Form.Item>
 
-          <Form.Item label="定义（SQL）" name="definition" rules={[{ required: true }]}>
+          <Form.Item
+            label={t('mysql.viewDefinitionSql')}
+            name="definition"
+            rules={[{ required: true }]}
+          >
             <Input.TextArea
               placeholder={'BEGIN\n  -- your sql here\n  CALL your_procedure();\nEND'}
               autoSize={{ minRows: 6, maxRows: 14 }}
             />
           </Form.Item>
 
-          <Form.Item label="备注" name="comment">
+          <Form.Item label={t('table.comment')} name="comment">
             <Input />
           </Form.Item>
         </Form>

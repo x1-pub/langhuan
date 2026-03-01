@@ -2,7 +2,8 @@ import React from 'react';
 
 import { useState, useRef, useEffect } from 'react';
 import styles from './index.module.less';
-import { Tooltip } from 'antd';
+import { Tooltip, message } from 'antd';
+import { useTranslation } from 'react-i18next';
 
 interface EditableTextProps {
   value?: string;
@@ -29,13 +30,15 @@ const EditableText: React.FC<EditableTextProps> = ({
   readonly = false,
   editMode = 'normal',
   showCopy = true,
-  empty = 'Empty',
+  empty,
 }) => {
+  const { t } = useTranslation();
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(value);
   const [isHovered, setIsHovered] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
+  const displayEmpty = empty ?? t('common.empty');
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -87,8 +90,8 @@ const EditableText: React.FC<EditableTextProps> = ({
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(value);
-    } catch (err) {
-      console.error('Failed to copy text: ', err);
+    } catch {
+      message.error(t('notification.copyFailed'));
     }
   };
 
@@ -192,7 +195,7 @@ const EditableText: React.FC<EditableTextProps> = ({
       <Tooltip title={tooltip}>
         <span
           className={`${styles.text} ${multiline ? styles.multilineText : ''}`}
-          data-empty={empty}
+          data-empty={displayEmpty}
         >
           {multiline
             ? value.split('\n').map((line, index) => (
@@ -213,7 +216,7 @@ const EditableText: React.FC<EditableTextProps> = ({
               handleCopy();
             }}
             type="button"
-            title="Copy"
+            title={t('button.copy')}
           >
             <svg
               width="14"

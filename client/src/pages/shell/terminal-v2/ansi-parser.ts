@@ -60,9 +60,6 @@ class AnsiToHtmlParser {
     // 重置样式
     this.currentStyle = {};
 
-    // 替换换行符为<br>
-    const html = ansiText.replace(/\n/g, '<br>');
-
     // 匹配ANSI转义序列的正则表达式
     // eslint-disable-next-line no-control-regex
     const ansiRegex = /\u001b\[([0-9;]*)m/g;
@@ -71,9 +68,9 @@ class AnsiToHtmlParser {
     let lastIndex = 0;
     let match;
 
-    while ((match = ansiRegex.exec(html)) !== null) {
+    while ((match = ansiRegex.exec(ansiText)) !== null) {
       // 添加匹配前的文本
-      const textBefore = html.slice(lastIndex, match.index);
+      const textBefore = ansiText.slice(lastIndex, match.index);
       if (textBefore) {
         result += this.wrapWithStyle(textBefore);
       }
@@ -86,7 +83,7 @@ class AnsiToHtmlParser {
     }
 
     // 添加剩余的文本
-    const remainingText = html.slice(lastIndex);
+    const remainingText = ansiText.slice(lastIndex);
     if (remainingText) {
       result += this.wrapWithStyle(remainingText);
     }
@@ -150,8 +147,10 @@ class AnsiToHtmlParser {
    * @returns 包装后的HTML
    */
   private wrapWithStyle(text: string): string {
+    const safeText = this.escapeHtml(text).replace(/\n/g, '<br>');
+
     if (Object.keys(this.currentStyle).length === 0) {
-      return text;
+      return safeText;
     }
 
     const styles: string[] = [];
@@ -181,7 +180,16 @@ class AnsiToHtmlParser {
     }
 
     const styleAttr = styles.length > 0 ? ` style="${styles.join('; ')}"` : '';
-    return `<span${styleAttr}>${text}</span>`;
+    return `<span${styleAttr}>${safeText}</span>`;
+  }
+
+  private escapeHtml(text: string): string {
+    return text
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#39;');
   }
 
   /**

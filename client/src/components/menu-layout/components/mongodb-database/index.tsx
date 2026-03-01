@@ -64,7 +64,7 @@ const MongoDBDatabase: React.FC<IMongoDBDatabaseProps> = props => {
       ghost={true}
       onChange={onClickDatabase}
       expandIconPlacement="start"
-      items={database?.map(db => ({
+      items={database?.map((db: { name: string }) => ({
         key: db.name,
         label: (
           <span className={styles.dbTitle}>
@@ -74,7 +74,7 @@ const MongoDBDatabase: React.FC<IMongoDBDatabaseProps> = props => {
         ),
         children: (
           <>
-            {(tableMap?.[db.name] || []).map(table => (
+            {(tableMap?.[db.name] || []).map((table: { name: string; comment?: string }) => (
               <li key={table.name} className={styles.tableWrap}>
                 <span
                   className={classNames(styles.tableTitle, {

@@ -114,8 +114,8 @@ const FieldEditor: React.FC<FieldEditorProps> = ({ editRow, visible, onSubmit, o
 
       form.resetFields();
       onSubmit();
-    } catch (error) {
-      console.log('Validate Failed:', error);
+    } catch {
+      // Validation errors are already displayed by Form.Item rules.
     }
   };
 
@@ -231,10 +231,10 @@ const FieldEditor: React.FC<FieldEditorProps> = ({ editRow, visible, onSubmit, o
                   <Tooltip
                     title={
                       <>
-                        <div>自动递增字段需满足: </div>
-                        <div>1. 整数类型</div>
-                        <div>2. PRIMARY或UNIQUE类型索引</div>
-                        <div>3. 每个表最多有一个</div>
+                        <div>{t('table.autoIncrementTipTitle')}</div>
+                        <div>{t('table.autoIncrementTip1')}</div>
+                        <div>{t('table.autoIncrementTip2')}</div>
+                        <div>{t('table.autoIncrementTip3')}</div>
                       </>
                     }
                   >

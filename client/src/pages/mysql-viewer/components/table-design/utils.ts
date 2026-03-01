@@ -38,6 +38,5 @@ export const getTypeFromIndexData = (record: IMySQLTableIndex) => {
     return EMySQLIndexType.SPATIAL;
   }
 
-  console.error(`Description Failed to identify the index type: ${record}`);
-  return EMySQLIndexType.UNIQUE;
+  return EMySQLIndexType.INDEX;
 };

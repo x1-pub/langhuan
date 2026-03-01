@@ -15,16 +15,18 @@ interface IActions {
 
 const Actions: React.FC<IActions> = ({ connectionId, connectionType, onCreateDatabase }) => {
   const { t } = useTranslation();
+  const createDbText =
+    connectionType === EConnectionType.PGSQL ? t('pgsql.createDb') : t('mysql.createDb');
 
   const handleOpenShell = () => {
-    window.open(`/${connectionType}/${connectionId}/shell`, '_blank');
+    window.open(`/${connectionType}/${connectionId}/shell`, '_blank', 'noopener,noreferrer');
   };
 
   return (
     <div className={styles.actions}>
       {connectionType !== EConnectionType.REDIS && (
         <Button type="dashed" shape="round" icon={<PlusOutlined />} onClick={onCreateDatabase}>
-          {t('mysql.createDb')}
+          {createDbText}
         </Button>
       )}
       <Button

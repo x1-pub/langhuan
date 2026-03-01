@@ -19,7 +19,7 @@ const HeaderLayout: React.FC = () => {
   const isWelcomePage = location.pathname === '/';
 
   const linkToGithub = () => {
-    window.open('https://github.com/x1-pub/langhuan');
+    window.open('https://github.com/x1-pub/langhuan', '_blank', 'noopener,noreferrer');
   };
 
   const handleAfterCreate = () => {
