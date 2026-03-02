@@ -5,12 +5,12 @@ import { Divider, Popconfirm, Tooltip } from 'antd';
 import { useTranslation } from 'react-i18next';
 import KeyTypeIcon from '../key-type-icon';
 import ValueEditor from '../value-editor';
-import { formatByteSize } from '@/utils/format-byte-size';
-import useDatabaseWindows from '@/hooks/use-database-windows';
+import { formatByteSize } from '@/shared/formatters/byte-size';
+import useDatabaseWindows from '@/domain/workbench/state/database-window-state';
 import EditableText from '@/components/editable-text';
 import styles from './index.module.less';
 
-import { RouterOutput, trpc } from '@/utils/trpc';
+import { RouterOutput, trpc } from '@/infra/api/trpc';
 import { useMutation } from '@tanstack/react-query';
 import { ERedisDataType } from '@packages/types/redis';
 

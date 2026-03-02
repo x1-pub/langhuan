@@ -33,6 +33,27 @@ export const DeletePgsqlRowsSchema = PgsqlBaseSchema.extend({
 
 export const GetPgsqlTableColumnsSchema = PgsqlBaseSchema;
 
+export const CreatePgsqlTableColumnSchema = PgsqlBaseSchema.extend({
+  name: z.string().min(1),
+  dataType: z.string().min(1),
+  nullable: z.boolean().default(true),
+  defaultValue: z.string().optional(),
+  comment: z.string().optional(),
+});
+
+export const UpdatePgsqlTableColumnSchema = PgsqlBaseSchema.extend({
+  oldName: z.string().min(1),
+  name: z.string().min(1),
+  dataType: z.string().min(1),
+  nullable: z.boolean().default(true),
+  defaultValue: z.string().optional(),
+  comment: z.string().optional(),
+});
+
+export const DeletePgsqlTableColumnSchema = PgsqlBaseSchema.extend({
+  name: z.string().min(1),
+});
+
 export const GetPgsqlTableIndexesSchema = PgsqlBaseSchema;
 
 export const CreatePgsqlTableIndexSchema = PgsqlBaseSchema.extend({
@@ -44,6 +65,14 @@ export const CreatePgsqlTableIndexSchema = PgsqlBaseSchema.extend({
 
 export const DropPgsqlTableIndexSchema = PgsqlBaseSchema.extend({
   indexName: z.string().min(1),
+});
+
+export const UpdatePgsqlTableIndexSchema = PgsqlBaseSchema.extend({
+  oldName: z.string().min(1),
+  indexName: z.string().min(1),
+  columns: z.array(z.string().min(1)).min(1),
+  unique: z.boolean().optional(),
+  method: z.string().optional(),
 });
 
 export const GetPgsqlTableDDLSchema = PgsqlBaseSchema;

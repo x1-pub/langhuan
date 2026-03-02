@@ -3,10 +3,10 @@ import { Modal, Form, Input, Select, Checkbox, Row, Col, Tooltip } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from '@tanstack/react-query';
 
-import useDatabaseWindows from '@/hooks/use-database-windows';
+import useDatabaseWindows from '@/domain/workbench/state/database-window-state';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import { EMySQLFieldDefaultType, IMySQLColumn, TMysqlBaseColumnInfo } from '@packages/types/mysql';
-import { trpc } from '@/utils/trpc';
+import { trpc } from '@/infra/api/trpc';
 import MySQLColumnTypeSelector from '@/components/mysql-column-type-selector';
 
 interface FieldEditorProps {

@@ -11,8 +11,8 @@ import {
   GEOMETRY_TYPES,
   NUMBER_TYPES,
   STRING_TYPES,
-} from '@/utils/mysql-types';
-import { getMySQLPureType } from '@/utils/mysql-generator';
+} from '@/domain/mysql/model/mysql-type-groups';
+import { getMySQLPureType } from '@/domain/mysql/model/mysql-value';
 
 type TEngine = 'mysql' | 'pgsql';
 

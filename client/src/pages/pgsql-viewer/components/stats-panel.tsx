@@ -2,7 +2,7 @@ import React from 'react';
 import { Descriptions, Empty, Spin } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import { formatByteSize } from '@/utils/format-byte-size';
+import { formatByteSize } from '@/shared/formatters/byte-size';
 
 interface StatsPanelProps {
   loading: boolean;

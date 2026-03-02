@@ -7,7 +7,7 @@ import {
   UpdateTableIndexSchema,
 } from '@packages/zod/mysql';
 import { protectedProcedure, router } from '../../trpc';
-import { escapedMySQLName } from '../../lib/utils';
+import { escapedMySQLName } from '../../shared/mysql/quote-identifier';
 import { IMySQLTableIndex } from '@packages/types/mysql';
 import { mysqlAPIs } from '../../api/mysql';
 

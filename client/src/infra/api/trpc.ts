@@ -3,8 +3,8 @@ import { createTRPCOptionsProxy } from '@trpc/tanstack-react-query';
 import { createTRPCClient, httpBatchLink } from '@trpc/client';
 
 import type { inferRouterOutputs, inferRouterInputs } from '@trpc/server';
-import type { AppRouter } from '../../../server/src/router';
-import { showError } from './global-notification';
+import type { AppRouter } from '../../../../server/src/router';
+import { showError } from '@/shared/ui/notifications';
 
 const DEFAULT_ERROR_TITLE = 'UNEXPECTED_ERROR';
 const DEFAULT_ERROR_MESSAGE = "I'm sorry, an unexpected error occurred on the server.";

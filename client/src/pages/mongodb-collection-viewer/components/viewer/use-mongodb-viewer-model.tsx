@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import useDatabaseWindows from '@/hooks/use-database-windows';
+import useDatabaseWindows from '@/domain/workbench/state/database-window-state';
 import type { DocumentsPanelProps } from '../panels/documents-panel';
 import { TActiveTab } from '../shared';
 import {

@@ -2,7 +2,7 @@ import { TRPCError } from '@trpc/server';
 import { Pool, types } from 'pg';
 
 import { IConnectionPoolConfig } from '@packages/types/connection';
-import { removeNullAndUndefined } from '../lib/utils';
+import { removeNullAndUndefined } from '../shared/object/remove-nullish';
 
 interface PgsqlInstanceWithTimestamp {
   pool: Pool;

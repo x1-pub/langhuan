@@ -7,14 +7,55 @@ html {
   --theme-text-color: #222222;
   --theme-border-color: #e7e7e7;
   --theme-table-row-hover-bg: #f5f5f5;
+  --theme-warning-color: #f5be38;
+  --theme-table-column-type-color: #8dcdce;
+  --theme-danger-color: #ff4d4f;
+  --theme-moderate-border-color: #d9d9d9;
+
+  // Spacing scale: 4 / 8 / 12 / 16 / 20
   --spacing-1: 4px;
   --spacing-2: 8px;
   --spacing-3: 12px;
   --spacing-4: 16px;
+  --spacing-5: 20px;
+
+  --radius-xs: 4px;
   --radius-sm: 6px;
   --radius-md: 8px;
   --radius-lg: 12px;
+
+  --layout-header-height: 51px;
+  --layout-sidebar-width: 270px;
+  --layout-sidebar-border-width: 1px;
+  --layout-root-height: 100vh;
+  --layout-body-height: calc(var(--layout-root-height) - var(--layout-header-height));
+  --layout-tabs-viewport-offset: 56px;
+  --layout-viewer-height: calc(var(--layout-body-height) - var(--layout-tabs-viewport-offset));
+  --layout-panel-toolbar-height: 44px;
+  --layout-dialog-content-max-height: calc(var(--layout-root-height) - 310px);
   --layout-min-width: 1250px;
+  --layout-query-help-width: 300px;
+  --layout-query-editor-height: 76px;
+  --layout-query-editor-padding: var(--spacing-1);
+  --layout-query-editor-help-left: var(--spacing-1);
+  --layout-query-editor-help-top: var(--spacing-2);
+  --layout-query-editor-border-color: var(--theme-moderate-border-color);
+  --layout-field-width-md: 150px;
+  --layout-field-width-xl: 300px;
+  --layout-field-width-xxl: 400px;
+  --layout-form-field-min-width: 260px;
+  --layout-form-field-compact-width: 140px;
+  --layout-modal-width-md: 830px;
+  --layout-modal-width-lg: 950px;
+  --layout-modal-width-xl: 820px;
+  --layout-modal-width-sm: 760px;
+  --layout-modal-width-base: 780px;
+  --layout-modal-width-xs: 600px;
+  --layout-modal-width-2xl: 900px;
+  --layout-modal-min-width-lg: 800px;
+  --layout-row-editor-table-max-height: 52vh;
+  --size-inline-xs: 6px;
+
   scrollbar-color: var(--theme-scrollbar-color) transparent;
   background: var(--theme-background-color);
 }

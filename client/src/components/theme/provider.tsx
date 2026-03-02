@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
 import { ThemeProvider as ThemeCtx, ThemeMode } from 'antd-style';
 
-import { getPersistedTheme } from '@/utils/storage';
+import { getPersistedTheme } from '@/infra/storage/persistence';
 import { Theme } from './constants';
 
 const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {

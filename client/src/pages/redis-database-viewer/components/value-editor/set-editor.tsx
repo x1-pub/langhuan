@@ -7,8 +7,8 @@ import { useMutation } from '@tanstack/react-query';
 import styles from './index.module.less';
 import EditableText from '@/components/editable-text';
 import { TRedisValue } from '@packages/types/redis';
-import useDatabaseWindows from '@/hooks/use-database-windows';
-import { trpc } from '@/utils/trpc';
+import useDatabaseWindows from '@/domain/workbench/state/database-window-state';
+import { trpc } from '@/infra/api/trpc';
 
 interface SetEditorProps {
   mode: 'add' | 'edit';

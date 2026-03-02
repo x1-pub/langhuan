@@ -1,0 +1,25 @@
+.wrapper {
+  height: 100%;
+  min-height: 0;
+}
+
+.dataTable {
+  height: 100%;
+  min-height: 0;
+
+  :global {
+    .langhuan-table-body,
+    .ant-table-body {
+      overflow-y: auto !important;
+    }
+
+    .langhuan-pagination,
+    .ant-pagination {
+      margin-bottom: 0;
+    }
+  }
+}
+
+.columnActionBtn {
+  padding-inline: var(--size-inline-xs) !important;
+}

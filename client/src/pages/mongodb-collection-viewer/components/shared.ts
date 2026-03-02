@@ -1,4 +1,4 @@
-import type { RouterOutput } from '@/utils/trpc';
+import type { RouterOutput } from '@/infra/api/trpc';
 
 export const ROW_KEY_FIELD = '__mongo_row_key';
 export const DEFAULT_PAGE_SIZE = 20;

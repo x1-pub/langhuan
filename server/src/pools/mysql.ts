@@ -1,7 +1,7 @@
 import { Sequelize } from 'sequelize';
 
 import { IConnectionPoolConfig } from '@packages/types/connection';
-import { removeNullAndUndefined } from '../lib/utils';
+import { removeNullAndUndefined } from '../shared/object/remove-nullish';
 import { TRPCError } from '@trpc/server';
 
 interface SequelizeInstanceWithTimestamp {

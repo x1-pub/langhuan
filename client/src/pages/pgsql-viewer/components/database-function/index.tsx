@@ -4,9 +4,11 @@ import type { TableColumnsType } from 'antd';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
-import useDatabaseWindows from '@/hooks/use-database-windows';
-import { trpc, RouterOutput } from '@/utils/trpc';
+import useDatabaseWindows from '@/domain/workbench/state/database-window-state';
+import { trpc, RouterOutput } from '@/infra/api/trpc';
 import styles from '../../index.module.less';
+
+const FUNCTION_MODAL_WIDTH = 'var(--layout-modal-width-xl)';
 
 type TPgsqlFunction = RouterOutput['pgsql']['getFunctions'][number];
 
@@ -191,12 +193,13 @@ const DatabaseFunction: React.FC = () => {
   return (
     <div className={styles.wrapper}>
       <Table<TPgsqlFunction>
+        className={styles.dataTable}
         rowKey={row => `${row.schema}.${row.name}(${row.arguments || ''})`}
         loading={getFunctionsQuery.isLoading}
         columns={columns}
         dataSource={getFunctionsQuery.data || []}
         pagination={false}
-        scroll={{ x: 'max-content', y: 'calc(100vh - 375px)' }}
+        scroll={{ x: 'max-content', y: '100%' }}
         onRow={record => ({
           onDoubleClick: () => handleEdit(record),
         })}
@@ -210,7 +213,7 @@ const DatabaseFunction: React.FC = () => {
           setEditing(null);
         }}
         onOk={handleSubmit}
-        width={820}
+        width={FUNCTION_MODAL_WIDTH}
         confirmLoading={loading}
         destroyOnHidden={true}
       >

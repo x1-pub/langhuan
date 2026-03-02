@@ -9,7 +9,7 @@ import {
 } from '@packages/zod/mysql';
 import { EMySQLViewCheckOption, EMysqlFunctionSecurity } from '@packages/types/mysql';
 import { protectedProcedure, router } from '../../trpc';
-import { escapedMySQLName } from '../../lib/utils';
+import { escapedMySQLName } from '../../shared/mysql/quote-identifier';
 
 interface IOriginView {
   name: string;

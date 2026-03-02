@@ -8,7 +8,7 @@ import TableDesign from './components/table-design';
 import TableDDL from './components/table-ddl';
 import TableStatus from './components/table-status';
 import styles from './index.module.less';
-import { ESpecialWind, IWind } from '@/hooks/use-database-windows';
+import { ESpecialWind, IWind } from '@/domain/workbench/state/database-window-state';
 import MysqlEvent from './components/database-event';
 import MysqlView from './components/database-view';
 import MysqlFunction from './components/database-function';

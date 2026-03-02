@@ -4,10 +4,12 @@ import type { TableColumnsType } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation } from '@tanstack/react-query';
 
-import { trpc, RouterInput, RouterOutput } from '@/utils/trpc';
-import useDatabaseWindows from '@/hooks/use-database-windows';
+import { trpc, RouterInput, RouterOutput } from '@/infra/api/trpc';
+import useDatabaseWindows from '@/domain/workbench/state/database-window-state';
 import { EMySQLViewCheckOption, EMysqlFunctionSecurity } from '@packages/types/mysql';
 import styles from './index.module.less';
+
+const VIEW_MODAL_WIDTH = 'var(--layout-modal-width-base)';
 
 type TFormValue = Omit<RouterInput['mysql']['createView'], 'connectionId' | 'dbName'>;
 type TViewItem = RouterOutput['mysql']['getViews'][number];
@@ -161,6 +163,7 @@ const MysqlView: React.FC = () => {
   return (
     <div className={styles.wrapper}>
       <Table<TViewItem>
+        className={styles.dataTable}
         rowKey={record => record.name}
         columns={columns}
         dataSource={getViewsQuery.data}
@@ -169,7 +172,7 @@ const MysqlView: React.FC = () => {
         onRow={record => ({
           onDoubleClick: () => handleEdit(record),
         })}
-        scroll={{ y: 'calc(100vh - 195px)' }}
+        scroll={{ y: '100%' }}
       />
 
       <Modal
@@ -181,7 +184,7 @@ const MysqlView: React.FC = () => {
           form.resetFields();
         }}
         onOk={handleSave}
-        width={780}
+        width={VIEW_MODAL_WIDTH}
         confirmLoading={
           createViewMutation.isPending ||
           updateViewMutation.isPending ||

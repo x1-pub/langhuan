@@ -16,11 +16,11 @@ import { useMutation } from '@tanstack/react-query';
 
 import FieldEditor from '../field-editor';
 import styles from '../../index.module.less';
-import useDatabaseWindows from '@/hooks/use-database-windows';
+import useDatabaseWindows from '@/domain/workbench/state/database-window-state';
 import { IMySQLColumn, IMySQLTableIndex } from '@packages/types/mysql';
 import PrimaryIcon from '../primary-icon';
-import { trpc } from '@/utils/trpc';
-import { getMySQLPureType } from '@/utils/mysql-generator';
+import { trpc } from '@/infra/api/trpc';
+import { getMySQLPureType } from '@/domain/mysql/model/mysql-value';
 
 interface RowProps extends React.HTMLAttributes<HTMLTableRowElement> {
   'data-row-key': string;
@@ -103,7 +103,19 @@ const ColumnsManager: React.FC<ColumnsManagerProps> = props => {
       dataIndex: 'Comment',
     },
     {
-      title: t('table.operation'),
+      title: (
+        <>
+          {t('table.operation')}
+          <Button
+            className={styles.columnActionBtn}
+            color="cyan"
+            variant="link"
+            onClick={() => setVisible(true)}
+          >
+            {t('button.add')}
+          </Button>
+        </>
+      ),
       dataIndex: '',
       render: (_, record) => (
         <>
@@ -182,11 +194,6 @@ const ColumnsManager: React.FC<ColumnsManagerProps> = props => {
 
   return (
     <>
-      <div className={styles.tableActionBar}>
-        <Button color="cyan" variant="link" onClick={() => setVisible(true)}>
-          {t('button.add')}
-        </Button>
-      </div>
       <DndContext sensors={sensors} modifiers={[restrictToVerticalAxis]} onDragEnd={onDragEnd}>
         <SortableContext
           // rowKey array
@@ -194,11 +201,12 @@ const ColumnsManager: React.FC<ColumnsManagerProps> = props => {
           strategy={verticalListSortingStrategy}
         >
           <Table
+            className={styles.dataTable}
             rowKey="Field"
             dataSource={dataOrder}
             columns={tableColumns}
             pagination={false}
-            scroll={{ x: 'max-content', y: 'calc(100vh - 375px)' }}
+            scroll={{ x: 'max-content', y: '100%' }}
             onRow={record => ({
               onDoubleClick: () => handleEdit(record),
             })}

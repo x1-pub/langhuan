@@ -1,5 +1,5 @@
 import { ERedisDataType, TRedisKeyViewType } from '@packages/types/redis';
-import { RouterOutput } from './trpc';
+import type { RouterOutput } from '@/infra/api/trpc';
 
 type TRedisKeys = RouterOutput['redis']['getKeys']['items'];
 

@@ -20,6 +20,25 @@ interface TableDesignPanelProps {
     isIdentity: boolean;
     identityGeneration: 'ALWAYS' | 'BY DEFAULT' | null;
   }>;
+  structureMutating: boolean;
+  onCreateColumn: (value: {
+    name: string;
+    dataType: string;
+    nullable: boolean;
+    defaultValue?: string;
+    comment?: string;
+  }) => Promise<void>;
+  onUpdateColumn: (
+    oldName: string,
+    value: {
+      name: string;
+      dataType: string;
+      nullable: boolean;
+      defaultValue?: string;
+      comment?: string;
+    },
+  ) => Promise<void>;
+  onDeleteColumn: (name: string) => Promise<void>;
   indexesLoading: boolean;
   indexes: Array<{
     name: string;
@@ -29,30 +48,38 @@ interface TableDesignPanelProps {
     label: string;
     value: string;
   }>;
-  draft: {
+  isMutatingIndexes: boolean;
+  onCreateIndex: (draft: {
     indexName: string;
     method: string;
     columns: string[];
     unique: boolean;
-  };
-  isCreating: boolean;
-  isDropping: boolean;
-  onChangeDraft: (draft: Partial<TableDesignPanelProps['draft']>) => void;
-  onCreateIndex: () => void;
-  onDropIndex: (indexName: string) => void;
+  }) => Promise<void>;
+  onUpdateIndex: (
+    oldName: string,
+    draft: {
+      indexName: string;
+      method: string;
+      columns: string[];
+      unique: boolean;
+    },
+  ) => Promise<void>;
+  onDropIndex: (indexName: string) => Promise<void>;
 }
 
 const TableDesignPanel: React.FC<TableDesignPanelProps> = ({
   structureLoading,
   columns,
+  structureMutating,
+  onCreateColumn,
+  onUpdateColumn,
+  onDeleteColumn,
   indexesLoading,
   indexes,
   columnOptions,
-  draft,
-  isCreating,
-  isDropping,
-  onChangeDraft,
+  isMutatingIndexes,
   onCreateIndex,
+  onUpdateIndex,
   onDropIndex,
 }) => {
   const { t } = useTranslation();
@@ -68,7 +95,16 @@ const TableDesignPanel: React.FC<TableDesignPanelProps> = ({
           {
             key: 'structure',
             label: t('pgsql.structure'),
-            children: <StructurePanel loading={structureLoading} columns={columns} />,
+            children: (
+              <StructurePanel
+                loading={structureLoading}
+                columns={columns}
+                isMutating={structureMutating}
+                onCreateColumn={onCreateColumn}
+                onUpdateColumn={onUpdateColumn}
+                onDeleteColumn={onDeleteColumn}
+              />
+            ),
           },
           {
             key: 'indexes',
@@ -78,11 +114,9 @@ const TableDesignPanel: React.FC<TableDesignPanelProps> = ({
                 loading={indexesLoading}
                 indexes={indexes}
                 columnOptions={columnOptions}
-                draft={draft}
-                isCreating={isCreating}
-                isDropping={isDropping}
-                onChangeDraft={onChangeDraft}
+                isMutating={isMutatingIndexes}
                 onCreateIndex={onCreateIndex}
+                onUpdateIndex={onUpdateIndex}
                 onDropIndex={onDropIndex}
               />
             ),

@@ -1,6 +1,6 @@
 import type { TFunction } from 'i18next';
 
-import { showError } from '@/utils/global-notification';
+import { showError } from '@/shared/ui/notifications';
 import { isPlainObject } from '../../shared';
 
 export const parseJSONObject = (

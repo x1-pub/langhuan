@@ -5,6 +5,8 @@ import { useTranslation } from 'react-i18next';
 
 import styles from '../index.module.less';
 
+const TRIGGER_MODAL_WIDTH = 'var(--layout-modal-width-xl)';
+
 interface TriggerItem {
   name: string;
   timing: string;
@@ -131,12 +133,13 @@ const TriggersPanel: React.FC<TriggersPanelProps> = ({
   return (
     <div className={styles.wrapper}>
       <Table
+        className={styles.dataTable}
         rowKey="name"
         loading={loading}
         columns={columns}
         dataSource={triggers}
         pagination={false}
-        scroll={{ x: 'max-content', y: 'calc(100vh - 375px)' }}
+        scroll={{ x: 'max-content', y: '100%' }}
         onRow={record => ({
           onDoubleClick: () => handleEdit(record),
         })}
@@ -150,7 +153,7 @@ const TriggersPanel: React.FC<TriggersPanelProps> = ({
           setEditing(null);
         }}
         onOk={handleSubmit}
-        width={820}
+        width={TRIGGER_MODAL_WIDTH}
         confirmLoading={isMutating}
         destroyOnHidden={true}
       >

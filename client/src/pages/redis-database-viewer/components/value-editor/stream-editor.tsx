@@ -9,8 +9,8 @@ import { useMutation } from '@tanstack/react-query';
 import EditableText from '@/components/editable-text';
 import styles from './index.module.less';
 import { TRedisValue } from '@packages/types/redis';
-import useDatabaseWindows from '@/hooks/use-database-windows';
-import { trpc } from '@/utils/trpc';
+import useDatabaseWindows from '@/domain/workbench/state/database-window-state';
+import { trpc } from '@/infra/api/trpc';
 
 interface StreamEditorProps {
   mode: 'add' | 'edit';

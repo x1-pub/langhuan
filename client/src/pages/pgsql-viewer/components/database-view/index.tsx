@@ -4,9 +4,11 @@ import type { TableColumnsType } from 'antd';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
-import useDatabaseWindows from '@/hooks/use-database-windows';
-import { trpc, RouterOutput } from '@/utils/trpc';
+import useDatabaseWindows from '@/domain/workbench/state/database-window-state';
+import { trpc, RouterOutput } from '@/infra/api/trpc';
 import styles from '../../index.module.less';
+
+const VIEW_MODAL_WIDTH = 'var(--layout-modal-width-xl)';
 
 type TPgsqlView = RouterOutput['pgsql']['getViews'][number];
 
@@ -167,12 +169,13 @@ const DatabaseView: React.FC = () => {
   return (
     <div className={styles.wrapper}>
       <Table<TPgsqlView>
+        className={styles.dataTable}
         rowKey={row => `${row.schema}.${row.name}`}
         loading={getViewsQuery.isLoading}
         columns={columns}
         dataSource={getViewsQuery.data || []}
         pagination={false}
-        scroll={{ x: 'max-content', y: 'calc(100vh - 375px)' }}
+        scroll={{ x: 'max-content', y: '100%' }}
         onRow={record => ({
           onDoubleClick: () => handleEdit(record),
         })}
@@ -186,7 +189,7 @@ const DatabaseView: React.FC = () => {
           setEditing(null);
         }}
         onOk={handleSubmit}
-        width={820}
+        width={VIEW_MODAL_WIDTH}
         confirmLoading={loading}
         destroyOnHidden={true}
       >

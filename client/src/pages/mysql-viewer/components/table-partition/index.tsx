@@ -4,8 +4,8 @@ import type { TableColumnsType } from 'antd';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
-import { trpc, RouterOutput, RouterInput } from '@/utils/trpc';
-import useDatabaseWindows from '@/hooks/use-database-windows';
+import { trpc, RouterOutput, RouterInput } from '@/infra/api/trpc';
+import useDatabaseWindows from '@/domain/workbench/state/database-window-state';
 import PartitionModal from './modal';
 import styles from '../../index.module.less';
 
@@ -152,6 +152,7 @@ const TablePartition: React.FC = () => {
   return (
     <div className={styles.wrapper}>
       <Table<TPartition>
+        className={styles.dataTable}
         columns={columns}
         dataSource={getPartitionsQuery.data}
         rowKey="name"
@@ -160,7 +161,7 @@ const TablePartition: React.FC = () => {
         onRow={record => ({
           onDoubleClick: () => handleEdit(record),
         })}
-        scroll={{ y: 'calc(100vh - 195px)' }}
+        scroll={{ y: '100%' }}
       />
 
       <PartitionModal

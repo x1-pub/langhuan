@@ -1,35 +1,44 @@
+@import '../../styles/components/crud-table-pane.less';
+
 .mysqlWrap {
-  height: calc(100vh - 107px);
+  height: 100%;
 }
 
 .mysqlTabs {
   height: 100%;
+  min-height: 0;
 
   :global {
-    .langhuan-tabs-tabpane {
-      padding: 10px !important;
+    .langhuan-tabs-content-holder,
+    .langhuan-tabs-content,
+    .langhuan-tabs-tabpane,
+    .ant-tabs-content-holder,
+    .ant-tabs-content,
+    .ant-tabs-tabpane {
+      height: 100%;
+      min-height: 0;
     }
 
-    .langhuan-tabs-content-holder {
-      height: 100%;
+    .langhuan-tabs-content-holder,
+    .ant-tabs-content-holder {
+      flex: 1;
+      overflow: hidden;
+    }
 
-      .langhuan-tabs-content {
-        height: 100%;
+    .langhuan-tabs-tabpane,
+    .ant-tabs-tabpane {
+      box-sizing: border-box;
+      padding: var(--spacing-3) !important;
+      overflow: hidden;
+    }
 
-        .langhuan-tabs-tabpane {
-          height: 100%;
-          overflow: hidden;
-        }
+    .langhuan-tabs-tabpane[id$='panel-table-status'] {
+      overflow-y: auto;
+    }
 
-        .langhuan-tabs-tabpane[id$='panel-table-status'] {
-          overflow-y: scroll;
-        }
-
-        .langhuan-tabs-tabpane[id$='panel-table-sql'] {
-          padding-right: 0 !important;
-          padding-bottom: 0 !important;
-        }
-      }
+    .langhuan-tabs-tabpane[id$='panel-table-sql'] {
+      padding-right: 0 !important;
+      padding-bottom: 0 !important;
     }
   }
 }

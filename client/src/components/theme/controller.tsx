@@ -4,7 +4,7 @@ import { ThemeMode, useThemeMode } from 'antd-style';
 import { useTranslation } from 'react-i18next';
 import { SunOutlined } from '@ant-design/icons';
 
-import { getPersistedTheme, setPersistedTheme } from '@/utils/storage';
+import { getPersistedTheme, setPersistedTheme } from '@/infra/storage/persistence';
 import { Theme } from './constants';
 import styles from './index.module.less';
 

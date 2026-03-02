@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { TranslationOutlined } from '@ant-design/icons';
 
 import i18n, { normalizeLanguage, type TLanguage } from '@/i18n';
-import { setPersistedLanguage } from '@/utils/storage';
+import { setPersistedLanguage } from '@/infra/storage/persistence';
 import { LOCALE_OPTIONS, LocaleContext } from './constants';
 import styles from './index.module.less';
 

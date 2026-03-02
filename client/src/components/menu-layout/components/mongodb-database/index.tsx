@@ -4,8 +4,8 @@ import classNames from 'classnames';
 
 import DatabaseIcon from '@/assets/svg/db.svg?react';
 import TableIcon from '@/assets/svg/table.svg?react';
-import { RouterOutput } from '@/utils/trpc';
-import { generateActiveId } from '@/hooks/use-database-windows';
+import { RouterOutput } from '@/infra/api/trpc';
+import { generateActiveId } from '@/domain/workbench/state/database-window-state';
 import EllipsisText from '@/components/ellipsis-text';
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
 import DestructiveActionConfirm from '@/components/destructive-action-confirm';

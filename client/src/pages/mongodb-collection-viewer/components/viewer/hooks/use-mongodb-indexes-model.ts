@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
-import { showSuccess } from '@/utils/global-notification';
-import { trpc } from '@/utils/trpc';
+import { showSuccess } from '@/shared/ui/notifications';
+import { trpc } from '@/infra/api/trpc';
 import { IIndexEditorState, TActiveTab, TMongoIndex } from '../../shared';
 import { parseJSONObject } from '../utils';
 

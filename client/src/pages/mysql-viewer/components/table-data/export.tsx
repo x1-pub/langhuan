@@ -4,10 +4,10 @@ import { useMutation } from '@tanstack/react-query';
 import { Buffer } from 'buffer';
 import { useTranslation } from 'react-i18next';
 
-import useDatabaseWindows from '@/hooks/use-database-windows';
+import useDatabaseWindows from '@/domain/workbench/state/database-window-state';
 import type { TMySQLCondition } from '@packages/types/mysql';
 import { EMySQLDataExportType } from '@packages/types/mysql';
-import { trpc } from '@/utils/trpc';
+import { trpc } from '@/infra/api/trpc';
 
 interface ExportModalProps {
   visible: boolean;

@@ -2,10 +2,10 @@ import React, { Suspense } from 'react';
 import { Spin } from 'antd';
 import { useQuery } from '@tanstack/react-query';
 
-import useDatabaseWindows from '@/hooks/use-database-windows';
+import useDatabaseWindows from '@/domain/workbench/state/database-window-state';
 import { useThemeMode } from 'antd-style';
 import styles from './index.module.less';
-import { trpc } from '@/utils/trpc';
+import { trpc } from '@/infra/api/trpc';
 
 const LazyCodeEditor = React.lazy(() => import('@/components/code-editor'));
 

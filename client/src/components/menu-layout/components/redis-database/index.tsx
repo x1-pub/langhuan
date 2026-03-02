@@ -3,8 +3,8 @@ import { List } from 'antd';
 import classNames from 'classnames';
 
 import DatabaseIcon from '@/assets/svg/db.svg?react';
-import { RouterOutput } from '@/utils/trpc';
-import { generateActiveId } from '@/hooks/use-database-windows';
+import { RouterOutput } from '@/infra/api/trpc';
+import { generateActiveId } from '@/domain/workbench/state/database-window-state';
 import styles from './index.module.less';
 
 type TTableList = RouterOutput['table']['getList'];

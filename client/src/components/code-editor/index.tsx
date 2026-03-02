@@ -17,6 +17,7 @@ interface CodeEditorProps {
   readOnly?: boolean;
   showLineNumbers?: boolean;
   fields?: string[];
+  keywords?: string[];
   onChange?: (value?: string) => void;
 }
 
@@ -29,6 +30,7 @@ const CodeEditor: React.FC<CodeEditorProps> = props => {
     readOnly = false,
     showLineNumbers = true,
     fields = [],
+    keywords = [],
     onChange,
   } = props;
 
@@ -51,7 +53,7 @@ const CodeEditor: React.FC<CodeEditorProps> = props => {
         };
 
         const suggestions: Monaco.languages.CompletionItem[] = [
-          ...SQL_KEYWORDS.map(keyword => ({
+          ...Array.from(new Set([...SQL_KEYWORDS, ...keywords])).map(keyword => ({
             label: keyword,
             kind: monacoInstance.languages.CompletionItemKind.Keyword,
             insertText: keyword,
@@ -128,7 +130,7 @@ const CodeEditor: React.FC<CodeEditorProps> = props => {
     return () => {
       disposed = true;
     };
-  }, [fields, i18n.language]);
+  }, [fields, i18n.language, keywords]);
 
   useEffect(() => {
     return () => {

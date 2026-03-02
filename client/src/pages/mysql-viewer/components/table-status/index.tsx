@@ -4,8 +4,8 @@ import type { DescriptionsProps } from 'antd';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
-import useDatabaseWindows from '@/hooks/use-database-windows';
-import { trpc } from '@/utils/trpc';
+import useDatabaseWindows from '@/domain/workbench/state/database-window-state';
+import { trpc } from '@/infra/api/trpc';
 
 const TableStatus: React.FC = () => {
   const { t } = useTranslation();

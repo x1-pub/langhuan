@@ -4,8 +4,8 @@ import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
-import { showError, showSuccess } from '@/utils/global-notification';
-import { trpc } from '@/utils/trpc';
+import { showError, showSuccess } from '@/shared/ui/notifications';
+import { trpc } from '@/infra/api/trpc';
 import type { DocumentsPanelProps } from '../../panels/documents-panel';
 import {
   DEFAULT_DOCUMENT,

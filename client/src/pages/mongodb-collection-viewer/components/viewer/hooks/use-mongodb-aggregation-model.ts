@@ -3,7 +3,7 @@ import type { TableProps } from 'antd';
 import { useMutation } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
-import { trpcClient } from '@/utils/trpc';
+import { trpcClient } from '@/infra/api/trpc';
 import {
   DEFAULT_PIPELINE,
   encodeRowKey,

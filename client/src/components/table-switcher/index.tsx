@@ -1,4 +1,4 @@
-import React, { ReactNode, useMemo } from 'react';
+import React, { ReactNode } from 'react';
 import { Tabs, type TabsProps } from 'antd';
 import { useTranslation } from 'react-i18next';
 
@@ -11,7 +11,7 @@ import useDatabaseWindows, {
   ESpecialWind,
   generateActiveId,
   IWind,
-} from '@/hooks/use-database-windows';
+} from '@/domain/workbench/state/database-window-state';
 import styles from './index.module.less';
 
 interface ITableSwitcherProps {
@@ -82,16 +82,12 @@ const TableSwitcher: React.FC<ITableSwitcherProps> = ({ children }) => {
     }
   };
 
-  const tabItems: TabsProps['items'] = useMemo(
-    () =>
-      wind.map(c => ({
-        key: generateActiveId(c),
-        label: renderTabItemLabel(c),
-        children: typeof children === 'function' ? children(c) : children,
-        forceRender: true,
-      })),
-    [children, t, wind],
-  );
+  const tabItems: TabsProps['items'] = wind.map(window => ({
+    key: generateActiveId(window),
+    label: renderTabItemLabel(window),
+    children: typeof children === 'function' ? children(window) : children,
+    forceRender: true,
+  }));
 
   const renderTabBar: TabsProps['renderTabBar'] = (props, DefaultTabBar) => (
     <DefaultTabBar {...props} className={styles.tabbar} />
@@ -112,6 +108,7 @@ const TableSwitcher: React.FC<ITableSwitcherProps> = ({ children }) => {
 
   return (
     <Tabs
+      className={styles.switcher}
       type="editable-card"
       hideAdd={true}
       activeKey={active}

@@ -5,8 +5,8 @@ import { useTranslation } from 'react-i18next';
 
 import IndexManager from './components/index-manager';
 import ColumnsManager from './components/columns-manager';
-import useDatabaseWindows from '@/hooks/use-database-windows';
-import { trpc } from '@/utils/trpc';
+import useDatabaseWindows from '@/domain/workbench/state/database-window-state';
+import { trpc } from '@/infra/api/trpc';
 import styles from './index.module.less';
 
 type TDesignTab = 'table-field' | 'table-index';

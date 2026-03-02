@@ -4,12 +4,12 @@ import { PlusCircleOutlined, MinusCircleOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from '@tanstack/react-query';
 
-import useDatabaseWindows from '@/hooks/use-database-windows';
-import { showSuccess } from '@/utils/global-notification';
+import useDatabaseWindows from '@/domain/workbench/state/database-window-state';
+import { showSuccess } from '@/shared/ui/notifications';
 import EllipsisText from '@/components/ellipsis-text';
 import type { TMySQLCondition, IMySQLColumn, TMySQLProcessedData } from '@packages/types/mysql';
 import styles from './batch-editor.module.less';
-import { trpc } from '@/utils/trpc';
+import { trpc } from '@/infra/api/trpc';
 import MySQLRawDataEditor from '@/components/mysql-raw-data-editor';
 
 interface BatchEditorProps {
@@ -19,6 +19,9 @@ interface BatchEditorProps {
   onCancel: () => void;
   show: boolean;
 }
+
+const FIELD_TYPE_WIDTH = 120;
+const RAW_DATA_EDITOR_WIDTH = 'var(--layout-field-width-xxl)';
 
 const BatchEditor: React.FC<BatchEditorProps> = ({ columns, condition, onOk, onCancel, show }) => {
   const [loading, setLoading] = useState(false);
@@ -35,6 +38,7 @@ const BatchEditor: React.FC<BatchEditorProps> = ({ columns, condition, onOk, onC
   const batchUpdateDataMutation = useMutation(trpc.mysql.batchUpdateData.mutationOptions());
 
   const handleOk = async () => {
+    setLoading(true);
     try {
       const count = await batchUpdateDataMutation.mutateAsync({
         connectionId,
@@ -56,8 +60,8 @@ const BatchEditor: React.FC<BatchEditorProps> = ({ columns, condition, onOk, onC
     if (!column) {
       return;
     }
-    setFieldList([...fieldList, { name: column.Field, type: column.Type }]);
-    setForm({ ...form, [column.Field]: null });
+    setFieldList(previous => [...previous, { name: column.Field, type: column.Type }]);
+    setForm(previous => ({ ...previous, [column.Field]: null }));
   };
 
   const handleSelectChange = (name: string, index: number) => {
@@ -72,7 +76,7 @@ const BatchEditor: React.FC<BatchEditorProps> = ({ columns, condition, onOk, onC
   };
 
   const handleFieldChange = (name: string, value: TMySQLProcessedData) => {
-    setForm({ ...form, [name]: value });
+    setForm(previous => ({ ...previous, [name]: value }));
   };
 
   useEffect(() => {
@@ -80,7 +84,7 @@ const BatchEditor: React.FC<BatchEditorProps> = ({ columns, condition, onOk, onC
       setFieldList([{ name: columns[0].Field, type: columns[0].Type }]);
       setForm({ [columns[0].Field]: null });
     }
-  }, [show]);
+  }, [columns, show]);
 
   return (
     <>
@@ -102,16 +106,16 @@ const BatchEditor: React.FC<BatchEditorProps> = ({ columns, condition, onOk, onC
       >
         {fieldList.map((field, index) => (
           <div className={styles.row} key={field.name}>
-            <EllipsisText text={field.type} width={120} />
+            <EllipsisText text={field.type} width={FIELD_TYPE_WIDTH} />
             <Select
               className={styles.selecter}
               options={fieldOptions}
               onChange={name => handleSelectChange(name, index)}
-              defaultValue={field.name}
+              value={field.name}
             />
             <span className={styles.update}>=</span>
             <MySQLRawDataEditor
-              style={{ width: '400px' }}
+              style={{ width: RAW_DATA_EDITOR_WIDTH }}
               type={field.type}
               onChange={v => handleFieldChange(field.name, v)}
             />

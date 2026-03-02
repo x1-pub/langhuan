@@ -6,6 +6,7 @@ import RawDataEditor from '@/components/raw-data-editor';
 import styles from '../index.module.less';
 
 type TEditorMode = 'form' | 'json';
+const ROW_EDITOR_MODAL_WIDTH = 'var(--layout-modal-width-2xl)';
 
 interface RowEditorModalProps {
   open: boolean;
@@ -75,7 +76,7 @@ const RowEditorModal: React.FC<RowEditorModalProps> = ({
   return (
     <Modal
       open={open}
-      width={900}
+      width={ROW_EDITOR_MODAL_WIDTH}
       maskClosable={false}
       title={mode === 'create' ? t('pgsql.createRow') : t('pgsql.editRow')}
       onCancel={onCancel}

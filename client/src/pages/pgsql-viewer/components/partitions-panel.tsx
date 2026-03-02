@@ -3,8 +3,10 @@ import { Button, Form, Input, Modal, Popconfirm, Table, Tag } from 'antd';
 import type { TableColumnsType } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import { formatByteSize } from '@/utils/format-byte-size';
+import { formatByteSize } from '@/shared/formatters/byte-size';
 import styles from '../index.module.less';
+
+const PARTITION_MODAL_WIDTH = 'var(--layout-modal-width-sm)';
 
 interface PartitionItem {
   name: string;
@@ -162,12 +164,13 @@ const PartitionsPanel: React.FC<PartitionsPanelProps> = ({
   return (
     <div className={styles.wrapper}>
       <Table
+        className={styles.dataTable}
         rowKey="name"
         loading={loading}
         columns={columns}
         dataSource={partitions}
         pagination={false}
-        scroll={{ x: 'max-content', y: 'calc(100vh - 375px)' }}
+        scroll={{ x: 'max-content', y: '100%' }}
         locale={{
           emptyText: t('pgsql.noPartition'),
         }}
@@ -184,7 +187,7 @@ const PartitionsPanel: React.FC<PartitionsPanelProps> = ({
           setEditing(null);
         }}
         onOk={handleSubmit}
-        width={760}
+        width={PARTITION_MODAL_WIDTH}
         confirmLoading={isMutating}
         destroyOnHidden={true}
       >

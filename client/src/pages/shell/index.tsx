@@ -5,8 +5,9 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
 import TerminalV2 from './terminal-v2';
-import { trpc } from '@/utils/trpc';
+import { trpc } from '@/infra/api/trpc';
 import { EConnectionType } from '@packages/types/connection';
+import styles from './index.module.less';
 
 const isConnectionType = (value?: string): value is EConnectionType => {
   return Object.values(EConnectionType).includes(value as EConnectionType);
@@ -34,7 +35,7 @@ const Shell: React.FC = () => {
   const { connectionType: routeConnectionType, connectionId: routeConnectionId } = useParams();
   const connectionId = Number(routeConnectionId);
   const pageIdRef = useRef(`shell_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`);
-  const [prompt, setPrompt] = useState<string>();
+  const [activeDatabase, setActiveDatabase] = useState<string | null | undefined>();
   const isValidRoute = isConnectionType(routeConnectionType) && Number.isFinite(connectionId);
 
   const connectionDetailQuery = useQuery(
@@ -53,7 +54,7 @@ const Shell: React.FC = () => {
     if (!connection) {
       return;
     }
-    setPrompt(buildPromptByType(connection.type, connection.database));
+    setActiveDatabase(connection.database);
   }, [connectionDetailQuery.data]);
 
   const handleCommandV2 = async (command: string) => {
@@ -71,7 +72,7 @@ const Shell: React.FC = () => {
         pageId: pageIdRef.current,
       });
       if (changeDatabase) {
-        setPrompt(buildPromptByType(connection.type, changeDatabase));
+        setActiveDatabase(changeDatabase);
       }
       return result;
     } catch (error) {
@@ -108,8 +109,13 @@ const Shell: React.FC = () => {
     return <Result status="warning" title={t('terminal.connectionTypeMismatch')} />;
   }
 
+  const prompt = buildPromptByType(
+    connectionDetailQuery.data.type,
+    activeDatabase ?? connectionDetailQuery.data.database,
+  );
+
   return (
-    <div style={{ height: '100vh' }}>
+    <div className={styles.shell}>
       <TerminalV2
         onExecuteCommand={handleCommandV2}
         title={connectionDetailQuery.data?.name}

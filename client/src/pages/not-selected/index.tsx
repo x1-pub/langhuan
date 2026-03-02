@@ -7,7 +7,7 @@ const NotSelected = () => {
   const { t } = useTranslation();
   return (
     <div className={styles.wrap}>
-      <Typography.Text style={{ fontSize: '22px' }} strong={true}>
+      <Typography.Text className={styles.title} strong={true}>
         {t('connection.notSelected')}
       </Typography.Text>
     </div>

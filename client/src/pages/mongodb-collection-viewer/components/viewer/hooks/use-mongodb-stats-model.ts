@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 
-import { trpc } from '@/utils/trpc';
+import { trpc } from '@/infra/api/trpc';
 import { TActiveTab, TMongoStats } from '../../shared';
 
 interface UseMongoStatsModelParams {

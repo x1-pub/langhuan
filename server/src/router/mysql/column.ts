@@ -8,7 +8,7 @@ import {
   UpdateColumnSchema,
 } from '@packages/zod/mysql';
 import { protectedProcedure, router } from '../../trpc';
-import { escapedMySQLName } from '../../lib/utils';
+import { escapedMySQLName } from '../../shared/mysql/quote-identifier';
 import {
   generateMySQLAddColumnSQL,
   generateMySQLUpdateColumnSQL,

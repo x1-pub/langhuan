@@ -1,7 +1,7 @@
 import mongoose, { Connection } from 'mongoose';
 
 import { IConnectionPoolConfig } from '@packages/types/connection';
-import { removeNullAndUndefined } from '../lib/utils';
+import { removeNullAndUndefined } from '../shared/object/remove-nullish';
 import { TRPCError } from '@trpc/server';
 
 interface MongooseInstanceWithTimestamp {

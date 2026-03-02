@@ -1,60 +1,36 @@
-.textBox {
-  position: relative;
-  height: 76px;
-
-  .editor {
-    border: 1px solid #d9d9d9;
-    height: 100%;
-    border-radius: 3px;
-    box-sizing: border-box;
-    padding: 3px;
-  }
-
-  .help {
-    position: absolute;
-    left: 3px;
-    top: 7px;
-  }
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+  height: 100%;
+  min-height: 0;
 }
 
 .buttonGroup {
-  display: flex;
   align-items: center;
-  gap: 10px;
-  margin: 10px 0;
+  display: flex;
+  gap: var(--spacing-3);
+}
 
-  .warn {
-    color: #f5be38;
-    font-size: 24px;
-    margin-left: 5px;
-  }
+.warn {
+  color: var(--theme-warning-color);
+  font-size: 24px;
+  margin-left: var(--spacing-1);
+}
+
+.tableWrap {
+  flex: 1;
+  min-height: 0;
 }
 
 .dataTable {
+  height: 100%;
+  min-height: 0;
+
   :global {
-    .langhuan-table-container > .langhuan-table-body {
-      overflow: auto scroll !important;
-      max-height: calc(100vh - 375px) !important;
+    .langhuan-pagination,
+    .ant-pagination {
+      margin-bottom: 0;
     }
   }
-}
-
-.tableTitle {
-  display: flex;
-  flex-direction: column;
-  white-space: nowrap;
-
-  .type {
-    color: #8dcdce;
-    font-weight: lighter;
-    font-size: 12px;
-  }
-}
-
-.spin {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }

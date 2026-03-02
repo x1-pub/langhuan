@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
-import { trpc } from '@/utils/trpc';
+import { trpc } from '@/infra/api/trpc';
 import { TActiveTab, TMongoSchemaAnalysis } from '../../shared';
 
 interface UseMongoSchemaModelParams {

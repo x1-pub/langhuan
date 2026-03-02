@@ -1,7 +1,7 @@
 import React from 'react';
 
 import TableSwitcher from '@/components/table-switcher';
-import { ESpecialWind, IWind } from '@/hooks/use-database-windows';
+import { ESpecialWind, IWind } from '@/domain/workbench/state/database-window-state';
 import Viewer from './components/viewer';
 import DatabaseFunction from './components/database-function';
 import DatabaseView from './components/database-view';

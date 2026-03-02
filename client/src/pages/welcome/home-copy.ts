@@ -1,4 +1,4 @@
-import { getPersistedLanguage } from '@/utils/storage';
+import { getPersistedLanguage } from '@/infra/storage/persistence';
 
 type HomeLanguage = 'en' | 'zh' | 'ja' | 'ko';
 

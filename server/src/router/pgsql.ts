@@ -1,11 +1,13 @@
 import { TRPCError } from '@trpc/server';
 import {
+  CreatePgsqlTableColumnSchema,
   CreatePgsqlEventTriggerSchema,
   CreatePgsqlFunctionSchema,
   CreatePgsqlTableIndexSchema,
   CreatePgsqlTablePartitionSchema,
   CreatePgsqlTableTriggerSchema,
   CreatePgsqlViewSchema,
+  DeletePgsqlTableColumnSchema,
   DeletePgsqlEventTriggerSchema,
   DeletePgsqlFunctionSchema,
   DeletePgsqlRowsSchema,
@@ -24,6 +26,8 @@ import {
   GetPgsqlTableStatsSchema,
   GetPgsqlViewsSchema,
   InsertPgsqlRowSchema,
+  UpdatePgsqlTableColumnSchema,
+  UpdatePgsqlTableIndexSchema,
   UpdatePgsqlEventTriggerSchema,
   UpdatePgsqlFunctionSchema,
   UpdatePgsqlTablePartitionSchema,
@@ -227,6 +231,62 @@ const getRoutineDropKeyword = (kind?: string) => {
   }
 
   return 'FUNCTION';
+};
+
+const resolveQuotedIndexName = (indexName: string, quotedSchemaName: string) => {
+  const parts = indexName.split('.');
+  if (parts.length === 2) {
+    return `${quotePgsqlIdentifier(parts[0], 'schema')}.${quotePgsqlIdentifier(parts[1], 'index')}`;
+  }
+
+  return `${quotedSchemaName}.${quotePgsqlIdentifier(indexName, 'index')}`;
+};
+
+const buildCreateTableIndexSql = ({
+  qualifiedTableName,
+  indexName,
+  columns,
+  unique,
+  method,
+}: {
+  qualifiedTableName: string;
+  indexName: string;
+  columns: string[];
+  unique?: boolean;
+  method?: string;
+}) => {
+  const trimmedIndexName = indexName.trim();
+  if (!trimmedIndexName) {
+    throw new TRPCError({
+      code: 'BAD_REQUEST',
+      message: 'indexName cannot be empty.',
+    });
+  }
+  const quotedIndexName = quotePgsqlIdentifier(trimmedIndexName, 'index');
+  const normalizedColumns = Array.from(new Set(columns.map(column => column.trim()))).filter(
+    column => !!column,
+  );
+
+  if (!normalizedColumns.length) {
+    throw new TRPCError({
+      code: 'BAD_REQUEST',
+      message: 'columns cannot be empty.',
+    });
+  }
+
+  const quotedColumns = normalizedColumns
+    .map(column => quotePgsqlIdentifier(column, 'column'))
+    .join(', ');
+  const indexMethod = (method || 'btree').trim().toLowerCase();
+
+  if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(indexMethod)) {
+    throw new TRPCError({
+      code: 'BAD_REQUEST',
+      message: `Invalid index method: ${indexMethod}`,
+    });
+  }
+
+  return `CREATE ${unique ? 'UNIQUE ' : ''}INDEX ${quotedIndexName} ON ${qualifiedTableName} USING ${indexMethod} (${quotedColumns})`;
 };
 
 export const pgsqlRouter = router({
@@ -569,6 +629,113 @@ export const pgsqlRouter = router({
       return getPgsqlColumns(pool, schemaName, tableName, serverVersionNum);
     }),
 
+  addTableColumn: protectedProcedure
+    .input(CreatePgsqlTableColumnSchema)
+    .mutation(async ({ ctx, input }) => {
+      const { pool, qualifiedTableName } = await getPgsqlTableContext(
+        ctx.pool.getPgsqlInstance,
+        input,
+      );
+      const columnName = quotePgsqlIdentifier(input.name, 'column');
+      const dataType = normalizeRequiredDefinition(
+        validatePgsqlSqlFragment(input.dataType, 'dataType'),
+        'dataType',
+      );
+      const defaultValue = input.defaultValue?.trim()
+        ? validatePgsqlSqlFragment(input.defaultValue, 'defaultValue')
+        : '';
+
+      await pool.query(
+        [
+          `ALTER TABLE ${qualifiedTableName} ADD COLUMN ${columnName} ${dataType}`,
+          input.nullable ? '' : 'NOT NULL',
+          defaultValue ? `DEFAULT ${defaultValue}` : '',
+        ]
+          .filter(Boolean)
+          .join(' '),
+      );
+
+      if (input.comment?.trim()) {
+        await pool.query(`COMMENT ON COLUMN ${qualifiedTableName}.${columnName} IS $1`, [
+          input.comment.trim(),
+        ]);
+      }
+
+      return null;
+    }),
+
+  updateTableColumn: protectedProcedure
+    .input(UpdatePgsqlTableColumnSchema)
+    .mutation(async ({ ctx, input }) => {
+      const { pool, qualifiedTableName } = await getPgsqlTableContext(
+        ctx.pool.getPgsqlInstance,
+        input,
+      );
+      const dataType = normalizeRequiredDefinition(
+        validatePgsqlSqlFragment(input.dataType, 'dataType'),
+        'dataType',
+      );
+      const defaultValue = input.defaultValue?.trim()
+        ? validatePgsqlSqlFragment(input.defaultValue, 'defaultValue')
+        : '';
+
+      await withPgsqlTransaction(pool, async client => {
+        let currentColumnName = input.oldName;
+
+        if (input.oldName !== input.name) {
+          await client.query(
+            `ALTER TABLE ${qualifiedTableName} RENAME COLUMN ${quotePgsqlIdentifier(input.oldName, 'column')} TO ${quotePgsqlIdentifier(input.name, 'column')}`,
+          );
+          currentColumnName = input.name;
+        }
+
+        const quotedCurrentColumnName = quotePgsqlIdentifier(currentColumnName, 'column');
+
+        await client.query(
+          `ALTER TABLE ${qualifiedTableName} ALTER COLUMN ${quotedCurrentColumnName} TYPE ${dataType}`,
+        );
+        await client.query(
+          `ALTER TABLE ${qualifiedTableName} ALTER COLUMN ${quotedCurrentColumnName} ${input.nullable ? 'DROP' : 'SET'} NOT NULL`,
+        );
+
+        if (defaultValue) {
+          await client.query(
+            `ALTER TABLE ${qualifiedTableName} ALTER COLUMN ${quotedCurrentColumnName} SET DEFAULT ${defaultValue}`,
+          );
+        } else {
+          await client.query(
+            `ALTER TABLE ${qualifiedTableName} ALTER COLUMN ${quotedCurrentColumnName} DROP DEFAULT`,
+          );
+        }
+
+        if (input.comment?.trim()) {
+          await client.query(
+            `COMMENT ON COLUMN ${qualifiedTableName}.${quotedCurrentColumnName} IS $1`,
+            [input.comment.trim()],
+          );
+        } else {
+          await client.query(
+            `COMMENT ON COLUMN ${qualifiedTableName}.${quotedCurrentColumnName} IS NULL`,
+          );
+        }
+      });
+
+      return null;
+    }),
+
+  deleteTableColumn: protectedProcedure
+    .input(DeletePgsqlTableColumnSchema)
+    .mutation(async ({ ctx, input }) => {
+      const { pool, qualifiedTableName } = await getPgsqlTableContext(
+        ctx.pool.getPgsqlInstance,
+        input,
+      );
+      await pool.query(
+        `ALTER TABLE ${qualifiedTableName} DROP COLUMN ${quotePgsqlIdentifier(input.name, 'column')}`,
+      );
+      return null;
+    }),
+
   getTableIndexes: protectedProcedure
     .input(GetPgsqlTableIndexesSchema)
     .query(async ({ ctx, input }) => {
@@ -824,36 +991,13 @@ export const pgsqlRouter = router({
         ctx.pool.getPgsqlInstance,
         input,
       );
-      const trimmedIndexName = input.indexName.trim();
-      if (!trimmedIndexName) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'indexName cannot be empty.',
-        });
-      }
-      const indexName = quotePgsqlIdentifier(trimmedIndexName, 'index');
-      const normalizedColumns = Array.from(
-        new Set(input.columns.map(column => column.trim())),
-      ).filter(column => !!column);
-      if (!normalizedColumns.length) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'columns cannot be empty.',
-        });
-      }
-      const columns = normalizedColumns
-        .map(column => quotePgsqlIdentifier(column, 'column'))
-        .join(', ');
-      const method = (input.method || 'btree').trim().toLowerCase();
-
-      if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(method)) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: `Invalid index method: ${method}`,
-        });
-      }
-
-      const sql = `CREATE ${input.unique ? 'UNIQUE ' : ''}INDEX ${indexName} ON ${qualifiedTableName} USING ${method} (${columns})`;
+      const sql = buildCreateTableIndexSql({
+        qualifiedTableName,
+        indexName: input.indexName,
+        columns: input.columns,
+        unique: input.unique,
+        method: input.method,
+      });
       await pool.query(sql);
       return null;
     }),
@@ -865,13 +1009,33 @@ export const pgsqlRouter = router({
         ctx.pool.getPgsqlInstance,
         input,
       );
-      const parts = input.indexName.split('.');
-      const quotedIndexName =
-        parts.length === 2
-          ? `${quotePgsqlIdentifier(parts[0], 'schema')}.${quotePgsqlIdentifier(parts[1], 'index')}`
-          : `${quotedSchemaName}.${quotePgsqlIdentifier(input.indexName, 'index')}`;
+      const quotedIndexName = resolveQuotedIndexName(input.indexName, quotedSchemaName);
 
       await pool.query(`DROP INDEX ${quotedIndexName}`);
+      return null;
+    }),
+
+  updateTableIndex: protectedProcedure
+    .input(UpdatePgsqlTableIndexSchema)
+    .mutation(async ({ ctx, input }) => {
+      const { pool, quotedSchemaName, qualifiedTableName } = await getPgsqlTableContext(
+        ctx.pool.getPgsqlInstance,
+        input,
+      );
+      const quotedOldIndexName = resolveQuotedIndexName(input.oldName, quotedSchemaName);
+      const createSql = buildCreateTableIndexSql({
+        qualifiedTableName,
+        indexName: input.indexName,
+        columns: input.columns,
+        unique: input.unique,
+        method: input.method,
+      });
+
+      await withPgsqlTransaction(pool, async client => {
+        await client.query(`DROP INDEX ${quotedOldIndexName}`);
+        await client.query(createSql);
+      });
+
       return null;
     }),
 

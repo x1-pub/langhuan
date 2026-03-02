@@ -1,5 +1,5 @@
 import { EMySQLPureType, IBuffer, TMySQLProcessedData, TMySQLRawData } from '@packages/types/mysql';
-import { BINARY_TYPES, BLOB_TYPES, GEOMETRY_TYPES } from './mysql-types';
+import { BINARY_TYPES, BLOB_TYPES, GEOMETRY_TYPES } from './mysql-type-groups';
 import { mysqlSpatialToString } from '@packages/tools/mysql-spatial-to-string';
 import i18n from '@/i18n';
 

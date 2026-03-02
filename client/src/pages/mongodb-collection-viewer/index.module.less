@@ -1,10 +1,10 @@
 .page {
-  height: calc(100vh - 107px);
+  height: 100%;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  padding: 0 12px 12px;
-  gap: 12px;
+  padding: 0 var(--spacing-3) var(--spacing-3);
+  gap: var(--spacing-3);
   min-height: 0;
   overflow: hidden;
   color: var(--theme-text-color);
@@ -57,7 +57,7 @@
 
     .langhuan-tabs-nav,
     .ant-tabs-nav {
-      margin-bottom: 10px;
+      margin-bottom: var(--spacing-3);
     }
   }
 }
@@ -66,7 +66,7 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--spacing-3);
   min-height: 0;
   overflow: hidden;
 }
@@ -89,11 +89,11 @@
 .queryBar {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--spacing-3);
   border: 1px solid var(--theme-border-color);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   background: var(--theme-background-color);
-  padding: 10px;
+  padding: var(--spacing-3);
   overflow-x: auto;
 }
 
@@ -101,7 +101,7 @@
   display: flex;
   align-items: center;
   flex-wrap: nowrap;
-  gap: 10px;
+  gap: var(--spacing-3);
   min-width: 0;
 }
 
@@ -136,7 +136,7 @@
 .queryAdvanced {
   display: grid;
   grid-template-columns: 1fr 1fr 120px 120px;
-  gap: 10px;
+  gap: var(--spacing-3);
   align-items: end;
 }
 
@@ -168,7 +168,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--spacing-3);
   flex-wrap: wrap;
 }
 
@@ -207,7 +207,7 @@
   flex: 1;
   min-height: 0;
   border: 1px solid var(--theme-border-color);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   background: var(--theme-background-color);
   overflow: hidden;
 
@@ -220,7 +220,7 @@
     .langhuan-table-container > .langhuan-table-body,
     .ant-table-container > .ant-table-body {
       overflow: auto scroll !important;
-      max-height: calc(100vh - 375px) !important;
+      max-height: 100% !important;
     }
 
     .langhuan-table-container,
