@@ -3,7 +3,6 @@ import {
   Button,
   Table,
   TableProps,
-  Card,
   Modal,
   Popconfirm,
   Form,
@@ -207,29 +206,25 @@ const IndexManager: React.FC<IndexManagerProps> = props => {
 
   return (
     <>
-      <Card
-        className={styles.card}
-        title={t('table.index')}
-        extra={
-          <Button color="cyan" variant="link" onClick={() => setOpen(true)}>
-            {t('button.add')}
-          </Button>
+      <div className={styles.tableActionBar}>
+        <Button color="cyan" variant="link" onClick={() => setOpen(true)}>
+          {t('button.add')}
+        </Button>
+      </div>
+      <Table
+        rowKey={record =>
+          record.Key_name + record.Column_name + record.Index_type + record.Seq_in_index
         }
-      >
-        <Table
-          rowKey={record =>
-            record.Key_name + record.Column_name + record.Index_type + record.Seq_in_index
-          }
-          dataSource={dataAfter}
-          columns={tableColumns}
-          pagination={false}
-          onRow={record => {
-            return {
-              onDoubleClick: () => handleEdit(record),
-            };
-          }}
-        />
-      </Card>
+        dataSource={dataAfter}
+        columns={tableColumns}
+        pagination={false}
+        scroll={{ x: 'max-content', y: 'calc(100vh - 375px)' }}
+        onRow={record => {
+          return {
+            onDoubleClick: () => handleEdit(record),
+          };
+        }}
+      />
       <Modal
         width={600}
         destroyOnHidden={true}

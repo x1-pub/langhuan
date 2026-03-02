@@ -470,6 +470,8 @@ const en = {
     createPartition: 'Create Partition',
     editPartition: 'Edit Partition',
     where: 'Where Clause',
+    whereTip1: 'Example:',
+    whereTip2: 'Note: Do not add a LIMIT condition',
     orderBy: 'Order By',
     pageSize: 'Page Size',
     rowEditor: 'Row Editor',

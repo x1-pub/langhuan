@@ -461,6 +461,8 @@ const ko = {
     createPartition: '파티션 생성',
     editPartition: '파티션 편집',
     where: 'WHERE 절',
+    whereTip1: '예시:',
+    whereTip2: '주의: LIMIT 조건을 추가하지 마세요',
     orderBy: '정렬',
     pageSize: '페이지 크기',
     rowEditor: '행 편집기',

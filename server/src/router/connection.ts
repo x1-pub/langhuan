@@ -5,7 +5,7 @@ import { protectedProcedure, router } from '../trpc';
 import { connectionsTable } from '../schema';
 import redis from '../pools/redis';
 import mysql from '../pools/mysql';
-import mongoodb from '../pools/mongodb';
+import mongodb from '../pools/mongodb';
 import pgsql from '../pools/pgsql';
 import {
   CreateConnectionSchema,
@@ -111,7 +111,7 @@ export const connectionRouter = router({
     }
 
     if (type === EConnectionType.MONGODB) {
-      await mongoodb.getInstance({ ...dbConfig, database });
+      await mongodb.getInstance({ ...dbConfig, database });
     }
 
     if (type === EConnectionType.PGSQL) {
@@ -134,7 +134,7 @@ export const connectionRouter = router({
 
       switch (type) {
         case EConnectionType.REDIS: {
-          const instance = await ctx.pool.getRedislInstance(connectionId, undefined, pageId);
+          const instance = await ctx.pool.getRedisInstance(connectionId, undefined, pageId);
           const parts = parseRedisCommand(trimmedCommand);
           const [cmd, ...args] = parts;
 
@@ -166,14 +166,14 @@ export const connectionRouter = router({
           };
         }
         case EConnectionType.MONGODB: {
-          const instance = await ctx.pool.getMongoDBlInstance(connectionId, undefined, pageId);
+          const instance = await ctx.pool.getMongoDbInstance(connectionId, undefined, pageId);
 
           const parser = new MongoShellParser(instance);
           const { result: rawResult, changeDatabase } = await parser.executeCommand(trimmedCommand);
           const result = formatMongoResult(rawResult);
 
           if (changeDatabase) {
-            await ctx.pool.changeMongoDB(changeDatabase, connectionId, pageId);
+            await ctx.pool.changeMongoDatabase(changeDatabase, connectionId, pageId);
           }
 
           return {

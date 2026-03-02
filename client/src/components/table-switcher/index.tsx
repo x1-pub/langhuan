@@ -90,7 +90,7 @@ const TableSwitcher: React.FC<ITableSwitcherProps> = ({ children }) => {
         children: typeof children === 'function' ? children(c) : children,
         forceRender: true,
       })),
-    [wind, t],
+    [children, t, wind],
   );
 
   const renderTabBar: TabsProps['renderTabBar'] = (props, DefaultTabBar) => (
@@ -103,15 +103,11 @@ const TableSwitcher: React.FC<ITableSwitcherProps> = ({ children }) => {
   ) => {
     if (action === 'add') return;
 
-    const list = wind.filter(w => generateActiveId(w) !== targetKey);
-    setWind(list);
-
-    if (list.length > 0) {
-      const activeId = generateActiveId(list[0]);
-      setActive(activeId);
-    } else {
-      setActive('');
-    }
+    setWind(previousWindows => {
+      const nextWindows = previousWindows.filter(window => generateActiveId(window) !== targetKey);
+      setActive(nextWindows.length > 0 ? generateActiveId(nextWindows[0]) : '');
+      return nextWindows;
+    });
   };
 
   return (

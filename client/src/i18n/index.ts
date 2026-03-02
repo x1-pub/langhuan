@@ -1,7 +1,7 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
-import storage, { LANG_KEY } from '@/utils/storage';
+import { getPersistedLanguage } from '@/utils/storage';
 import en from './en';
 import ja from './ja';
 import ko from './ko';
@@ -55,7 +55,7 @@ const detectBrowserLanguage = (): TLanguage | undefined => {
 };
 
 const detectInitialLanguage = (): TLanguage => {
-  const storageLang = normalizeLanguage(storage.get(LANG_KEY));
+  const storageLang = normalizeLanguage(getPersistedLanguage());
   if (storageLang) {
     return storageLang;
   }

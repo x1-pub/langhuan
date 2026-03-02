@@ -1,17 +1,11 @@
 import React, { Suspense } from 'react';
-import { Badge, Button, Popconfirm, Space, Spin, Table, TableProps } from 'antd';
-import {
-  DeleteOutlined,
-  EditOutlined,
-  PlayCircleOutlined,
-  PlusOutlined,
-  ReloadOutlined,
-} from '@ant-design/icons';
+import { Button, Popconfirm, Space, Spin, Table, TableProps, Tooltip } from 'antd';
+import { QuestionCircleOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 
 import styles from '../index.module.less';
 const LazyCodeEditor = React.lazy(() => import('@/components/code-editor'));
-const PGSQL_TABLE_SCROLL_Y = 'calc(100vh - 430px)';
+const PGSQL_TABLE_SCROLL_Y = 'calc(100vh - 380px)';
 
 export interface PgsqlTableRow {
   __pg_ctid: string;
@@ -31,7 +25,6 @@ interface DataPanelProps {
   onChangeWhereDraft: (value?: string) => void;
   onApplyQuery: () => void;
   onResetQuery: () => void;
-  onRefresh: () => void;
   onChangePage: (page: number, pageSize: number) => void;
   onOpenCreate: () => void;
   onOpenEdit: (row: PgsqlTableRow) => void;
@@ -52,7 +45,6 @@ const DataPanel: React.FC<DataPanelProps> = ({
   onChangeWhereDraft,
   onApplyQuery,
   onResetQuery,
-  onRefresh,
   onChangePage,
   onOpenCreate,
   onOpenEdit,
@@ -76,27 +68,27 @@ const DataPanel: React.FC<DataPanelProps> = ({
             />
           </Suspense>
         </div>
+        <Tooltip
+          placement="right"
+          title={
+            <>
+              <div>{t('pgsql.whereTip1')}</div>
+              <div>(1) WHERE id = 10 AND name LIKE '%cat%'</div>
+              <div>(2) WHERE age &gt;= 18 ORDER BY age DESC</div>
+              <div>(3) WHERE year IN ('2024','2025')</div>
+              <div>{t('pgsql.whereTip2')}</div>
+            </>
+          }
+          styles={{ container: { width: '300px' } }}
+        >
+          <QuestionCircleOutlined className={styles.help} />
+        </Tooltip>
       </div>
 
       <div className={styles.buttonGroup}>
         <Space>
-          <Button icon={<ReloadOutlined />} onClick={onRefresh}>
-            {t('button.refresh')}
-          </Button>
-          <Button type="primary" icon={<PlayCircleOutlined />} onClick={onApplyQuery}>
-            {t('button.search')}
-          </Button>
-          <Button onClick={onResetQuery}>{t('button.reset')}</Button>
-        </Space>
-      </div>
-
-      <div className={styles.toolbar}>
-        <Space>
-          <Button type="dashed" icon={<PlusOutlined />} onClick={onOpenCreate}>
-            {t('pgsql.createRow')}
-          </Button>
+          <Button onClick={onOpenCreate}>{t('button.add')}</Button>
           <Button
-            icon={<EditOutlined />}
             disabled={selectedRows.length !== 1}
             onClick={() => {
               if (selectedRows[0]) {
@@ -104,7 +96,7 @@ const DataPanel: React.FC<DataPanelProps> = ({
               }
             }}
           >
-            {t('button.edit')}
+            {t('button.update')}
           </Button>
           <Popconfirm
             title={t('delete.title')}
@@ -112,12 +104,15 @@ const DataPanel: React.FC<DataPanelProps> = ({
             disabled={selectedRows.length === 0}
             onConfirm={() => onDeleteRows(selectedRows.map(row => row.__pg_ctid))}
           >
-            <Button danger={true} icon={<DeleteOutlined />} disabled={selectedRows.length === 0}>
+            <Button danger={true} disabled={selectedRows.length === 0}>
               {t('button.delete')}
             </Button>
           </Popconfirm>
+          <Button onClick={onResetQuery}>{t('button.reset')}</Button>
+          <Button type="primary" onClick={onApplyQuery}>
+            {t('button.search')}
+          </Button>
         </Space>
-        <Badge color="var(--theme-main-color)" text={t('pgsql.total', { total })} />
       </div>
 
       <div className={styles.tableWrap}>

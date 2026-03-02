@@ -40,7 +40,7 @@ export const tableRouter = router({
     }
 
     if (type === EConnectionType.MONGODB) {
-      const instance = await ctx.pool.getMongoDBlInstance(connectionId, dbName);
+      const instance = await ctx.pool.getMongoDbInstance(connectionId, dbName);
       const res = await instance.listCollections();
 
       return res
@@ -94,7 +94,7 @@ export const tableRouter = router({
     }
 
     if (type === EConnectionType.MONGODB) {
-      const instance = await ctx.pool.getMongoDBlInstance(connectionId, dbName);
+      const instance = await ctx.pool.getMongoDbInstance(connectionId, dbName);
       if (!instance.db) {
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
@@ -145,7 +145,7 @@ export const tableRouter = router({
           message: 'The internal placeholder collection cannot be renamed.',
         });
       }
-      const instance = await ctx.pool.getMongoDBlInstance(connectionId, dbName);
+      const instance = await ctx.pool.getMongoDbInstance(connectionId, dbName);
       if (!instance.db) {
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
@@ -214,7 +214,7 @@ export const tableRouter = router({
           message: 'The internal placeholder collection cannot be deleted.',
         });
       }
-      const instance = await ctx.pool.getMongoDBlInstance(connectionId, dbName);
+      const instance = await ctx.pool.getMongoDbInstance(connectionId, dbName);
       if (!instance.db) {
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',

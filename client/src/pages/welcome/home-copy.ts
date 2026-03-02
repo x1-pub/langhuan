@@ -1,4 +1,4 @@
-import { LANG_KEY } from '@/utils/storage';
+import { getPersistedLanguage } from '@/utils/storage';
 
 type HomeLanguage = 'en' | 'zh' | 'ja' | 'ko';
 
@@ -311,11 +311,9 @@ const detectBrowserLanguage = (): HomeLanguage | undefined => {
 };
 
 const detectHomeLanguage = (): HomeLanguage => {
-  if (typeof window !== 'undefined') {
-    const storageLanguage = normalizeHomeLanguage(window.localStorage.getItem(LANG_KEY));
-    if (storageLanguage) {
-      return storageLanguage;
-    }
+  const storageLanguage = normalizeHomeLanguage(getPersistedLanguage());
+  if (storageLanguage) {
+    return storageLanguage;
   }
 
   return detectBrowserLanguage() || 'en';

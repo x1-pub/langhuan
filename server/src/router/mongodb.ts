@@ -26,7 +26,7 @@ import { protectedProcedure, router } from '../trpc';
 
 // Shared helper to keep collection lookup and connection readiness checks consistent.
 const getMongoCollection = async (
-  getMongoDBlInstance: (
+  getMongoDbInstance: (
     connectionId: number,
     databaseName?: string,
     pageId?: string,
@@ -37,7 +37,7 @@ const getMongoCollection = async (
     tableName: string;
   },
 ) => {
-  const instance = await getMongoDBlInstance(input.connectionId, input.dbName);
+  const instance = await getMongoDbInstance(input.connectionId, input.dbName);
 
   if (!instance.db) {
     throw new TRPCError({
@@ -50,7 +50,7 @@ const getMongoCollection = async (
 };
 
 const getMongoDatabase = async (
-  getMongoDBlInstance: (
+  getMongoDbInstance: (
     connectionId: number,
     databaseName?: string,
     pageId?: string,
@@ -60,7 +60,7 @@ const getMongoDatabase = async (
     dbName: string;
   },
 ) => {
-  const instance = await getMongoDBlInstance(input.connectionId, input.dbName);
+  const instance = await getMongoDbInstance(input.connectionId, input.dbName);
 
   if (!instance.db) {
     throw new TRPCError({
@@ -191,7 +191,7 @@ export const mongodbRouter = router({
       // Keep backward compatibility with both legacy (limit/current) and new (pageSize/skip) paging params.
       const pageSize = input.limit ?? input.pageSize;
       const offset = input.skip ?? (input.current - 1) * pageSize;
-      const collection = await getMongoCollection(ctx.pool.getMongoDBlInstance, input);
+      const collection = await getMongoCollection(ctx.pool.getMongoDbInstance, input);
 
       const [count, list] = await Promise.all([
         collection.countDocuments(filter),
@@ -215,7 +215,7 @@ export const mongodbRouter = router({
     .input(InsertMongoDocumentSchema)
     .mutation(async ({ ctx, input }) => {
       const document = parseMongoJsonObject(input.document, 'document');
-      const collection = await getMongoCollection(ctx.pool.getMongoDBlInstance, input);
+      const collection = await getMongoCollection(ctx.pool.getMongoDbInstance, input);
       const result = await collection.insertOne(document);
 
       return {
@@ -227,7 +227,7 @@ export const mongodbRouter = router({
     .input(UpdateMongoDocumentSchema)
     .mutation(async ({ ctx, input }) => {
       const document = parseMongoJsonObject(input.document, 'document');
-      const collection = await getMongoCollection(ctx.pool.getMongoDBlInstance, input);
+      const collection = await getMongoCollection(ctx.pool.getMongoDbInstance, input);
       const id = normalizeMongoId(input.id);
 
       // `_id` is immutable in MongoDB; remove it from replacement payload explicitly.
@@ -250,7 +250,7 @@ export const mongodbRouter = router({
   deleteDocuments: protectedProcedure
     .input(DeleteMongoDocumentsSchema)
     .mutation(async ({ ctx, input }) => {
-      const collection = await getMongoCollection(ctx.pool.getMongoDBlInstance, input);
+      const collection = await getMongoCollection(ctx.pool.getMongoDbInstance, input);
       const ids = input.ids.map(id => normalizeMongoId(id));
       const result = await collection.deleteMany({ _id: { $in: ids } } as never);
 
@@ -261,7 +261,7 @@ export const mongodbRouter = router({
     .input(AggregateMongoCollectionSchema)
     .query(async ({ ctx, input }) => {
       const pipeline = parseMongoJsonArray(input.pipeline, 'pipeline');
-      const collection = await getMongoCollection(ctx.pool.getMongoDBlInstance, input);
+      const collection = await getMongoCollection(ctx.pool.getMongoDbInstance, input);
       const aggregateOptions: {
         allowDiskUse?: boolean;
         maxTimeMS?: number;
@@ -283,7 +283,7 @@ export const mongodbRouter = router({
     .input(AggregateMongoCollectionSchema)
     .query(async ({ ctx, input }) => {
       const pipeline = parseMongoJsonArray(input.pipeline, 'pipeline');
-      const collection = await getMongoCollection(ctx.pool.getMongoDBlInstance, input);
+      const collection = await getMongoCollection(ctx.pool.getMongoDbInstance, input);
       const aggregateOptions: {
         allowDiskUse?: boolean;
         maxTimeMS?: number;
@@ -306,7 +306,7 @@ export const mongodbRouter = router({
   getCollectionIndexes: protectedProcedure
     .input(MongoCollectionIndexesSchema)
     .query(async ({ ctx, input }) => {
-      const collection = await getMongoCollection(ctx.pool.getMongoDBlInstance, input);
+      const collection = await getMongoCollection(ctx.pool.getMongoDbInstance, input);
       const indexes = await collection.indexes();
 
       return indexes.map(index => normalizeMongoDocument(index));
@@ -315,7 +315,7 @@ export const mongodbRouter = router({
   getCollectionValidation: protectedProcedure
     .input(MongoCollectionValidationSchema)
     .query(async ({ ctx, input }) => {
-      const db = await getMongoDatabase(ctx.pool.getMongoDBlInstance, input);
+      const db = await getMongoDatabase(ctx.pool.getMongoDbInstance, input);
       const collectionOptions = await db
         .listCollections({ name: input.tableName }, { nameOnly: false })
         .toArray();
@@ -339,7 +339,7 @@ export const mongodbRouter = router({
   updateCollectionValidation: protectedProcedure
     .input(UpdateMongoCollectionValidationSchema)
     .mutation(async ({ ctx, input }) => {
-      const db = await getMongoDatabase(ctx.pool.getMongoDBlInstance, input);
+      const db = await getMongoDatabase(ctx.pool.getMongoDbInstance, input);
       const command: Record<string, unknown> = {
         collMod: input.tableName,
       };
@@ -368,7 +368,7 @@ export const mongodbRouter = router({
   analyzeCollectionSchema: protectedProcedure
     .input(AnalyzeMongoCollectionSchemaSchema)
     .query(async ({ ctx, input }) => {
-      const collection = await getMongoCollection(ctx.pool.getMongoDBlInstance, input);
+      const collection = await getMongoCollection(ctx.pool.getMongoDbInstance, input);
       const sampleSize = Math.max(10, Math.min(5000, input.sampleSize));
       let sampledDocuments: Record<string, unknown>[];
       try {
@@ -431,7 +431,7 @@ export const mongodbRouter = router({
     .mutation(async ({ ctx, input }) => {
       const keys = parseMongoJsonObject(input.keys, 'keys');
       const options = parseMongoJsonObject(input.options, 'options');
-      const collection = await getMongoCollection(ctx.pool.getMongoDBlInstance, input);
+      const collection = await getMongoCollection(ctx.pool.getMongoDbInstance, input);
       const indexName = await collection.createIndex(keys as never, options as never);
 
       return indexName;
@@ -448,7 +448,7 @@ export const mongodbRouter = router({
         });
       }
 
-      const collection = await getMongoCollection(ctx.pool.getMongoDBlInstance, input);
+      const collection = await getMongoCollection(ctx.pool.getMongoDbInstance, input);
       await collection.dropIndex(input.indexName);
 
       return null;
@@ -457,7 +457,7 @@ export const mongodbRouter = router({
   getCollectionStats: protectedProcedure
     .input(MongoCollectionStatsSchema)
     .query(async ({ ctx, input }) => {
-      const instance = await ctx.pool.getMongoDBlInstance(input.connectionId, input.dbName);
+      const instance = await ctx.pool.getMongoDbInstance(input.connectionId, input.dbName);
       if (!instance.db) {
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',

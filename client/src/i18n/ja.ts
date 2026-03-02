@@ -462,6 +462,8 @@ const ja = {
     createPartition: 'パーティション作成',
     editPartition: 'パーティション編集',
     where: 'WHERE 条件',
+    whereTip1: '例:',
+    whereTip2: '注意: LIMIT 条件は追加しないでください',
     orderBy: '並び順',
     pageSize: 'ページサイズ',
     rowEditor: '行エディター',

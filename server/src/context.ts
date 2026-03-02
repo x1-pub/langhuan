@@ -1,23 +1,137 @@
 import { CreateFastifyContextOptions } from '@trpc/server/adapters/fastify';
 import { drizzle } from 'drizzle-orm/mysql2';
-import { inArray } from 'drizzle-orm';
+import { and, eq, inArray, isNull } from 'drizzle-orm';
 import dotenv from 'dotenv';
 import path from 'path';
+import { TRPCError } from '@trpc/server';
+import { EConnectionType, IConnectionPoolConfig } from '@packages/types/connection';
 
 import mysql from './pools/mysql';
 import redis from './pools/redis';
 import mongodb from './pools/mongodb';
 import pgsql from './pools/pgsql';
 import * as schema from './schema';
-import { TRPCError } from '@trpc/server';
-import { EConnectionType } from '@packages/types/connection';
 
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
 const db = drizzle(process.env.DATABASE_URL as string, { schema, mode: 'default' });
+const MYSQL_COMPATIBLE_TYPES = [EConnectionType.MYSQL, EConnectionType.MARIADB] as const;
+type ConnectionRecord = typeof schema.connectionsTable.$inferSelect;
+
+const createNotFoundError = (databaseTypeName: string, connectionId: number) =>
+  new TRPCError({
+    code: 'NOT_FOUND',
+    message: `The ${databaseTypeName} connection instance (ID: ${connectionId}) does not exist.`,
+  });
 
 const createContext = async ({ req, res }: CreateFastifyContextOptions) => {
   const uid = Number(req.headers['sso-uid-id']) || Number(process.env.DEV_USER_ID);
+  const getConnectionByTypes = async (
+    connectionId: number,
+    connectionTypes: readonly EConnectionType[],
+    databaseTypeName: string,
+  ) => {
+    const connection = await db.query.connectionsTable.findFirst({
+      where: table =>
+        and(
+          eq(table.creator, uid),
+          eq(table.id, connectionId),
+          isNull(table.deletedAt),
+          inArray(table.type, connectionTypes as EConnectionType[]),
+        ),
+    });
+
+    if (!connection) {
+      throw createNotFoundError(databaseTypeName, connectionId);
+    }
+
+    return connection;
+  };
+  const createPoolConfig = (
+    connection: Pick<ConnectionRecord, 'host' | 'port' | 'username' | 'password' | 'database'>,
+    overrides?: {
+      database?: string | null;
+      pageId?: string;
+    },
+  ): IConnectionPoolConfig => {
+    const hasDatabaseOverride =
+      Boolean(overrides) && Object.prototype.hasOwnProperty.call(overrides, 'database');
+    return {
+      uid,
+      host: connection.host,
+      port: connection.port,
+      username: connection.username,
+      password: connection.password,
+      database: hasDatabaseOverride ? overrides?.database : connection.database,
+      pageId: overrides?.pageId,
+    };
+  };
+  const getMysqlInstance = async (connectionId: number, databaseName?: string, pageId?: string) => {
+    const connection = await getConnectionByTypes(
+      connectionId,
+      MYSQL_COMPATIBLE_TYPES,
+      'MySQL/MariaDB',
+    );
+    return mysql.getInstance(
+      createPoolConfig(connection, {
+        database: databaseName,
+        pageId,
+      }),
+    );
+  };
+  const getPgsqlInstance = async (connectionId: number, databaseName?: string, pageId?: string) => {
+    const connection = await getConnectionByTypes(
+      connectionId,
+      [EConnectionType.PGSQL],
+      'PostgreSQL',
+    );
+    return pgsql.getInstance(
+      createPoolConfig(connection, {
+        database: databaseName || connection.database || 'postgres',
+        pageId,
+      }),
+    );
+  };
+  const getRedisInstance = async (connectionId: number, databaseName?: string, pageId?: string) => {
+    const connection = await getConnectionByTypes(connectionId, [EConnectionType.REDIS], 'Redis');
+    return redis.getInstance(
+      createPoolConfig(connection, {
+        database: databaseName,
+        pageId,
+      }),
+    );
+  };
+  const getMongoDbInstance = async (
+    connectionId: number,
+    databaseName?: string,
+    pageId?: string,
+  ) => {
+    const connection = await getConnectionByTypes(
+      connectionId,
+      [EConnectionType.MONGODB],
+      'MongoDB',
+    );
+    const client = await mongodb.getInstance(
+      createPoolConfig(connection, {
+        pageId,
+      }),
+    );
+    return databaseName ? client.useDb(databaseName) : client;
+  };
+  const changeMongoDatabase = async (
+    databaseName: string,
+    connectionId: number,
+    pageId?: string,
+  ) => {
+    const connection = await getConnectionByTypes(
+      connectionId,
+      [EConnectionType.MONGODB],
+      'MongoDB',
+    );
+    const config = createPoolConfig(connection, { pageId });
+    const previousClient = await mongodb.getInstance(config);
+    mongodb.changeInstance(config, previousClient.useDb(databaseName));
+  };
 
   return {
     req,
@@ -25,169 +139,15 @@ const createContext = async ({ req, res }: CreateFastifyContextOptions) => {
     user: { id: uid },
     db,
     pool: {
-      /**
-       * 根据连接 ID 获取 MySQL 连接实例
-       * @param connectionId 连接 ID
-       * @param databaseName 可选数据库名称
-       * @param pageId 可选页面 ID，用于区分不同数据库实例
-       * @returns MySQL 连接实例
-       */
-      getMysqlInstance: async (connectionId: number, databaseName?: string, pageId?: string) => {
-        const instance = await db.query.connectionsTable.findFirst({
-          where: (table, { and, eq }) =>
-            and(
-              eq(table.creator, uid),
-              eq(table.id, connectionId),
-              inArray(table.type, [EConnectionType.MYSQL, EConnectionType.MARIADB]),
-            ),
-        });
-        if (!instance) {
-          throw new TRPCError({
-            code: 'NOT_FOUND',
-            message: `The MySQL/MariaDB connection instance (ID: ${connectionId}) does not exist.`,
-          });
-        }
-        return mysql.getInstance({
-          uid,
-          host: instance.host,
-          port: instance.port,
-          username: instance.username,
-          password: instance.password,
-          database: databaseName,
-          pageId,
-        });
-      },
-
-      /**
-       * 根据连接 ID 获取 PostgreSQL 连接池实例
-       * @param connectionId 连接 ID
-       * @param databaseName 可选数据库名称
-       * @param pageId 可选页面 ID，用于区分不同数据库实例
-       * @returns PostgreSQL 连接池实例
-       */
-      getPgsqlInstance: async (connectionId: number, databaseName?: string, pageId?: string) => {
-        const instance = await db.query.connectionsTable.findFirst({
-          where: (table, { and, eq }) =>
-            and(
-              eq(table.creator, uid),
-              eq(table.id, connectionId),
-              eq(table.type, EConnectionType.PGSQL),
-            ),
-        });
-        if (!instance) {
-          throw new TRPCError({
-            code: 'NOT_FOUND',
-            message: `The PostgreSQL connection instance (ID: ${connectionId}) does not exist.`,
-          });
-        }
-        return pgsql.getInstance({
-          uid,
-          host: instance.host,
-          port: instance.port,
-          username: instance.username,
-          password: instance.password,
-          database: databaseName || instance.database || 'postgres',
-          pageId,
-        });
-      },
-      /**
-       * 根据连接 ID Redis 连接实例
-       * @param connectionId 连接 ID
-       * @param databaseName Redis 库名（默认使用 0 号库）
-       * @param pageId 可选页面 ID，用于区分不同数据库实例
-       * @returns Redis 连接实例
-       */
-      getRedislInstance: async (connectionId: number, databaseName?: string, pageId?: string) => {
-        const instance = await db.query.connectionsTable.findFirst({
-          where: (table, { and, eq }) =>
-            and(
-              eq(table.creator, uid),
-              eq(table.id, connectionId),
-              eq(table.type, EConnectionType.REDIS),
-            ),
-        });
-        if (!instance) {
-          throw new TRPCError({
-            code: 'NOT_FOUND',
-            message: `The Redis connection instance (ID: ${connectionId}) does not exist.`,
-          });
-        }
-        return redis.getInstance({
-          uid,
-          host: instance.host,
-          port: instance.port,
-          username: instance.username,
-          password: instance.password,
-          database: databaseName,
-          pageId,
-        });
-      },
-
-      /**
-       * 根据连接 ID 获取 MongoDB 实例
-       * @param connectionId 连接 ID
-       * @param databaseName 可选数据库名称，缺省时返回默认数据库实例
-       * @param pageId 可选页面 ID，用于区分不同数据库实例
-       * @returns MongoDB 数据库实例
-       */
-      getMongoDBlInstance: async (connectionId: number, databaseName?: string, pageId?: string) => {
-        const instance = await db.query.connectionsTable.findFirst({
-          where: (table, { and, eq }) =>
-            and(
-              eq(table.creator, uid),
-              eq(table.id, connectionId),
-              eq(table.type, EConnectionType.MONGODB),
-            ),
-        });
-        if (!instance) {
-          throw new TRPCError({
-            code: 'NOT_FOUND',
-            message: `The MongoDB connection instance (ID: ${connectionId}) does not exist.`,
-          });
-        }
-        const connection = await mongodb.getInstance({
-          uid,
-          host: instance.host,
-          port: instance.port,
-          username: instance.username,
-          password: instance.password,
-          database: instance.database,
-          pageId,
-        });
-        return databaseName ? connection.useDb(databaseName) : connection;
-      },
-
-      /**
-       * 切换 MongoDB 数据库
-       * @param databaseName 目标数据库名称
-       * @param connectionId 连接 ID
-       * @param pageId 可选页面 ID，用于区分不同数据库实例
-       * @returns Promise<void>
-       */
-      changeMongoDB: async (databaseName: string, connectionId: number, pageId?: string) => {
-        const instance = await db.query.connectionsTable.findFirst({
-          where: (table, { and, eq }) =>
-            and(
-              eq(table.creator, uid),
-              eq(table.id, connectionId),
-              eq(table.type, EConnectionType.MONGODB),
-            ),
-        });
-        if (!instance) {
-          throw new TRPCError({ code: 'NOT_FOUND' });
-        }
-        const config = {
-          uid,
-          host: instance.host,
-          port: instance.port,
-          username: instance.username,
-          password: instance.password,
-          database: instance.database,
-          pageId,
-        };
-        const oldConnection = await mongodb.getInstance(config);
-        mongodb.changeInstance(config, oldConnection.useDb(databaseName));
-      },
+      getMysqlInstance,
+      getPgsqlInstance,
+      getRedisInstance,
+      getMongoDbInstance,
+      changeMongoDatabase,
+      // backward compatibility: keep legacy typo method names until all callers are migrated.
+      getRedislInstance: getRedisInstance,
+      getMongoDBlInstance: getMongoDbInstance,
+      changeMongoDB: changeMongoDatabase,
     },
   };
 };

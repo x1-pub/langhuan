@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { TranslationOutlined } from '@ant-design/icons';
 
 import i18n, { normalizeLanguage, type TLanguage } from '@/i18n';
-import storage, { LANG_KEY } from '@/utils/storage';
+import { setPersistedLanguage } from '@/utils/storage';
 import { LOCALE_OPTIONS, LocaleContext } from './constants';
 import styles from './index.module.less';
 
@@ -40,7 +40,7 @@ const LocaleSwitcher: React.FC = () => {
     }
 
     setLocale(option.antdLocale);
-    storage.set(LANG_KEY, language);
+    setPersistedLanguage(language);
     dayjs.locale(option.dayjsLocale);
     await i18n.changeLanguage(language);
     setOpen(false);

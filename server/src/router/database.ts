@@ -23,7 +23,7 @@ export const databaseRouter = router({
     const { type, connectionId } = input;
 
     if (type === EConnectionType.REDIS) {
-      const instance = await ctx.pool.getRedislInstance(connectionId);
+      const instance = await ctx.pool.getRedisInstance(connectionId);
       const [, dbCount] = (await instance.config('GET', 'databases')) as string[];
       const dbList = Array.from({ length: Number(dbCount) }, (_, i) => ({
         name: String(i),
@@ -48,7 +48,7 @@ export const databaseRouter = router({
     }
 
     if (type === EConnectionType.MONGODB) {
-      const instance = await ctx.pool.getMongoDBlInstance(connectionId);
+      const instance = await ctx.pool.getMongoDbInstance(connectionId);
       const res = await instance.listDatabases();
       const dbList = res.databases.map(db => ({ name: db.name })) as IDatabaseItem[];
 
@@ -95,7 +95,7 @@ export const databaseRouter = router({
       }
 
       if (type === EConnectionType.MONGODB) {
-        const instance = await ctx.pool.getMongoDBlInstance(connectionId, dbName);
+        const instance = await ctx.pool.getMongoDbInstance(connectionId, dbName);
         if (!instance.db) {
           throw new TRPCError({
             code: 'INTERNAL_SERVER_ERROR',
@@ -191,7 +191,7 @@ export const databaseRouter = router({
     }
 
     if (type === EConnectionType.MONGODB) {
-      const instance = await ctx.pool.getMongoDBlInstance(connectionId, dbName);
+      const instance = await ctx.pool.getMongoDbInstance(connectionId, dbName);
       if (!instance.db) {
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',

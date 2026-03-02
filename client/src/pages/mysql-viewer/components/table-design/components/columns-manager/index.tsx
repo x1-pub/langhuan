@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Card, Popconfirm, Table, TableProps, Tooltip } from 'antd';
+import { Button, Popconfirm, Table, TableProps, Tooltip } from 'antd';
 import { HolderOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import type { DragEndEvent } from '@dnd-kit/core';
@@ -182,36 +182,32 @@ const ColumnsManager: React.FC<ColumnsManagerProps> = props => {
 
   return (
     <>
-      <Card
-        className={styles.card}
-        title={t('table.field')}
-        extra={
-          <Button color="cyan" variant="link" onClick={() => setVisible(true)}>
-            {t('button.add')}
-          </Button>
-        }
-      >
-        <DndContext sensors={sensors} modifiers={[restrictToVerticalAxis]} onDragEnd={onDragEnd}>
-          <SortableContext
-            // rowKey array
-            items={dataOrder.map(i => i.Field)}
-            strategy={verticalListSortingStrategy}
-          >
-            <Table
-              rowKey="Field"
-              dataSource={dataOrder}
-              columns={tableColumns}
-              pagination={false}
-              onRow={record => ({
-                onDoubleClick: () => handleEdit(record),
-              })}
-              components={{
-                body: { row: Row },
-              }}
-            />
-          </SortableContext>
-        </DndContext>
-      </Card>
+      <div className={styles.tableActionBar}>
+        <Button color="cyan" variant="link" onClick={() => setVisible(true)}>
+          {t('button.add')}
+        </Button>
+      </div>
+      <DndContext sensors={sensors} modifiers={[restrictToVerticalAxis]} onDragEnd={onDragEnd}>
+        <SortableContext
+          // rowKey array
+          items={dataOrder.map(i => i.Field)}
+          strategy={verticalListSortingStrategy}
+        >
+          <Table
+            rowKey="Field"
+            dataSource={dataOrder}
+            columns={tableColumns}
+            pagination={false}
+            scroll={{ x: 'max-content', y: 'calc(100vh - 375px)' }}
+            onRow={record => ({
+              onDoubleClick: () => handleEdit(record),
+            })}
+            components={{
+              body: { row: Row },
+            }}
+          />
+        </SortableContext>
+      </DndContext>
       <FieldEditor
         visible={visible}
         onSubmit={handleSubmit}

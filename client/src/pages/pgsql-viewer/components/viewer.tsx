@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Button, Popconfirm, Space, Tabs, Typography, type TableProps } from 'antd';
-import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
+import { Tabs, Typography, type TableProps } from 'antd';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
@@ -248,27 +247,7 @@ const Viewer: React.FC = () => {
     },
   );
 
-  const tableColumns: TableProps<PgsqlTableRow>['columns'] = [
-    ...dynamicColumns,
-    {
-      title: t('table.operation'),
-      key: 'operation',
-      fixed: 'right',
-      width: 96,
-      render: (_value, row) => (
-        <Space size={4}>
-          <Button type="text" icon={<EditOutlined />} onClick={() => handleOpenEdit(row)} />
-          <Popconfirm
-            title={t('delete.title')}
-            description={t('delete.desc')}
-            onConfirm={() => handleDeleteRows([row.__pg_ctid])}
-          >
-            <Button type="text" danger={true} icon={<DeleteOutlined />} />
-          </Popconfirm>
-        </Space>
-      ),
-    },
-  ];
+  const tableColumns: TableProps<PgsqlTableRow>['columns'] = dynamicColumns;
 
   const indexColumnOptions = useMemo(() => {
     const columns = tableColumnsData.length ? tableColumnsData : tableData?.columns || [];
@@ -279,18 +258,39 @@ const Viewer: React.FC = () => {
   }, [tableColumnsData, tableData?.columns]);
 
   const handleApplyQuery = () => {
+    const nextWhere = normalizeWhereClause(whereDraft);
+
     setPagination(prev => ({ ...prev, current: 1 }));
     setSelectedRowKeys([]);
-    setQueryApplied({
-      where: normalizeWhereClause(whereDraft),
-    });
+
+    if (queryApplied.where === nextWhere) {
+      if (pagination.current === 1) {
+        getTableDataQuery.refetch();
+      }
+      return;
+    }
+
+    setQueryApplied({ where: nextWhere });
   };
 
   const handleResetQuery = () => {
-    setWhereDraft(DEFAULT_WHERE_CLAUSE);
+    const defaultWhere = normalizeWhereClause(DEFAULT_WHERE_CLAUSE);
+    const keepCurrentWhere = whereDraft === DEFAULT_WHERE_CLAUSE;
+
+    if (!keepCurrentWhere) {
+      setWhereDraft(DEFAULT_WHERE_CLAUSE);
+    }
     setPagination(prev => ({ ...prev, current: 1 }));
     setSelectedRowKeys([]);
-    setQueryApplied({ where: normalizeWhereClause(DEFAULT_WHERE_CLAUSE) });
+
+    if (queryApplied.where === defaultWhere) {
+      if (pagination.current === 1 && keepCurrentWhere) {
+        getTableDataQuery.refetch();
+      }
+      return;
+    }
+
+    setQueryApplied({ where: defaultWhere });
   };
 
   const handleOpenCreate = () => {
@@ -564,7 +564,7 @@ const Viewer: React.FC = () => {
         items={[
           {
             key: 'table-data',
-            label: t('pgsql.data'),
+            label: t('mysql.data'),
             children: (
               <DataPanel
                 whereDraft={whereDraft}
@@ -579,7 +579,6 @@ const Viewer: React.FC = () => {
                 onChangeWhereDraft={value => setWhereDraft(value || '')}
                 onApplyQuery={handleApplyQuery}
                 onResetQuery={handleResetQuery}
-                onRefresh={() => getTableDataQuery.refetch()}
                 onChangePage={(page, pageSize) => setPagination({ current: page, pageSize })}
                 onOpenCreate={handleOpenCreate}
                 onOpenEdit={handleOpenEdit}
@@ -590,7 +589,7 @@ const Viewer: React.FC = () => {
           },
           {
             key: 'table-design',
-            label: t('pgsql.design'),
+            label: t('mysql.design'),
             children: (
               <TableDesignPanel
                 structureLoading={getTableColumnsQuery.isLoading}
@@ -609,7 +608,7 @@ const Viewer: React.FC = () => {
           },
           {
             key: 'table-triggers',
-            label: t('pgsql.trigger'),
+            label: t('mysql.trigger'),
             children: (
               <TriggersPanel
                 loading={getTableTriggersQuery.isLoading}
@@ -627,7 +626,7 @@ const Viewer: React.FC = () => {
           },
           {
             key: 'table-partitions',
-            label: t('pgsql.partition'),
+            label: t('mysql.partition'),
             children: (
               <PartitionsPanel
                 loading={getTablePartitionsQuery.isLoading}
@@ -645,14 +644,14 @@ const Viewer: React.FC = () => {
           },
           {
             key: 'table-ddl',
-            label: t('pgsql.ddl'),
+            label: t('mysql.ddl'),
             children: (
               <TableDDL loading={getTableDDLQuery.isLoading} ddl={getTableDDLQuery.data?.ddl} />
             ),
           },
           {
             key: 'table-stats',
-            label: t('pgsql.stats'),
+            label: t('mysql.status'),
             children: (
               <StatsPanel loading={getTableStatsQuery.isLoading} stats={getTableStatsQuery.data} />
             ),

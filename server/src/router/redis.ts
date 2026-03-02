@@ -36,7 +36,7 @@ const isRedisUnsupportedFeatureError = (error: unknown) => {
 export const redisRouter = router({
   getKeys: protectedProcedure.input(GetRedisKeysSchema).query(async ({ ctx, input }) => {
     const { connectionId, type, count, match, dbName, cursor } = input;
-    const instance = await ctx.pool.getRedislInstance(connectionId, dbName);
+    const instance = await ctx.pool.getRedisInstance(connectionId, dbName);
 
     let scanned = 0;
     let nextCursor = cursor || 0;
@@ -130,7 +130,7 @@ export const redisRouter = router({
   getValue: protectedProcedure.input(GetRedisValueSchema).query(async ({ ctx, input }) => {
     const { connectionId, type, key, dbName } = input;
 
-    const instance = await ctx.pool.getRedislInstance(connectionId, dbName);
+    const instance = await ctx.pool.getRedisInstance(connectionId, dbName);
     const pipe = instance.pipeline();
     switch (type) {
       case ERedisDataType.STRING:
@@ -183,7 +183,7 @@ export const redisRouter = router({
 
   addValue: protectedProcedure.input(AddRedisValueSchema).mutation(async ({ ctx, input }) => {
     const { connectionId, type, ttl, value, key, dbName } = input;
-    const instance = await ctx.pool.getRedislInstance(connectionId, dbName);
+    const instance = await ctx.pool.getRedisInstance(connectionId, dbName);
     const pipe = instance.pipeline();
 
     switch (type) {
@@ -219,7 +219,7 @@ export const redisRouter = router({
     .input(UpdateHashValueSchema)
     .mutation(async ({ ctx, input }) => {
       const { connectionId, field, value, key, dbName, isRemove } = input;
-      const instance = await ctx.pool.getRedislInstance(connectionId, dbName);
+      const instance = await ctx.pool.getRedisInstance(connectionId, dbName);
 
       if (isRemove) {
         await instance.hdel(key, field);
@@ -234,7 +234,7 @@ export const redisRouter = router({
     .input(UpdateStringValueSchema)
     .mutation(async ({ ctx, input }) => {
       const { connectionId, value, key, dbName } = input;
-      const instance = await ctx.pool.getRedislInstance(connectionId, dbName);
+      const instance = await ctx.pool.getRedisInstance(connectionId, dbName);
 
       await instance.set(key, value);
       return null;
@@ -253,7 +253,7 @@ export const redisRouter = router({
         isModify,
         isPushToHead,
       } = input;
-      const instance = await ctx.pool.getRedislInstance(connectionId, dbName);
+      const instance = await ctx.pool.getRedisInstance(connectionId, dbName);
 
       if (isModify) {
         await instance.lset(key, index, element);
@@ -278,7 +278,7 @@ export const redisRouter = router({
     .input(UpdateSetValueSchema)
     .mutation(async ({ ctx, input }) => {
       const { connectionId, member, key, dbName, isRemove } = input;
-      const instance = await ctx.pool.getRedislInstance(connectionId, dbName);
+      const instance = await ctx.pool.getRedisInstance(connectionId, dbName);
 
       if (isRemove) {
         await instance.srem(key, member);
@@ -293,7 +293,7 @@ export const redisRouter = router({
     .input(UpdateZsetValueSchema)
     .mutation(async ({ ctx, input }) => {
       const { connectionId, member, key, dbName, isRemove, score = 0 } = input;
-      const instance = await ctx.pool.getRedislInstance(connectionId, dbName);
+      const instance = await ctx.pool.getRedisInstance(connectionId, dbName);
 
       if (isRemove) {
         await instance.zrem(key, member);
@@ -308,7 +308,7 @@ export const redisRouter = router({
     .input(UpdateStreamValueSchema)
     .mutation(async ({ ctx, input }) => {
       const { connectionId, key, dbName, isRemove, entry } = input;
-      const instance = await ctx.pool.getRedislInstance(connectionId, dbName);
+      const instance = await ctx.pool.getRedisInstance(connectionId, dbName);
 
       if (isRemove) {
         await instance.xdel(key, entry[0][0]);
@@ -321,7 +321,7 @@ export const redisRouter = router({
 
   deleteKey: protectedProcedure.input(DeleteRedisKey).mutation(async ({ ctx, input }) => {
     const { connectionId, key, dbName } = input;
-    const instance = await ctx.pool.getRedislInstance(connectionId, dbName);
+    const instance = await ctx.pool.getRedisInstance(connectionId, dbName);
 
     await instance.del(key);
     return null;
@@ -329,7 +329,7 @@ export const redisRouter = router({
 
   modifyTTL: protectedProcedure.input(ModifyRedisTTL).mutation(async ({ ctx, input }) => {
     const { connectionId, key, ttl, dbName } = input;
-    const instance = await ctx.pool.getRedislInstance(connectionId, dbName);
+    const instance = await ctx.pool.getRedisInstance(connectionId, dbName);
 
     if (ttl >= 0) {
       await instance.expire(key, ttl);
@@ -341,7 +341,7 @@ export const redisRouter = router({
 
   modifyKey: protectedProcedure.input(ModifyRedisKey).mutation(async ({ ctx, input }) => {
     const { connectionId, key, newKey, dbName } = input;
-    const instance = await ctx.pool.getRedislInstance(connectionId, dbName);
+    const instance = await ctx.pool.getRedisInstance(connectionId, dbName);
 
     await instance.renamenx(key, newKey);
     return null;

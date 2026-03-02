@@ -1,17 +1,39 @@
 import { QueryCache, QueryClient } from '@tanstack/react-query';
 import { createTRPCOptionsProxy } from '@trpc/tanstack-react-query';
-import { createTRPCClient, httpBatchLink, TRPCClientErrorLike } from '@trpc/client';
+import { createTRPCClient, httpBatchLink } from '@trpc/client';
 
 import type { inferRouterOutputs, inferRouterInputs } from '@trpc/server';
 import type { AppRouter } from '../../../server/src/router';
 import { showError } from './global-notification';
 
-const extractError = (error: unknown) => {
-  const trpcError = error as TRPCClientErrorLike<AppRouter>;
+const DEFAULT_ERROR_TITLE = 'UNEXPECTED_ERROR';
+const DEFAULT_ERROR_MESSAGE = "I'm sorry, an unexpected error occurred on the server.";
 
-  const title = trpcError.data?.code || 'UNEXPECTED_ERROR';
-  const message = trpcError.message || "I'm sorry, an unexpected error occurred on the server.";
-  const sql = trpcError.data?.sql;
+const isObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const extractError = (error: unknown) => {
+  let title = DEFAULT_ERROR_TITLE;
+  let message = DEFAULT_ERROR_MESSAGE;
+  let sql: string | undefined;
+
+  if (isObject(error)) {
+    const errorMessage = error.message;
+    message = typeof errorMessage === 'string' ? errorMessage : DEFAULT_ERROR_MESSAGE;
+
+    if (isObject(error.data)) {
+      const dataCode = error.data.code;
+      const dataSql = error.data.sql;
+
+      if (typeof dataCode === 'string') {
+        title = dataCode;
+      }
+
+      if (typeof dataSql === 'string') {
+        sql = dataSql;
+      }
+    }
+  }
 
   showError({ title, message, sql });
 };

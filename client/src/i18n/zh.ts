@@ -462,6 +462,8 @@ const zh = {
     createPartition: '创建分区',
     editPartition: '编辑分区',
     where: '筛选条件',
+    whereTip1: '示例:',
+    whereTip2: '注意: 不要加 LIMIT 条件',
     orderBy: '排序条件',
     pageSize: '每页条数',
     rowEditor: '行编辑器',
