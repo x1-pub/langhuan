@@ -1,49 +1,75 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { Popover } from 'antd';
-import enUS from 'antd/locale/en_US';
-import zhCN from 'antd/locale/zh_CN';
 import dayjs from 'dayjs';
+import 'dayjs/locale/en';
+import 'dayjs/locale/ja';
+import 'dayjs/locale/ko';
 import 'dayjs/locale/zh-cn';
 import { useTranslation } from 'react-i18next';
 import { TranslationOutlined } from '@ant-design/icons';
 
-import { isChinese } from '@/i18n';
-import storage, { LANG_KEY } from '@/utils/storage';
-import { Locale, LocaleContext } from './constants';
+import i18n, { normalizeLanguage, type TLanguage } from '@/i18n';
+import { setPersistedLanguage } from '@/infra/storage/persistence';
+import { LOCALE_OPTIONS, LocaleContext } from './constants';
 import styles from './index.module.less';
 
-dayjs.locale(isChinese ? 'zh-cn' : 'en');
+const getLanguageByDayjsLocale = (language: TLanguage): string => {
+  const option = LOCALE_OPTIONS.find(item => item.language === language);
+  return option?.dayjsLocale || 'en';
+};
 
 const LocaleSwitcher: React.FC = () => {
-  const { i18n } = useTranslation();
-  const { setLocal } = useContext(LocaleContext);
+  const { i18n: i18next } = useTranslation();
+  const { setLocale } = useContext(LocaleContext);
+  const activeLanguage = normalizeLanguage(i18next.resolvedLanguage) || 'en';
+  const [open, setOpen] = useState(false);
 
-  const changeLocale = (localeValue: Locale) => {
-    if (!localeValue) {
-      localeValue = enUS;
+  useEffect(() => {
+    dayjs.locale(getLanguageByDayjsLocale(activeLanguage));
+  }, [activeLanguage]);
+
+  const changeLocale = async (language: TLanguage) => {
+    const option = LOCALE_OPTIONS.find(item => item.language === language);
+    if (!option) {
+      return;
     }
 
-    setLocal(localeValue);
-    storage.set(LANG_KEY, localeValue.locale);
-
-    if (localeValue.locale === 'en') {
-      dayjs.locale('en');
-      i18n.changeLanguage('en');
-    } else {
-      dayjs.locale('zh-cn');
-      i18n.changeLanguage('zh');
+    if (language === activeLanguage) {
+      setOpen(false);
+      return;
     }
+
+    setLocale(option.antdLocale);
+    setPersistedLanguage(language);
+    dayjs.locale(option.dayjsLocale);
+    await i18n.changeLanguage(language);
+    setOpen(false);
   };
 
   const content = (
     <div className={styles.list}>
-      <span onClick={() => changeLocale(enUS)}>English</span>
-      <span onClick={() => changeLocale(zhCN)}>简体中文</span>
+      {LOCALE_OPTIONS.map(option => (
+        <button
+          key={option.language}
+          type="button"
+          aria-pressed={activeLanguage === option.language}
+          className={`${styles.item} ${activeLanguage === option.language ? styles.active : ''}`}
+          onClick={() => changeLocale(option.language)}
+        >
+          {option.nativeName}
+        </button>
+      ))}
     </div>
   );
 
   return (
-    <Popover content={content}>
+    <Popover
+      content={content}
+      trigger="click"
+      placement="bottom"
+      open={open}
+      onOpenChange={setOpen}
+    >
       <TranslationOutlined className={styles.icon} />
     </Popover>
   );

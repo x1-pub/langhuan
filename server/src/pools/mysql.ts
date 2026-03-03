@@ -1,7 +1,7 @@
 import { Sequelize } from 'sequelize';
 
 import { IConnectionPoolConfig } from '@packages/types/connection';
-import { removeNullAndUndefined } from '../lib/utils';
+import { removeNullAndUndefined } from '../shared/object/remove-nullish';
 import { TRPCError } from '@trpc/server';
 
 interface SequelizeInstanceWithTimestamp {
@@ -29,9 +29,15 @@ class MysqlManager {
           username: config.username || undefined,
           password: config.password || undefined,
           dialect: 'mysql',
+          timezone: '+00:00',
+          dialectOptions: {
+            dateStrings: true,
+          },
           logging: false,
         });
         await sequelize.authenticate();
+        // Keep all sessions in UTC to avoid implicit server/client timezone drift.
+        await sequelize.query("SET time_zone = '+00:00'");
         instance = {
           sequelize,
           lastUsed: Date.now(),

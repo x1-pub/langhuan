@@ -8,23 +8,6 @@ export const LANG_HUAN = `
 
 `;
 
-export const WELCOME: Record<EConnectionType, string[]> = {
-  mysql: [
-    'Welcome to MySQL Shell',
-    'Type your SQL commands and press Enter to execute',
-    'Commands should end with semicolon (;)',
-  ],
-  redis: ['Welcome to Redis CLI', 'Type your Redis commands and press Enter to execute'],
-  mongodb: [
-    'Welcome to MongoDB Shell',
-    'Type your MongoDB commands and press Enter to execute',
-    '',
-    '⚠️ Due to limited server resources, MongoDB Shell commands are \x1b[31mconverted for execution\x1b[0m',
-    '⚠️ If there are compatibility issues, please contact: \x1b[96;4mx1_mailer@163.com\x1b[0m',
-    '',
-  ],
-};
-
 const SQL_KEYWORDS = [
   'CREATE',
   'DATABASES',
@@ -239,12 +222,8 @@ const MONGO_KEYWORDS = [
 
 export const KEYWORDS: Record<EConnectionType, string[]> = {
   mysql: SQL_KEYWORDS,
+  mariadb: SQL_KEYWORDS,
+  pgsql: SQL_KEYWORDS,
   redis: REDIS_KEYWORDS,
   mongodb: MONGO_KEYWORDS,
-};
-
-export const TITLE_PREFIX: Record<EConnectionType, string> = {
-  mysql: 'MySQL shell',
-  redis: 'Redis Shell',
-  mongodb: 'MongoDB shell',
 };

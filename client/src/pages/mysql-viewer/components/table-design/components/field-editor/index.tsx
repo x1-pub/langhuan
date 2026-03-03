@@ -3,10 +3,10 @@ import { Modal, Form, Input, Select, Checkbox, Row, Col, Tooltip } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from '@tanstack/react-query';
 
-import useDatabaseWindows from '@/hooks/use-database-windows';
+import useDatabaseWindows from '@/domain/workbench/state/database-window-state';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import { EMySQLFieldDefaultType, IMySQLColumn, TMysqlBaseColumnInfo } from '@packages/types/mysql';
-import { trpc } from '@/utils/trpc';
+import { trpc } from '@/infra/api/trpc';
 import MySQLColumnTypeSelector from '@/components/mysql-column-type-selector';
 
 interface FieldEditorProps {
@@ -114,8 +114,8 @@ const FieldEditor: React.FC<FieldEditorProps> = ({ editRow, visible, onSubmit, o
 
       form.resetFields();
       onSubmit();
-    } catch (error) {
-      console.log('Validate Failed:', error);
+    } catch {
+      // Validation errors are already displayed by Form.Item rules.
     }
   };
 
@@ -231,10 +231,10 @@ const FieldEditor: React.FC<FieldEditorProps> = ({ editRow, visible, onSubmit, o
                   <Tooltip
                     title={
                       <>
-                        <div>自动递增字段需满足: </div>
-                        <div>1. 整数类型</div>
-                        <div>2. PRIMARY或UNIQUE类型索引</div>
-                        <div>3. 每个表最多有一个</div>
+                        <div>{t('table.autoIncrementTipTitle')}</div>
+                        <div>{t('table.autoIncrementTip1')}</div>
+                        <div>{t('table.autoIncrementTip2')}</div>
+                        <div>{t('table.autoIncrementTip3')}</div>
                       </>
                     }
                   >

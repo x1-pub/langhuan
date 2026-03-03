@@ -6,9 +6,9 @@ import TableSwitcher from '@/components/table-switcher';
 import TableData from './components/table-data';
 import TableDesign from './components/table-design';
 import TableDDL from './components/table-ddl';
-import TableSatus from './components/table-status';
+import TableStatus from './components/table-status';
 import styles from './index.module.less';
-import { ESpecialWind, IWind } from '@/hooks/use-database-windows';
+import { ESpecialWind, IWind } from '@/domain/workbench/state/database-window-state';
 import MysqlEvent from './components/database-event';
 import MysqlView from './components/database-view';
 import MysqlFunction from './components/database-function';
@@ -47,13 +47,13 @@ const MysqlViewer: React.FC = () => {
     {
       label: t('mysql.status'),
       key: 'table-status',
-      children: <TableSatus />,
+      children: <TableStatus />,
     },
   ];
 
   const renderWind = (wind: IWind) => {
     switch (wind.specialWind) {
-      case ESpecialWind.MYSQL_ENENT:
+      case ESpecialWind.MYSQL_EVENT:
         return <MysqlEvent />;
       case ESpecialWind.MYSQL_FUNCTION:
         return <MysqlFunction />;

@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from 'react';
-import useDatabaseWindows from '@/hooks/use-database-windows';
 import { Splitter, Input, Select, Button, Table, type TableProps, Segmented, Tooltip } from 'antd';
 import { useTranslation } from 'react-i18next';
 import {
@@ -15,63 +14,116 @@ import {
 import { last, sumBy } from 'lodash';
 import { useInfiniteQuery, useQueryClient, useQuery } from '@tanstack/react-query';
 
+import useDatabaseWindows from '@/domain/workbench/state/database-window-state';
 import KeyTypeIcon from './key-type-icon';
 import styles from './index.module.less';
 import AddKeyBox from './add-key-box';
 import EditKeyBox from './edit-key-box';
-import { formatDuration } from '@/utils/format-duration';
-import redisListToTree from '@/utils/redis-list-to-tree';
+import { formatDuration } from '@/shared/formatters/duration';
+import redisListToTree from '@/domain/redis/model/redis-key-tree';
 import useElementSize from '../hooks/use-element-size';
-import { trpc } from '@/utils/trpc';
+import { trpc } from '@/infra/api/trpc';
 import { ERedisDataType, TRedisKeyViewType } from '@packages/types/redis';
 
-interface IActive {
+interface ActiveRedisKey {
   key: string;
   type: ERedisDataType;
 }
+
+type RedisTreeNode = ReturnType<typeof redisListToTree>[number];
 
 const RedisMain: React.FC = () => {
   const { connectionId, dbName } = useDatabaseWindows();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const [tableType, setTableType] = useState<TRedisKeyViewType>('list');
-  const [type, setType] = useState<ERedisDataType | 'all'>('all');
-  const [match, setMatch] = useState<string>();
-  const { width, height } = useElementSize('redis-keys-wrap-table');
-  const [active, setActive] = useState<IActive | null>(null);
-  const [showAddBox, setShowAddBox] = useState<boolean>(false);
 
-  const getKeysInfiniteQuery = useInfiniteQuery(
-    trpc.redis.getKeys.infiniteQueryOptions(
-      {
-        connectionId,
-        dbName,
-        count: tableType === 'list' ? 500 : 10000,
-        match: match || '*',
-        type: type === 'all' ? undefined : type,
-      },
-      {
-        getNextPageParam: lastPage => lastPage.nextCursor,
-        initialCursor: 0,
-      },
-    ),
+  const [viewType, setViewType] = useState<TRedisKeyViewType>('list');
+  const [keyTypeFilter, setKeyTypeFilter] = useState<ERedisDataType | 'all'>('all');
+  const [searchPattern, setSearchPattern] = useState<string>();
+  const [activeKey, setActiveKey] = useState<ActiveRedisKey | null>(null);
+  const [showAddKeyPanel, setShowAddKeyPanel] = useState(false);
+
+  const { width, height } = useElementSize('redis-keys-wrap-table');
+
+  const keyListQueryOptions = trpc.redis.getKeys.infiniteQueryOptions(
+    {
+      connectionId,
+      dbName,
+      count: viewType === 'list' ? 500 : 10000,
+      match: searchPattern || '*',
+      type: keyTypeFilter === 'all' ? undefined : keyTypeFilter,
+    },
+    {
+      getNextPageParam: page => page.nextCursor,
+      initialCursor: 0,
+    },
   );
 
-  const getValueQuery = useQuery(
+  const keyListQuery = useInfiniteQuery(keyListQueryOptions);
+
+  const valueQuery = useQuery(
     trpc.redis.getValue.queryOptions(
       {
         connectionId,
         dbName,
-        type: active?.type ?? ('' as never),
-        key: active?.key ?? ('' as never),
+        type: activeKey?.type ?? ('' as never),
+        key: activeKey?.key ?? ('' as never),
       },
-      {
-        enabled: !!active,
-      },
+      { enabled: Boolean(activeKey) },
     ),
   );
 
-  const columns: TableProps<ReturnType<typeof redisListToTree>[number]>['columns'] = [
+  const pages = keyListQuery.data?.pages ?? [];
+  const lastPage = last(pages);
+  const hasMorePage = Boolean(lastPage && lastPage.nextCursor !== 0);
+  const totalScanned = sumBy(pages, page => page.scanned);
+  const totalMatched = lastPage?.total ?? 0;
+
+  const tableData = useMemo(() => {
+    const list = pages.flatMap(page => page.items);
+    return redisListToTree(list, viewType);
+  }, [pages, viewType]);
+
+  const invalidateKeyList = () => {
+    void queryClient.invalidateQueries({ queryKey: keyListQueryOptions.queryKey });
+  };
+
+  const handleAddSuccess = (key: string, type: ERedisDataType) => {
+    setShowAddKeyPanel(false);
+    setActiveKey({ type, key });
+    void keyListQuery.refetch();
+  };
+
+  const handleDeleteKey = () => {
+    invalidateKeyList();
+    setActiveKey(null);
+  };
+
+  const handleModifyKey = async (nextKey: string) => {
+    if (!activeKey) {
+      return;
+    }
+
+    setActiveKey({ type: activeKey.type, key: nextKey });
+    invalidateKeyList();
+    await valueQuery.refetch();
+  };
+
+  const handleSelectRedisKey = (record: RedisTreeNode) => {
+    if (!record.isLeaf || !record.type) {
+      return;
+    }
+
+    setShowAddKeyPanel(false);
+    setActiveKey({ type: record.type, key: record.key });
+  };
+
+  const handleOpenAddKeyPanel = () => {
+    setActiveKey(null);
+    setShowAddKeyPanel(true);
+  };
+
+  const columns: TableProps<RedisTreeNode>['columns'] = [
     {
       title: 'type',
       dataIndex: 'type',
@@ -80,10 +132,11 @@ const RedisMain: React.FC = () => {
         if (!record.isLeaf) {
           return record.name;
         }
+
         return (
           <>
             <KeyTypeIcon type={type} />
-            <span style={{ paddingLeft: '5px' }}>{record.name}</span>
+            <span className={styles.keyName}>{record.name}</span>
           </>
         );
       },
@@ -94,64 +147,26 @@ const RedisMain: React.FC = () => {
       title: 'ttl',
       dataIndex: 'ttl',
       key: 'ttl',
-      render: (ttl, record) => {
-        return record.isLeaf ? formatDuration(ttl) : null;
-      },
+      render: (ttl, record) => (record.isLeaf ? formatDuration(ttl) : null),
       align: 'right',
       width: 100,
       ellipsis: true,
     },
   ];
 
-  const tableData = useMemo(() => {
-    const list = getKeysInfiniteQuery.data?.pages.flatMap(page => page.items) || [];
-    return redisListToTree(list, tableType);
-  }, [getKeysInfiniteQuery.data?.pages, tableType]);
-
-  const handleAddSuccess = (key: string, type: ERedisDataType) => {
-    setShowAddBox(false);
-    setActive({ type, key });
-    getKeysInfiniteQuery.refetch();
-  };
-
-  const handleDeleteKey = () => {
-    queryClient.invalidateQueries(getKeysInfiniteQuery);
-    setActive(null);
-  };
-
-  const handleModifyKey = async (newKey: string) => {
-    if (!active) return;
-
-    setActive({ type: active.type, key: newKey });
-    queryClient.invalidateQueries(getKeysInfiniteQuery);
-    getValueQuery.refetch();
-  };
-
-  const handleGetRedisValue = async (record: ReturnType<typeof redisListToTree>[number]) => {
-    if (!record.isLeaf) return;
-
-    setShowAddBox(false);
-    setActive({ type: record.type!, key: record.key });
-  };
-
-  const handleAddKey = () => {
-    setActive(null);
-    setShowAddBox(true);
-  };
-
   return (
     <div className={styles.redisWrap}>
       <div className={styles.searchGroup}>
         <Input.Search
           addonBefore={
-            <Select value={type} style={{ width: '180px' }} onChange={setType}>
+            <Select value={keyTypeFilter} style={{ width: '180px' }} onChange={setKeyTypeFilter}>
               <Select.Option value="all">
-                <div style={{ width: '100%', textAlign: 'center' }}>{t('redis.allKeyTypes')}</div>
+                <div className={styles.typeOption}>{t('redis.allKeyTypes')}</div>
               </Select.Option>
-              {Object.values(ERedisDataType).map(key => (
-                <Select.Option value={key} key={key}>
-                  <div style={{ width: '100%', textAlign: 'center' }}>
-                    <KeyTypeIcon type={key} />
+              {Object.values(ERedisDataType).map(type => (
+                <Select.Option value={type} key={type}>
+                  <div className={styles.typeOption}>
+                    <KeyTypeIcon type={type} />
                   </div>
                 </Select.Option>
               ))}
@@ -159,136 +174,138 @@ const RedisMain: React.FC = () => {
           }
           allowClear={true}
           placeholder={t('redis.placeholderRedisSearch')}
-          onSearch={setMatch}
+          onSearch={setSearchPattern}
         />
-        <Button type="primary" onClick={handleAddKey}>
+        <Button type="primary" onClick={handleOpenAddKeyPanel}>
           + {t('redis.key')}
         </Button>
       </div>
 
       <Splitter className={styles.data}>
-        {/* 左侧keys */}
         <Splitter.Panel collapsible={true} min={480}>
-          <div className={styles.content}>
-            <div className={styles.left}>
-              <span>
-                {t('redis.results')}: {tableData.length}
-              </span>
-              <span>
-                {t('redis.scanned')}: {sumBy(getKeysInfiniteQuery.data?.pages, 'scanned')} /{' '}
-                {last(getKeysInfiniteQuery.data?.pages)?.total || 0}
-              </span>
-              {last(getKeysInfiniteQuery.data?.pages)?.nextCursor !== 0 && (
-                <Button
+          <section className={styles.keysPanel}>
+            <div className={styles.content}>
+              <div className={styles.left}>
+                <span>
+                  {t('redis.results')}: {tableData.length}
+                </span>
+                <span>
+                  {t('redis.scanned')}: {totalScanned} / {totalMatched}
+                </span>
+                {hasMorePage && (
+                  <Button
+                    size="small"
+                    icon={
+                      <Tooltip title={t('redis.scanWarn')}>
+                        <InfoCircleOutlined />
+                      </Tooltip>
+                    }
+                    onClick={() => keyListQuery.fetchNextPage()}
+                  >
+                    {t('redis.more')}
+                  </Button>
+                )}
+              </div>
+
+              <div className={styles.right}>
+                <Tooltip title={t('button.refresh')}>
+                  <ReloadOutlined className={styles.refreshIcon} onClick={invalidateKeyList} />
+                </Tooltip>
+                <Segmented
                   size="small"
-                  icon={
-                    <Tooltip title={t('redis.scanWarn')}>
-                      <InfoCircleOutlined />
-                    </Tooltip>
-                  }
-                  onClick={() => getKeysInfiniteQuery.fetchNextPage()}
-                >
-                  {t('redis.more')}
-                </Button>
-              )}
-            </div>
-            <div className={styles.right}>
-              <Tooltip title={t('button.refresh')}>
-                <ReloadOutlined
-                  style={{ cursor: 'pointer' }}
-                  onClick={() => queryClient.invalidateQueries(getKeysInfiniteQuery)}
+                  shape="round"
+                  options={[
+                    {
+                      value: 'list',
+                      icon: (
+                        <Tooltip title={t('redis.listView')}>
+                          <BarsOutlined />
+                        </Tooltip>
+                      ),
+                    },
+                    {
+                      value: 'tree',
+                      icon: (
+                        <Tooltip title={t('redis.treeView')}>
+                          <NodeExpandOutlined />
+                        </Tooltip>
+                      ),
+                    },
+                  ]}
+                  value={viewType}
+                  onChange={value => setViewType(value as TRedisKeyViewType)}
                 />
-              </Tooltip>
-              <Segmented
+              </div>
+            </div>
+
+            <div className={styles.redisKeys} id="redis-keys-wrap-table">
+              <Table
+                columns={columns}
+                dataSource={tableData}
+                pagination={false}
+                showHeader={false}
+                onRow={record => ({ onClick: () => handleSelectRedisKey(record) })}
+                rowClassName={record =>
+                  record.key === valueQuery.data?.key ? styles.activeRow : ''
+                }
                 size="small"
-                shape="round"
-                options={[
-                  {
-                    value: 'list',
-                    icon: (
-                      <Tooltip title={t('redis.listView')}>
-                        <BarsOutlined />
-                      </Tooltip>
-                    ),
+                tableLayout="fixed"
+                rowHoverable={true}
+                expandable={{
+                  indentSize: 12,
+                  expandRowByClick: true,
+                  showExpandColumn: viewType === 'tree',
+                  expandIcon: ({ expanded, onExpand, record }) => {
+                    if (record.isLeaf) {
+                      return null;
+                    }
+
+                    return expanded ? (
+                      <span>
+                        <DownOutlined
+                          className={styles.expandIconLeft}
+                          onClick={e => onExpand(record, e)}
+                        />
+                        <FolderOpenOutlined className={styles.expandIconRight} />
+                      </span>
+                    ) : (
+                      <span>
+                        <RightOutlined
+                          className={styles.expandIconLeft}
+                          onClick={e => onExpand(record, e)}
+                        />
+                        <FolderOutlined className={styles.expandIconRight} />
+                      </span>
+                    );
                   },
-                  {
-                    value: 'tree',
-                    icon: (
-                      <Tooltip title={t('redis.treeView')}>
-                        <NodeExpandOutlined />
-                      </Tooltip>
-                    ),
-                  },
-                ]}
-                value={tableType}
-                onChange={setTableType}
+                }}
+                scroll={{ x: width, y: height }}
+                virtual={true}
               />
             </div>
-          </div>
-          <div className={styles.redisKeys} id="redis-keys-wrap-table">
-            <Table
-              columns={columns}
-              dataSource={tableData}
-              pagination={false}
-              showHeader={false}
-              onRow={record => ({
-                onClick: () => handleGetRedisValue(record),
-              })}
-              rowClassName={record => {
-                return record.key === getValueQuery.data?.key ? styles.avtiveRow : '';
-              }}
-              size="small"
-              tableLayout="fixed"
-              rowHoverable={true}
-              expandable={{
-                indentSize: 12,
-                expandRowByClick: true,
-                showExpandColumn: tableType === 'tree',
-                expandIcon: ({ expanded, onExpand, record }) => {
-                  if (record.isLeaf) {
-                    return null;
-                  }
-                  return expanded ? (
-                    <span>
-                      <DownOutlined
-                        className={styles.expandIconLeft}
-                        onClick={e => onExpand(record, e)}
-                      />
-                      <FolderOpenOutlined className={styles.expandIconRight} />
-                    </span>
-                  ) : (
-                    <span>
-                      <RightOutlined
-                        className={styles.expandIconLeft}
-                        onClick={e => onExpand(record, e)}
-                      />
-                      <FolderOutlined className={styles.expandIconRight} />
-                    </span>
-                  );
-                },
-              }}
-              scroll={{ x: width, y: height }}
-              virtual={true}
-            />
-          </div>
+          </section>
         </Splitter.Panel>
 
-        {/* 右侧详情 */}
         <Splitter.Panel collapsible={true} min={420}>
-          <div className={styles.redisValue}>
-            {showAddBox && (
-              <AddKeyBox onAddSuccess={handleAddSuccess} onCancel={() => setShowAddBox(false)} />
-            )}
-            {!!active && !!getValueQuery.data && (
-              <EditKeyBox
-                data={getValueQuery.data}
-                onDelete={handleDeleteKey}
-                onCancel={() => setActive(null)}
-                onReload={() => getValueQuery.refetch()}
-                onModifyKey={handleModifyKey}
-              />
-            )}
-          </div>
+          <section className={styles.valuePanel}>
+            <div className={styles.redisValue}>
+              {showAddKeyPanel && (
+                <AddKeyBox
+                  onAddSuccess={handleAddSuccess}
+                  onCancel={() => setShowAddKeyPanel(false)}
+                />
+              )}
+              {activeKey && valueQuery.data && (
+                <EditKeyBox
+                  data={valueQuery.data}
+                  onDelete={handleDeleteKey}
+                  onCancel={() => setActiveKey(null)}
+                  onReload={() => valueQuery.refetch()}
+                  onModifyKey={handleModifyKey}
+                />
+              )}
+            </div>
+          </section>
         </Splitter.Panel>
       </Splitter>
     </div>

@@ -2,31 +2,66 @@ import React from 'react';
 import { Descriptions } from 'antd';
 import type { DescriptionsProps } from 'antd';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 
-import useDatabaseWindows from '@/hooks/use-database-windows';
-import { trpc } from '@/utils/trpc';
+import useDatabaseWindows from '@/domain/workbench/state/database-window-state';
+import { trpc } from '@/infra/api/trpc';
 
-const TableSatus: React.FC = () => {
+const TableStatus: React.FC = () => {
+  const { t } = useTranslation();
   const { connectionId, dbName, tableName } = useDatabaseWindows();
   const getTableStatusQuery = useQuery(
     trpc.mysql.getTableStatus.queryOptions({ connectionId, dbName, tableName }),
   );
 
   const items: DescriptionsProps['items'] = [
-    { label: '数据库名称', children: dbName },
-    { label: '表名称', children: tableName },
-    { label: '行数(估值)', children: getTableStatusQuery.data?.['TABLE_ROWS'] ?? '-' },
-    { label: '数据长度', children: getTableStatusQuery.data?.['DATA_LENGTH'] ?? '-' },
-    { label: '引擎', children: getTableStatusQuery.data?.['ENGINE'] ?? '-' },
-    { label: '创建日期', children: getTableStatusQuery.data?.['CREATE_TIME'] ?? '-' },
-    { label: '修改日期', children: getTableStatusQuery.data?.['UPDATE_TIME'] ?? '-' },
-    { label: '排序规则', children: getTableStatusQuery.data?.['TABLE_COLLATION'] ?? '-' },
-    { label: '行格式', children: getTableStatusQuery.data?.['ROW_FORMAT'] ?? '-' },
-    { label: '平均行长度', children: getTableStatusQuery.data?.['AVG_ROW_LENGTH'] ?? '-' },
-    { label: '最大数据长度', children: getTableStatusQuery.data?.['MAX_DATA_LENGTH'] ?? '-' },
-    { label: '索引长度', children: getTableStatusQuery.data?.['INDEX_LENGTH'] ?? '-' },
-    { label: '自动递增', children: getTableStatusQuery.data?.['AUTO_INCREMENT'] ?? '-' },
-    { label: '表注释', children: getTableStatusQuery.data?.['TABLE_COMMENT'] ?? '-' },
+    { label: t('mysql.tableStatusDatabaseName'), children: dbName },
+    { label: t('mysql.tableStatusTableName'), children: tableName },
+    {
+      label: t('mysql.tableStatusEstimatedRows'),
+      children: getTableStatusQuery.data?.['TABLE_ROWS'] ?? '-',
+    },
+    {
+      label: t('mysql.tableStatusDataLength'),
+      children: getTableStatusQuery.data?.['DATA_LENGTH'] ?? '-',
+    },
+    { label: t('mysql.tableStatusEngine'), children: getTableStatusQuery.data?.['ENGINE'] ?? '-' },
+    {
+      label: t('mysql.tableStatusCreateTime'),
+      children: getTableStatusQuery.data?.['CREATE_TIME'] ?? '-',
+    },
+    {
+      label: t('mysql.tableStatusUpdateTime'),
+      children: getTableStatusQuery.data?.['UPDATE_TIME'] ?? '-',
+    },
+    {
+      label: t('mysql.tableStatusCollation'),
+      children: getTableStatusQuery.data?.['TABLE_COLLATION'] ?? '-',
+    },
+    {
+      label: t('mysql.tableStatusRowFormat'),
+      children: getTableStatusQuery.data?.['ROW_FORMAT'] ?? '-',
+    },
+    {
+      label: t('mysql.tableStatusAvgRowLength'),
+      children: getTableStatusQuery.data?.['AVG_ROW_LENGTH'] ?? '-',
+    },
+    {
+      label: t('mysql.tableStatusMaxDataLength'),
+      children: getTableStatusQuery.data?.['MAX_DATA_LENGTH'] ?? '-',
+    },
+    {
+      label: t('mysql.tableStatusIndexLength'),
+      children: getTableStatusQuery.data?.['INDEX_LENGTH'] ?? '-',
+    },
+    {
+      label: t('mysql.tableStatusAutoIncrement'),
+      children: getTableStatusQuery.data?.['AUTO_INCREMENT'] ?? '-',
+    },
+    {
+      label: t('mysql.tableStatusComment'),
+      children: getTableStatusQuery.data?.['TABLE_COMMENT'] ?? '-',
+    },
   ];
 
   return (
@@ -34,4 +69,4 @@ const TableSatus: React.FC = () => {
   );
 };
 
-export default TableSatus;
+export default TableStatus;

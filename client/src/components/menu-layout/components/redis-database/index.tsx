@@ -3,8 +3,8 @@ import { List } from 'antd';
 import classNames from 'classnames';
 
 import DatabaseIcon from '@/assets/svg/db.svg?react';
-import { RouterOutput } from '@/utils/trpc';
-import { generateActiveId } from '@/hooks/use-database-windows';
+import { RouterOutput } from '@/infra/api/trpc';
+import { generateActiveId } from '@/domain/workbench/state/database-window-state';
 import styles from './index.module.less';
 
 type TTableList = RouterOutput['table']['getList'];
@@ -16,6 +16,10 @@ interface IRedisDatabaseProps {
   onClick?: (name: string) => void;
 }
 
+interface IRedisDatabaseItem {
+  name: string;
+}
+
 const RedisDatabase: React.FC<IRedisDatabaseProps> = ({
   database,
   activeId,
@@ -23,9 +27,9 @@ const RedisDatabase: React.FC<IRedisDatabaseProps> = ({
   onClick,
 }) => {
   return (
-    <List
+    <List<IRedisDatabaseItem>
       split={false}
-      dataSource={database}
+      dataSource={(database || []) as IRedisDatabaseItem[]}
       className={className}
       renderItem={item => (
         <List.Item>

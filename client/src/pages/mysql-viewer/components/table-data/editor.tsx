@@ -4,8 +4,8 @@ import { KeyOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from '@tanstack/react-query';
 
-import useDatabaseWindows from '@/hooks/use-database-windows';
-import { showSuccess } from '@/utils/global-notification';
+import useDatabaseWindows from '@/domain/workbench/state/database-window-state';
+import { showSuccess } from '@/shared/ui/notifications';
 import EllipsisText from '@/components/ellipsis-text';
 import type {
   TMySQLCondition,
@@ -14,7 +14,7 @@ import type {
   TMySQLRawData,
 } from '@packages/types/mysql';
 import styles from './editor.module.less';
-import { trpc } from '@/utils/trpc';
+import { trpc } from '@/infra/api/trpc';
 import MySQLRawDataEditor from '@/components/mysql-raw-data-editor';
 
 interface EditorProps {
@@ -25,6 +25,11 @@ interface EditorProps {
   onCancel: () => void;
   show?: boolean;
 }
+
+const FIELD_COLUMN_WIDTH = 200;
+const FIELD_TEXT_WIDTH = 150;
+const TYPE_COLUMN_WIDTH = 135;
+const DEFAULT_COLUMN_WIDTH = 130;
 
 const Editor: React.FC<EditorProps> = ({ data = {}, columns, onOk, onCancel, show, condition }) => {
   const [loading, setLoading] = useState(false);
@@ -52,11 +57,13 @@ const Editor: React.FC<EditorProps> = ({ data = {}, columns, onOk, onCancel, sho
       title: t('table.key'),
       dataIndex: 'key',
       key: 'key',
-      width: 200,
+      width: FIELD_COLUMN_WIDTH,
       render: (value: string, record) => {
-        const pri = record.pri ? <KeyOutlined style={{ color: '#EBAD32' }} /> : null;
+        const pri = record.pri ? (
+          <KeyOutlined style={{ color: 'var(--theme-warning-color)' }} />
+        ) : null;
         const mark = record.required ? <span className={styles.mark}>*</span> : null;
-        const text = <EllipsisText text={value} width={150} />;
+        const text = <EllipsisText text={value} width={FIELD_TEXT_WIDTH} />;
         const comment = record.desc ? (
           <Tooltip placement="right" title={record.desc}>
             <QuestionCircleOutlined />
@@ -64,7 +71,7 @@ const Editor: React.FC<EditorProps> = ({ data = {}, columns, onOk, onCancel, sho
         ) : null;
 
         return (
-          <span style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-1)' }}>
             {pri}
             {mark}
             {text}
@@ -91,14 +98,14 @@ const Editor: React.FC<EditorProps> = ({ data = {}, columns, onOk, onCancel, sho
       title: t('table.type'),
       dataIndex: 'type',
       key: 'type',
-      width: 135,
+      width: TYPE_COLUMN_WIDTH,
       ellipsis: true,
     },
     {
       title: t('table.default'),
       dataIndex: 'default',
       key: 'default',
-      width: 130,
+      width: DEFAULT_COLUMN_WIDTH,
       ellipsis: true,
     },
   ];

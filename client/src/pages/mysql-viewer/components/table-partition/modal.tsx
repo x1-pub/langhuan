@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Form, Input, Modal, Tooltip } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 
 interface IFormValue {
   definition: string;
@@ -23,6 +24,7 @@ const PartitionModal: React.FC<PartitionModalProps> = ({
   onCancel,
   onSubmit,
 }) => {
+  const { t } = useTranslation();
   const [form] = Form.useForm<IFormValue>();
   const isEditMode = !!editingName;
 
@@ -44,7 +46,7 @@ const PartitionModal: React.FC<PartitionModalProps> = ({
 
   return (
     <Modal
-      title={isEditMode ? '编辑分区' : '新建分区'}
+      title={isEditMode ? t('mysql.editPartition') : t('mysql.createPartition')}
       open={visible}
       onOk={handleSubmit}
       onCancel={onCancel}
@@ -57,17 +59,17 @@ const PartitionModal: React.FC<PartitionModalProps> = ({
           name="definition"
           label={
             <span>
-              分区定义
-              <Tooltip title="填写完整分区定义内容，将直接插入到 ADD PARTITION ( ... ) 中，例如：PARTITION p2025 VALUES LESS THAN (20250101)">
+              {t('mysql.partitionDefinition')}
+              <Tooltip title={t('mysql.partitionDefinitionTip')}>
                 <InfoCircleOutlined style={{ marginLeft: 4 }} />
               </Tooltip>
             </span>
           }
-          rules={[{ required: true, message: '请输入分区定义' }]}
+          rules={[{ required: true, message: t('mysql.partitionDefinitionRequired') }]}
         >
           <TextArea
             rows={6}
-            placeholder={`PARTITION p2025 VALUES LESS THAN (20250101) COMMENT '示例'`}
+            placeholder={t('mysql.partitionDefinitionPlaceholder')}
             style={{ fontFamily: 'Monaco, Consolas, "Courier New", monospace' }}
           />
         </Form.Item>

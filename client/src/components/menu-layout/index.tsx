@@ -1,161 +1,54 @@
-import React, { useState } from 'react';
 import { Spin } from 'antd';
 import { Outlet, useParams } from 'react-router';
-import { omit } from 'lodash';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { EConnectionType } from '@packages/types/connection';
+import { DatabaseWindowsContext } from '@/domain/workbench/state/database-window-state';
+import useWorkbenchModel from '@/domain/workbench/hooks/use-workbench-model';
 import Editor from './components/editor';
-import {
-  DatabaseWindowsContext,
-  ESpecialWind,
-  generateActiveId,
-  IWind,
-} from '@/hooks/use-database-windows';
-import { trpc, RouterOutput } from '@/utils/trpc';
-import { EEditorType, TEditorData } from './components/editor/types';
 import RedisDatabase from './components/redis-database';
 import MysqlDatabase from './components/mysql-database';
 import Actions from './components/actions';
 import MongoDBDatabase from './components/mongodb-database';
+import PgsqlDatabase from './components/pgsql-database';
 import styles from './index.module.less';
 
-type TTableList = RouterOutput['table']['getList'];
+const resolveConnectionType = (value: string | undefined) => {
+  if (!value) {
+    return EConnectionType.MYSQL;
+  }
+
+  const isKnownType = Object.values(EConnectionType).includes(value as EConnectionType);
+  return isKnownType ? (value as EConnectionType) : EConnectionType.MYSQL;
+};
 
 const MenuLayout: React.FC = () => {
   const { connectionId: connectionIdString, connectionType: connectionTypeString } = useParams();
-  const connectionId = Number(connectionIdString);
-  const connectionType = String(connectionTypeString) as EConnectionType;
+  const connectionId = Number(connectionIdString) || 0;
+  const connectionType = resolveConnectionType(connectionTypeString);
 
-  const queryClient = useQueryClient();
-  const [active, setActive] = useState<string>('');
-  const [wind, setWind] = useState<IWind[]>([]);
-  const [tableMap, setTableMap] = useState<Record<string, TTableList>>({});
-  const [editorData, setEditorData] = useState<TEditorData>();
-
-  const databaseListQuery = useQuery(
-    trpc.database.getList.queryOptions({ type: connectionType, connectionId }),
-  );
-  const tableListMutation = useMutation(
-    trpc.table.getList.mutationOptions({
-      onSuccess(data, variables) {
-        setTableMap(t => ({
-          ...t,
-          [variables.dbName]: data,
-        }));
-      },
-    }),
-  );
-  const deleteDatabaseMutation = useMutation(
-    trpc.database.delete.mutationOptions({
-      onSuccess(_data, variables) {
-        const omitPreDBWind = wind.filter(w => w.dbName !== variables.dbName);
-        setWind(omitPreDBWind);
-        const activeId = generateActiveId(omitPreDBWind[0]);
-        setActive(activeId);
-        setTableMap(t => omit(t, variables.dbName));
-        queryClient.invalidateQueries(databaseListQuery);
-      },
-    }),
-  );
-  const deleteTableMutation = useMutation(
-    trpc.table.delete.mutationOptions({
-      onSuccess(_data, variables) {
-        const omitPreTableWind = wind.filter(
-          w => !(w.tableName === variables.tableName && w.dbName === variables.dbName),
-        );
-        setWind(omitPreTableWind);
-        const activeId = generateActiveId(omitPreTableWind[0]);
-        setActive(activeId);
-        tableListMutation.mutateAsync(variables);
-      },
-    }),
-  );
-
-  const handleDeleteDatabase = (dbName: string) => {
-    deleteDatabaseMutation.mutateAsync({ type: connectionType, connectionId, dbName });
-  };
-
-  const handleCreateDatabase = () => {
-    setEditorData({
-      type: EEditorType.CREATE_DB,
-    });
-  };
-
-  const handleDeleteTable = (dbName: string, tableName: string) => {
-    deleteTableMutation.mutateAsync({ type: connectionType, connectionId, dbName, tableName });
-  };
-
-  const handleAfterEditor = () => {
-    if (editorData!.type === EEditorType.CREATE_DB) {
-      databaseListQuery.refetch();
-    }
-
-    if (editorData!.type === EEditorType.CREATE_TABLE) {
-      tableListMutation.mutateAsync({
-        type: connectionType,
-        connectionId,
-        dbName: editorData!.dbName,
-      });
-    }
-
-    if (editorData!.type === EEditorType.EDIT_TABLE) {
-      const omitPreTableWind = wind.filter(
-        w => !(w.tableName === editorData!.tableName && w.dbName === editorData!.dbName),
-      );
-      setWind(omitPreTableWind);
-      const activeId = generateActiveId(omitPreTableWind[0]);
-      setActive(activeId);
-      tableListMutation.mutateAsync({
-        type: connectionType,
-        connectionId,
-        dbName: editorData!.dbName,
-      });
-    }
-
-    if (editorData!.type === EEditorType.EDIT_DB) {
-      const omitPreDBWind = wind.filter(w => w.dbName !== editorData!.dbName);
-      setWind(omitPreDBWind);
-      const activeId = generateActiveId(omitPreDBWind[0]);
-      setActive(activeId);
-      databaseListQuery.refetch();
-    }
-
-    setEditorData(undefined);
-  };
-
-  const handleOpenTable = (dbName: string, tableName?: string, specialWind?: ESpecialWind) => {
-    const activeId = generateActiveId({ dbName, tableName, specialWind });
-    const hasOpen = wind.find(p => generateActiveId(p) === activeId);
-    setWind(hasOpen ? wind : [...wind, { dbName, tableName, specialWind }]);
-    setActive(activeId);
-  };
-
-  const handleOpenDatabase = (keys: string[]) => {
-    const dbName = keys[keys.length - 1];
-    if (!dbName || tableMap[dbName]) {
-      return;
-    }
-    tableListMutation.mutateAsync({ type: connectionType, connectionId, dbName });
-  };
+  const {
+    databaseWindowsContextValue,
+    isMysqlCompatible,
+    databaseList,
+    isSidebarLoading,
+    tableMap,
+    editorData,
+    setEditorData,
+    activeWindowId,
+    handleDeleteDatabase,
+    handleCreateDatabase,
+    handleDeleteTable,
+    handleEditorSubmit,
+    handleOpenTable,
+    handleOpenDatabase,
+    closeEditor,
+  } = useWorkbenchModel({ connectionId, connectionType });
 
   return (
     <div className={styles.menuWrapper}>
-      <DatabaseWindowsContext.Provider
-        value={{
-          connectionId,
-          connectionType,
-          wind,
-          active,
-          setWind,
-          setActive,
-        }}
-      >
-        <Spin
-          style={{ height: '100%' }}
-          spinning={databaseListQuery.isLoading || tableListMutation.isPending}
-        >
-          <div className={styles.menu}>
+      <DatabaseWindowsContext.Provider value={databaseWindowsContextValue}>
+        <Spin style={{ height: '100%' }} spinning={isSidebarLoading}>
+          <aside className={styles.menu}>
             <Actions
               connectionId={connectionId}
               connectionType={connectionType}
@@ -163,17 +56,17 @@ const MenuLayout: React.FC = () => {
             />
             {connectionType === EConnectionType.REDIS && (
               <RedisDatabase
-                database={databaseListQuery.data}
-                activeId={active}
+                database={databaseList}
+                activeId={activeWindowId}
                 className={styles.database}
                 onClick={handleOpenTable}
               />
             )}
-            {connectionType === EConnectionType.MYSQL && (
+            {isMysqlCompatible && (
               <MysqlDatabase
-                database={databaseListQuery.data}
+                database={databaseList}
                 tableMap={tableMap}
-                activeId={active}
+                activeId={activeWindowId}
                 className={styles.database}
                 onClickDatabase={handleOpenDatabase}
                 onClickTable={handleOpenTable}
@@ -184,9 +77,9 @@ const MenuLayout: React.FC = () => {
             )}
             {connectionType === EConnectionType.MONGODB && (
               <MongoDBDatabase
-                database={databaseListQuery.data}
+                database={databaseList}
                 tableMap={tableMap}
-                activeId={active}
+                activeId={activeWindowId}
                 className={styles.database}
                 onClickDatabase={handleOpenDatabase}
                 onClickTable={handleOpenTable}
@@ -195,14 +88,27 @@ const MenuLayout: React.FC = () => {
                 onEditorData={setEditorData}
               />
             )}
-          </div>
+            {connectionType === EConnectionType.PGSQL && (
+              <PgsqlDatabase
+                database={databaseList}
+                tableMap={tableMap}
+                activeId={activeWindowId}
+                className={styles.database}
+                onClickDatabase={handleOpenDatabase}
+                onClickTable={handleOpenTable}
+                onDeleteTable={handleDeleteTable}
+                onDeleteDatabase={handleDeleteDatabase}
+                onEditorData={setEditorData}
+              />
+            )}
+          </aside>
         </Spin>
         <Editor
           type={connectionType}
           connectionId={connectionId}
           data={editorData}
-          onCancel={() => setEditorData(undefined)}
-          onOk={handleAfterEditor}
+          onCancel={closeEditor}
+          onOk={handleEditorSubmit}
         />
         <main className={styles.main}>
           <Outlet />

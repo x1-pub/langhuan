@@ -1,69 +1,75 @@
-# React + TypeScript + Vite
+# LangHuan Hub Client
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Frontend application for LangHuan Hub, built with React + TypeScript + Vite.
 
-Currently, two official plugins are available:
+## Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- React 19
+- TypeScript (strict mode)
+- Vite 7
+- Ant Design 6
+- TanStack Query + tRPC
+- i18next (English + Simplified Chinese + Japanese + Korean)
 
-## Expanding the ESLint configuration
+## Quick Start
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
+```bash
+pnpm install
+pnpm --filter client dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+App runs on the Vite default host/port unless overridden.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x';
-import reactDom from 'eslint-plugin-react-dom';
+## Scripts
 
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
+From repo root:
+
+```bash
+pnpm --filter client dev
+pnpm --filter client typecheck
+pnpm --filter client lint
+pnpm --filter client lint:fix
+pnpm --filter client format
+pnpm --filter client format:check
+pnpm --filter client build
+pnpm --filter client preview
+```
+
+## Project Structure
+
+```text
+client/
+  src/
+    assets/          # images, SVGs
+    components/      # reusable UI and layout modules
+    hooks/           # shared React hooks
+    i18n/            # locale dictionaries (en/zh/ja/ko)
+    pages/           # route-level pages
+    routes/          # router definitions
+    styles/          # global styles
+    utils/           # app utilities
+```
+
+## Open Source Quality Guidelines
+
+- Keep TypeScript strict: avoid `any`, avoid suppression comments unless absolutely necessary.
+- All user-facing text should use i18n keys from locale dictionaries.
+- Avoid raw HTML injection. If needed, sanitize/escape content before render.
+- Use `window.open(..., '_blank', 'noopener,noreferrer')` for external pages.
+- Prefer small, composable components and colocated styles (`*.module.less`).
+
+## i18n Notes
+
+- Add keys in all supported language files when introducing new UI text.
+- Keep key naming grouped by domain (e.g. `home.shell.status`).
+- Do not leave hardcoded strings in components.
+
+## Build & Release Check
+
+Minimum pre-PR checks:
+
+```bash
+pnpm --filter client typecheck
+pnpm --filter client lint
+pnpm --filter client build
 ```

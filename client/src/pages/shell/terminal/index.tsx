@@ -195,8 +195,6 @@
 //     const currentInput = currentInputRef.current
 //     const cursorPosition = cursorPositionRef.current
 
-//     console.log("Input debug:", { currentInput, cursorPosition, char })
-
 //     const newInput = currentInput.slice(0, cursorPosition) + char + currentInput.slice(cursorPosition)
 //     const newCursorPos = cursorPosition + 1
 

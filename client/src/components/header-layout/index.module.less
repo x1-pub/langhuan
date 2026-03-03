@@ -1,31 +1,36 @@
+.layout {
+  height: var(--layout-root-height);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background-color: var(--theme-background-color);
+}
+
 .headerWrap {
-  position: sticky;
+  position: relative;
+  flex-shrink: 0;
   border-bottom: 1px solid var(--theme-border-color);
   background-color: var(--theme-background-color);
-  z-index: 100;
-  top: 0;
-  left: 0;
-  right: 0;
 }
 
 .header {
   display: flex;
-  height: 50px;
+  height: calc(var(--layout-header-height) - 1px);
   align-items: center;
   justify-content: space-between;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 var(--spacing-5);
 }
 
 .left {
   display: flex;
   align-items: center;
-  gap: 40px;
+  gap: calc(var(--spacing-5) * 2);
 
   .logoWrap {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: var(--spacing-1);
   }
 
   .logo {
@@ -44,17 +49,23 @@
   .db {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: var(--spacing-2);
   }
 }
 
 .right {
   display: flex;
-  gap: 20px;
+  gap: var(--spacing-5);
 
   .github {
     color: var(--theme-text-color);
     font-size: 20px;
     cursor: pointer;
   }
+}
+
+.body {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }

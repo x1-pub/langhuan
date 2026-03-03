@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useImperativeHandle } from 'react';
+import React, { useEffect, useImperativeHandle } from 'react';
 import { Select, Popconfirm } from 'antd';
 import type { SelectProps } from 'antd';
 import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { useParams, useNavigate, useLocation } from 'react-router';
 import { useQuery, useMutation } from '@tanstack/react-query';
 
-import { trpc } from '@/utils/trpc';
+import { trpc } from '@/infra/api/trpc';
 import ConnectionModal from '../connection-editor';
 import DatabaseIcon from '../database-icon';
 import EllipsisText from '@/components/ellipsis-text';
@@ -18,85 +18,107 @@ export interface RefHandler {
   refreshList: () => void;
 }
 
-const ConnectionSelector: React.FC<{ ref?: React.Ref<RefHandler> }> = ({ ref }) => {
+const ConnectionSelector = React.forwardRef<RefHandler>(function ConnectionSelector(_, ref) {
   const { connectionId: connectionIdString } = useParams();
   const { t } = useTranslation();
-  const connectionId = Number(connectionIdString) || undefined;
+  const selectedConnectionId = Number(connectionIdString) || undefined;
 
   const navigate = useNavigate();
   const location = useLocation();
-  const [editId, setEditId] = useState<number>();
+  const [editId, setEditId] = React.useState<number>();
 
   const listQuery = useQuery(trpc.connection.getList.queryOptions());
   const deleteMutation = useMutation(trpc.connection.deleteById.mutationOptions());
+  const connections = listQuery.data ?? [];
 
-  const findByConnectionId = (id?: number) => {
-    return listQuery.data?.find(c => c.id === id);
-  };
-
-  const handleSelectedConnectionIdChange = (selectedId: number) => {
-    if (!listQuery.data) {
-      return;
+  const findConnectionById = (id?: number) => {
+    if (!id) {
+      return undefined;
     }
 
-    const connection = findByConnectionId(selectedId);
+    return connections.find(connection => connection.id === id);
+  };
+
+  const navigateToConnection = (id: number) => {
+    const connection = findConnectionById(id);
     if (!connection) {
       navigate('/notselected');
       return;
     }
 
-    const path = `/${connection.type}/${connection.id}`;
-    if (path !== location.pathname) {
-      // TODO: why not use 'navigate(path)'? bug: connectionId is out of sync with wind
-      window.location.href = path;
+    const nextPath = `/${connection.type}/${connection.id}`;
+    if (nextPath !== location.pathname) {
+      // Keep full-page navigation to avoid stale route params in long-lived layout state.
+      window.location.assign(nextPath);
     }
   };
 
+  const refreshConnections = () => {
+    void listQuery.refetch();
+  };
+
   const labelRender: LabelRender = props => {
-    const { value } = props;
-    const connection = findByConnectionId(Number(value));
+    const connection = findConnectionById(Number(props.value));
     if (!connection) {
       return '';
     }
 
     return (
       <span className={styles.selectOption}>
-        <DatabaseIcon type={connection?.type} />
-        <EllipsisText text={connection?.name} />
+        <DatabaseIcon type={connection.type} />
+        <EllipsisText text={connection.name} />
       </span>
     );
   };
 
   const handleDelete = async (id: number) => {
-    await deleteMutation.mutateAsync({ id: Number(id) });
-    listQuery.refetch();
+    await deleteMutation.mutateAsync({ id });
+    refreshConnections();
   };
 
   const handleAfterEdit = () => {
     setEditId(undefined);
-    listQuery.refetch();
+    refreshConnections();
   };
 
-  useImperativeHandle(ref, () => ({
-    refreshList: listQuery.refetch,
-  }));
+  useImperativeHandle(
+    ref,
+    () => ({
+      refreshList: refreshConnections,
+    }),
+    [listQuery.refetch],
+  );
 
   useEffect(() => {
-    handleSelectedConnectionIdChange(Number(connectionId));
-  }, [listQuery.data]);
+    if (!selectedConnectionId || connections.length === 0) {
+      return;
+    }
+
+    const connection = findConnectionById(selectedConnectionId);
+    if (!connection) {
+      navigate('/notselected');
+      return;
+    }
+
+    const nextPath = `/${connection.type}/${connection.id}`;
+    if (nextPath !== location.pathname) {
+      window.location.assign(nextPath);
+    }
+  }, [connections, location.pathname, navigate, selectedConnectionId]);
 
   return (
     <>
-      <Select
-        defaultValue={connectionId}
+      <Select<number>
+        value={selectedConnectionId}
         fieldNames={{ value: 'id' }}
-        options={listQuery.data}
+        options={connections}
+        loading={listQuery.isLoading}
         className={styles.select}
         optionRender={option => (
           <span className={styles.selectOption}>
             <DatabaseIcon type={option.data.type} />
-            <EllipsisText text={option.data.name} style={{ flexGrow: '1' }} />
-            <span className={styles.handler} onClick={e => e.stopPropagation()}>
+            <EllipsisText text={option.data.name} className={styles.optionText} />
+            <span className={styles.handler} onClick={event => event.stopPropagation()}>
               <EditOutlined className={styles.icon} onClick={() => setEditId(option.data.id)} />
               <Popconfirm
                 title={t('delete.title')}
@@ -109,16 +131,16 @@ const ConnectionSelector: React.FC<{ ref?: React.Ref<RefHandler> }> = ({ ref }) 
           </span>
         )}
         labelRender={labelRender}
-        onChange={handleSelectedConnectionIdChange}
+        onChange={navigateToConnection}
       />
       <ConnectionModal
         id={editId}
-        open={!!editId}
+        open={Boolean(editId)}
         onOk={handleAfterEdit}
         onCancel={() => setEditId(undefined)}
       />
     </>
   );
-};
+});
 
 export default ConnectionSelector;

@@ -8,6 +8,20 @@
       "when": 1765628990993,
       "tag": "0000_mysterious_master_chief",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1772366400000,
+      "tag": "0001_add_pgsql_connection_type",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1772367600000,
+      "tag": "0002_add_mariadb_connection_type",
+      "breakpoints": true
     }
   ]
 }

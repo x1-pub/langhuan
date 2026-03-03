@@ -2,7 +2,7 @@ import z from 'zod';
 import { Sequelize } from 'sequelize';
 
 import { AddTableIndexSchema, DeleteTableIndexSchema } from '@packages/zod/mysql';
-import { escapedMySQLName } from '../lib/utils';
+import { escapedMySQLName } from '../shared/mysql/quote-identifier';
 
 export const mysqlAPIs = {
   addIndex: async (instance: Sequelize, input: z.infer<typeof AddTableIndexSchema>) => {

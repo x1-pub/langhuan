@@ -1,15 +1,29 @@
-.card {
-  :global {
-    .langhuan-card-body {
-      padding: 5px;
-    }
-  }
+@import '../../../../styles/components/crud-table-pane.less';
+
+.designPanel {
+  height: calc(100% + var(--spacing-3));
+  min-height: 0;
+  margin-top: calc(var(--spacing-3) * -1);
 }
 
-.columnActionBtn {
-  padding: 0;
+.designTabs {
+  height: 100%;
+  min-height: 0;
 
-  &:first-of-type {
-    padding-right: 7px;
+  :global {
+    .langhuan-tabs-content-holder,
+    .langhuan-tabs-content,
+    .langhuan-tabs-tabpane,
+    .ant-tabs-content-holder,
+    .ant-tabs-content,
+    .ant-tabs-tabpane {
+      height: 100%;
+      min-height: 0;
+    }
+
+    .langhuan-tabs-tabpane,
+    .ant-tabs-tabpane {
+      overflow: hidden;
+    }
   }
 }

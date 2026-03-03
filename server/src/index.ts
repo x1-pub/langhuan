@@ -1,31 +1,3 @@
-import cors from '@fastify/cors';
-import { fastifyTRPCPlugin } from '@trpc/server/adapters/fastify';
-import Fastify from 'fastify';
-import dotenv from 'dotenv';
-import path from 'path';
+import { startHttpServer } from './app/create-server';
 
-import createContext from './context';
-import { appRouter } from './router';
-
-dotenv.config({ path: path.join(__dirname, '../.env') });
-
-const fastify = Fastify({ logger: true });
-
-async function main() {
-  await fastify.register(cors, {
-    credentials: true,
-    origin: true,
-  });
-
-  await fastify.register(fastifyTRPCPlugin, {
-    prefix: '/api/trpc',
-    trpcOptions: {
-      router: appRouter,
-      createContext,
-    },
-  });
-
-  await fastify.listen({ host: '0.0.0.0', port: 7209 });
-}
-
-main();
+void startHttpServer();

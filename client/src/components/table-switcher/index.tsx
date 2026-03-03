@@ -1,4 +1,4 @@
-import React, { ReactNode, useMemo } from 'react';
+import React, { ReactNode } from 'react';
 import { Tabs, type TabsProps } from 'antd';
 import { useTranslation } from 'react-i18next';
 
@@ -11,7 +11,7 @@ import useDatabaseWindows, {
   ESpecialWind,
   generateActiveId,
   IWind,
-} from '@/hooks/use-database-windows';
+} from '@/domain/workbench/state/database-window-state';
 import styles from './index.module.less';
 
 interface ITableSwitcherProps {
@@ -26,7 +26,7 @@ const TableSwitcher: React.FC<ITableSwitcherProps> = ({ children }) => {
     const { dbName, tableName, specialWind } = item;
 
     switch (specialWind) {
-      case ESpecialWind.MYSQL_ENENT:
+      case ESpecialWind.MYSQL_EVENT:
         return (
           <span className={styles.tabLabel}>
             <ClockIcon className={styles.icon} />
@@ -47,6 +47,27 @@ const TableSwitcher: React.FC<ITableSwitcherProps> = ({ children }) => {
             {`${t('mysql.view')}(${dbName})`}
           </span>
         );
+      case ESpecialWind.PGSQL_FUNCTION:
+        return (
+          <span className={styles.tabLabel}>
+            <FunctionIcon className={styles.icon} />
+            {`${t('pgsql.function')}(${dbName})`}
+          </span>
+        );
+      case ESpecialWind.PGSQL_VIEW:
+        return (
+          <span className={styles.tabLabel}>
+            <GlassesIcon className={styles.icon} />
+            {`${t('pgsql.view')}(${dbName})`}
+          </span>
+        );
+      case ESpecialWind.PGSQL_EVENT:
+        return (
+          <span className={styles.tabLabel}>
+            <ClockIcon className={styles.icon} />
+            {`${t('pgsql.event')}(${dbName})`}
+          </span>
+        );
       default:
         return (
           <span className={styles.tabLabel}>
@@ -61,16 +82,12 @@ const TableSwitcher: React.FC<ITableSwitcherProps> = ({ children }) => {
     }
   };
 
-  const tabItems: TabsProps['items'] = useMemo(
-    () =>
-      wind.map(c => ({
-        key: generateActiveId(c),
-        label: renderTabItemLabel(c),
-        children: typeof children === 'function' ? children(c) : children,
-        forceRender: true,
-      })),
-    [wind, t],
-  );
+  const tabItems: TabsProps['items'] = wind.map(window => ({
+    key: generateActiveId(window),
+    label: renderTabItemLabel(window),
+    children: typeof children === 'function' ? children(window) : children,
+    forceRender: true,
+  }));
 
   const renderTabBar: TabsProps['renderTabBar'] = (props, DefaultTabBar) => (
     <DefaultTabBar {...props} className={styles.tabbar} />
@@ -82,19 +99,16 @@ const TableSwitcher: React.FC<ITableSwitcherProps> = ({ children }) => {
   ) => {
     if (action === 'add') return;
 
-    const list = wind.filter(w => generateActiveId(w) !== targetKey);
-    setWind(list);
-
-    if (list.length > 0) {
-      const activeId = generateActiveId(list[0]);
-      setActive(activeId);
-    } else {
-      setActive('');
-    }
+    setWind(previousWindows => {
+      const nextWindows = previousWindows.filter(window => generateActiveId(window) !== targetKey);
+      setActive(nextWindows.length > 0 ? generateActiveId(nextWindows[0]) : '');
+      return nextWindows;
+    });
   };
 
   return (
     <Tabs
+      className={styles.switcher}
       type="editable-card"
       hideAdd={true}
       activeKey={active}

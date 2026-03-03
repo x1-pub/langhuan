@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Modal, Form, Input, Select, Tooltip } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 
 import { EMySQLTriggerEvent, EMySQLTriggerTiming, TMySQLTrigger } from '@packages/types/mysql';
 
@@ -22,12 +23,13 @@ const TriggerModal: React.FC<TriggerModalProps> = ({
   onCancel,
   onSubmit,
 }) => {
+  const { t } = useTranslation();
   const [form] = Form.useForm<TMySQLTrigger>();
   const isEditMode = !!editingTrigger;
 
   const handleSubmit = async () => {
     const values = await form.validateFields();
-    onSubmit(values);
+    await onSubmit(values);
   };
 
   useEffect(() => {
@@ -42,7 +44,7 @@ const TriggerModal: React.FC<TriggerModalProps> = ({
 
   return (
     <Modal
-      title={isEditMode ? '编辑触发器' : '新建触发器'}
+      title={isEditMode ? t('mysql.editTrigger') : t('mysql.createTrigger')}
       open={visible}
       onOk={handleSubmit}
       onCancel={onCancel}
@@ -61,13 +63,13 @@ const TriggerModal: React.FC<TriggerModalProps> = ({
       >
         <Form.Item
           name="name"
-          label="触发器名称"
+          label={t('mysql.triggerName')}
           style={{ flex: 1 }}
           rules={[
-            { required: true, message: '请输入触发器名称' },
+            { required: true, message: t('mysql.triggerNameRequired') },
             {
               pattern: /^[a-zA-Z_][a-zA-Z0-9_]*$/,
-              message: '触发器名称只能包含字母、数字和下划线，且不能以数字开头',
+              message: t('mysql.triggerNamePatternError'),
             },
           ]}
         >
@@ -79,14 +81,14 @@ const TriggerModal: React.FC<TriggerModalProps> = ({
             name="event"
             label={
               <span>
-                事件类型
-                <Tooltip title="INSERT: 插入数据时触发, UPDATE: 更新数据时触发, DELETE: 删除数据时触发">
+                {t('mysql.triggerEventType')}
+                <Tooltip title={t('mysql.triggerEventTypeTip')}>
                   <InfoCircleOutlined style={{ marginLeft: 4 }} />
                 </Tooltip>
               </span>
             }
             style={{ flex: 1 }}
-            rules={[{ required: true, message: '请选择事件类型' }]}
+            rules={[{ required: true, message: t('mysql.triggerEventRequired') }]}
           >
             <Select>
               {Object.values(EMySQLTriggerEvent).map(event => (
@@ -101,14 +103,14 @@ const TriggerModal: React.FC<TriggerModalProps> = ({
             name="timing"
             label={
               <span>
-                触发时机
-                <Tooltip title="BEFORE: 在事件发生前触发, AFTER: 在事件发生后触发">
+                {t('mysql.triggerTiming')}
+                <Tooltip title={t('mysql.triggerTimingTip')}>
                   <InfoCircleOutlined style={{ marginLeft: 4 }} />
                 </Tooltip>
               </span>
             }
             style={{ flex: 1 }}
-            rules={[{ required: true, message: '请选择触发时机' }]}
+            rules={[{ required: true, message: t('mysql.triggerTimingRequired') }]}
           >
             <Select>
               {Object.values(EMySQLTriggerTiming).map(timing => (
@@ -124,13 +126,13 @@ const TriggerModal: React.FC<TriggerModalProps> = ({
           name="statement"
           label={
             <span>
-              触发器语句
-              <Tooltip title="触发器执行的SQL语句，可以使用NEW和OLD关键字引用新旧数据">
+              {t('mysql.triggerStatement')}
+              <Tooltip title={t('mysql.triggerStatementTip')}>
                 <InfoCircleOutlined style={{ marginLeft: 4 }} />
               </Tooltip>
             </span>
           }
-          rules={[{ required: true, message: '请输入触发器语句' }]}
+          rules={[{ required: true, message: t('mysql.triggerStatementRequired') }]}
         >
           <TextArea
             rows={6}
