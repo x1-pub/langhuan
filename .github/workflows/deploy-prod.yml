@@ -4,7 +4,7 @@ on:
   # 合并到发布分支后会触发（可改为你的目标分支）
   push:
     branches:
-      - main
+      - prod
     paths:
       - 'client/**'
       - 'server/**'
