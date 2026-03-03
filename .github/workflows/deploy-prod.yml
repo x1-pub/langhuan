@@ -105,6 +105,14 @@ jobs:
             sudo apt-get install -y awscli
           fi
 
+          if ! echo "$COS_BUCKET" | grep -Eq '^.+-[0-9]{6,}$'; then
+            echo "::error title=Invalid COS bucket::TENCENT_COS_BUCKET must be full bucket name with appid suffix, e.g. xxx-1250000000."
+            exit 1
+          fi
+
+          aws configure set default.s3.addressing_style virtual
+          aws configure set default.s3.signature_version s3v4
+
           COS_ENDPOINT="https://cos.${COS_REGION}.myqcloud.com"
 
           aws s3 sync client/dist/assets "s3://${COS_BUCKET}/assets" \
