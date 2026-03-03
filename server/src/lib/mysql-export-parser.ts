@@ -54,6 +54,16 @@ interface QueryGenerator {
 const isBit = (type: string) => type.toLocaleUpperCase().startsWith('BIT');
 const isBinary = (type: string) => type.toLocaleUpperCase().includes('BINARY');
 
+const formatDateToSqlDateTime = (value: Date) => {
+  const year = value.getUTCFullYear();
+  const month = String(value.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(value.getUTCDate()).padStart(2, '0');
+  const hour = String(value.getUTCHours()).padStart(2, '0');
+  const minute = String(value.getUTCMinutes()).padStart(2, '0');
+  const second = String(value.getUTCSeconds()).padStart(2, '0');
+  return `${year}-${month}-${day} ${hour}:${minute}:${second}`;
+};
+
 export const generateJSON = ({
   tableName,
   columns,
@@ -85,7 +95,7 @@ export const generateJSON = ({
       }
 
       if (value instanceof Date) {
-        return value.toLocaleString().slice(0, 19).replace('T', ' ');
+        return formatDateToSqlDateTime(value);
       }
 
       if (Buffer.isBuffer(value)) {
@@ -142,7 +152,7 @@ export const generateSQL = ({
       }
 
       if (value instanceof Date) {
-        return sequelize.escape(value.toLocaleString().slice(0, 19).replace('T', ' '));
+        return sequelize.escape(formatDateToSqlDateTime(value));
       }
 
       if (Buffer.isBuffer(value)) {

@@ -5,7 +5,8 @@ import { protectedProcedure, router } from '../trpc';
 import { connectionsTable } from '../schema';
 import redis from '../pools/redis';
 import mysql from '../pools/mysql';
-import mongoodb from '../pools/mongodb';
+import mongodb from '../pools/mongodb';
+import pgsql from '../pools/pgsql';
 import {
   CreateConnectionSchema,
   ConnectionIdZod,
@@ -24,6 +25,9 @@ import {
 } from '../lib/mysql-query-formatter';
 import { MongoShellParser } from '../lib/mongo-shell-parser';
 import { formatMongoResult } from '../lib/mongo-result-formatter';
+import { formatPgsqlCommandResult } from '../lib/pgsql-query-formatter';
+
+const pgsqlShellDatabaseMap = new Map<string, string>();
 
 export const connectionRouter = router({
   getList: protectedProcedure.query(async ({ ctx }) => {
@@ -76,7 +80,13 @@ export const connectionRouter = router({
     await ctx.db
       .update(connectionsTable)
       .set(input)
-      .where(and(eq(connectionsTable.id, input.id), isNull(connectionsTable.deletedAt)));
+      .where(
+        and(
+          eq(connectionsTable.id, input.id),
+          eq(connectionsTable.creator, ctx.user.id),
+          isNull(connectionsTable.deletedAt),
+        ),
+      );
     return null;
   }),
 
@@ -92,7 +102,7 @@ export const connectionRouter = router({
       dbConfig.password = data?.password;
     }
 
-    if (type === EConnectionType.MYSQL) {
+    if (type === EConnectionType.MYSQL || type === EConnectionType.MARIADB) {
       await mysql.getInstance(dbConfig);
     }
 
@@ -101,7 +111,11 @@ export const connectionRouter = router({
     }
 
     if (type === EConnectionType.MONGODB) {
-      await mongoodb.getInstance({ ...dbConfig, database });
+      await mongodb.getInstance({ ...dbConfig, database });
+    }
+
+    if (type === EConnectionType.PGSQL) {
+      await pgsql.getInstance({ ...dbConfig, database: database || 'postgres' });
     }
   }),
 
@@ -109,11 +123,19 @@ export const connectionRouter = router({
     .input(ExecuteCommandSchema)
     .mutation(async ({ ctx, input }) => {
       const { type, connectionId, command, pageId } = input;
+      const trimmedCommand = command.trim();
+
+      if (!trimmedCommand) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Command cannot be empty.',
+        });
+      }
 
       switch (type) {
         case EConnectionType.REDIS: {
-          const instance = await ctx.pool.getRedislInstance(connectionId, undefined, pageId);
-          const parts = parseRedisCommand(command);
+          const instance = await ctx.pool.getRedisInstance(connectionId, undefined, pageId);
+          const parts = parseRedisCommand(trimmedCommand);
           const [cmd, ...args] = parts;
 
           const res = await instance.call(cmd, ...args);
@@ -124,10 +146,11 @@ export const connectionRouter = router({
             changeDatabase: cmd.toLowerCase() === 'select' ? `[db${args[0]}]` : undefined,
           };
         }
-        case EConnectionType.MYSQL: {
+        case EConnectionType.MYSQL:
+        case EConnectionType.MARIADB: {
           const instance = await ctx.pool.getMysqlInstance(connectionId, undefined, pageId);
-          const [results, metadata] = await instance.query(command);
-          const type = getStatementType(command);
+          const [results, metadata] = await instance.query(trimmedCommand);
+          const type = getStatementType(trimmedCommand);
 
           if (type === 'query') {
             return {
@@ -143,16 +166,14 @@ export const connectionRouter = router({
           };
         }
         case EConnectionType.MONGODB: {
-          const instance = await ctx.pool.getMongoDBlInstance(connectionId, undefined, pageId);
+          const instance = await ctx.pool.getMongoDbInstance(connectionId, undefined, pageId);
 
           const parser = new MongoShellParser(instance);
-          const res = await parser.executeCommand(command);
-
-          const result = formatMongoResult(res);
-          const changeDatabase = result.match(/switched to db (.+)/)?.[1];
+          const { result: rawResult, changeDatabase } = await parser.executeCommand(trimmedCommand);
+          const result = formatMongoResult(rawResult);
 
           if (changeDatabase) {
-            await ctx.pool.changeMongoDB(changeDatabase, connectionId, pageId);
+            await ctx.pool.changeMongoDatabase(changeDatabase, connectionId, pageId);
           }
 
           return {
@@ -160,6 +181,34 @@ export const connectionRouter = router({
             changeDatabase,
           };
         }
+        case EConnectionType.PGSQL: {
+          const sessionKey = `${ctx.user.id}:${connectionId}:${pageId}`;
+          const switchDatabaseMatch = trimmedCommand.match(/^\\c\s+("?)([\w$]+)\1$/i);
+
+          if (switchDatabaseMatch) {
+            const targetDatabase = switchDatabaseMatch[2];
+            await ctx.pool.getPgsqlInstance(connectionId, targetDatabase, pageId);
+            pgsqlShellDatabaseMap.set(sessionKey, targetDatabase);
+            return {
+              result: `You are now connected to database "${targetDatabase}"`,
+              changeDatabase: targetDatabase,
+            };
+          }
+
+          const currentDatabase = pgsqlShellDatabaseMap.get(sessionKey);
+          const instance = await ctx.pool.getPgsqlInstance(connectionId, currentDatabase, pageId);
+          const result = await instance.query(trimmedCommand);
+
+          return {
+            result: formatPgsqlCommandResult(result),
+            changeDatabase: undefined,
+          };
+        }
+        default:
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: `Unsupported connection type: ${type}`,
+          });
       }
     }),
 });

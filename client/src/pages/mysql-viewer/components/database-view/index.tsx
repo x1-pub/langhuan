@@ -4,10 +4,12 @@ import type { TableColumnsType } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation } from '@tanstack/react-query';
 
-import { trpc, RouterInput, RouterOutput } from '@/utils/trpc';
-import useDatabaseWindows from '@/hooks/use-database-windows';
+import { trpc, RouterInput, RouterOutput } from '@/infra/api/trpc';
+import useDatabaseWindows from '@/domain/workbench/state/database-window-state';
 import { EMySQLViewCheckOption, EMysqlFunctionSecurity } from '@packages/types/mysql';
 import styles from './index.module.less';
+
+const VIEW_MODAL_WIDTH = 'var(--layout-modal-width-base)';
 
 type TFormValue = Omit<RouterInput['mysql']['createView'], 'connectionId' | 'dbName'>;
 type TViewItem = RouterOutput['mysql']['getViews'][number];
@@ -58,22 +60,22 @@ const MysqlView: React.FC = () => {
   const columns: TableColumnsType<TViewItem> = useMemo(
     () => [
       {
-        title: '视图名',
+        title: t('mysql.viewName'),
         dataIndex: 'name',
       },
       {
-        title: '定义者',
+        title: t('mysql.viewDefiner'),
         dataIndex: 'definer',
         width: 160,
       },
       {
-        title: 'Check Option',
+        title: t('mysql.viewCheckOption'),
         dataIndex: 'checkOption',
         width: 160,
         render: value => <Tag color="processing">{value}</Tag>,
       },
       {
-        title: 'Security',
+        title: t('mysql.viewSecurity'),
         dataIndex: 'security',
         width: 140,
         render: value => (
@@ -83,7 +85,7 @@ const MysqlView: React.FC = () => {
         ),
       },
       {
-        title: '备注',
+        title: t('table.comment'),
         dataIndex: 'comment',
         ellipsis: true,
       },
@@ -161,6 +163,7 @@ const MysqlView: React.FC = () => {
   return (
     <div className={styles.wrapper}>
       <Table<TViewItem>
+        className={styles.dataTable}
         rowKey={record => record.name}
         columns={columns}
         dataSource={getViewsQuery.data}
@@ -169,11 +172,11 @@ const MysqlView: React.FC = () => {
         onRow={record => ({
           onDoubleClick: () => handleEdit(record),
         })}
-        scroll={{ y: 'calc(100vh - 195px)' }}
+        scroll={{ y: '100%' }}
       />
 
       <Modal
-        title={editing ? '编辑视图' : '新建视图'}
+        title={editing ? t('mysql.editView') : t('mysql.createView')}
         open={modalOpen}
         onCancel={() => {
           setModalOpen(false);
@@ -181,7 +184,7 @@ const MysqlView: React.FC = () => {
           form.resetFields();
         }}
         onOk={handleSave}
-        width={780}
+        width={VIEW_MODAL_WIDTH}
         confirmLoading={
           createViewMutation.isPending ||
           updateViewMutation.isPending ||
@@ -199,12 +202,12 @@ const MysqlView: React.FC = () => {
         >
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item label="视图名" name="name" rules={[{ required: true }]}>
+              <Form.Item label={t('mysql.viewName')} name="name" rules={[{ required: true }]}>
                 <Input />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item label="定义者" name="definer">
+              <Form.Item label={t('mysql.viewDefiner')} name="definer">
                 <Input placeholder="root@%" />
               </Form.Item>
             </Col>
@@ -212,7 +215,7 @@ const MysqlView: React.FC = () => {
 
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item label="Check Option" name="checkOption">
+              <Form.Item label={t('mysql.viewCheckOption')} name="checkOption">
                 <Select
                   allowClear
                   options={Object.values(EMySQLViewCheckOption).map(value => ({
@@ -223,7 +226,7 @@ const MysqlView: React.FC = () => {
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item label="Security" name="security">
+              <Form.Item label={t('mysql.viewSecurity')} name="security">
                 <Select
                   allowClear
                   options={Object.values(EMysqlFunctionSecurity).map(value => ({
@@ -235,15 +238,19 @@ const MysqlView: React.FC = () => {
             </Col>
           </Row>
 
-          <Form.Item label="Algorithm" name="algorithm">
+          <Form.Item label={t('mysql.viewAlgorithm')} name="algorithm">
             <Input placeholder="UNDEFINED / MERGE / TEMPTABLE" />
           </Form.Item>
 
-          <Form.Item label="备注" name="comment">
+          <Form.Item label={t('table.comment')} name="comment">
             <Input />
           </Form.Item>
 
-          <Form.Item label="定义（SQL）" name="definition" rules={[{ required: true }]}>
+          <Form.Item
+            label={t('mysql.viewDefinitionSql')}
+            name="definition"
+            rules={[{ required: true }]}
+          >
             <Input.TextArea
               placeholder={'SELECT * FROM ...'}
               autoSize={{ minRows: 6, maxRows: 14 }}

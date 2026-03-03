@@ -2,8 +2,9 @@
 
 import mongoose from 'mongoose';
 
+import { normalizeMongoValue, reviveMongoSpecialTypes } from './mongodb';
+
 interface ParsedCommand {
-  database?: string;
   collection: string;
   operation: string;
   args: any[];
@@ -15,8 +16,19 @@ interface ChainedOperation {
   args: any[];
 }
 
+interface ParseStateFrame {
+  type: 'object' | 'array';
+  expectingKey: boolean;
+}
+
+export interface MongoShellExecutionResult {
+  result: unknown;
+  changeDatabase?: string;
+}
+
 export class MongoShellParser {
   private connection: mongoose.Connection;
+  private modelNameMap = new Map<string, string>();
 
   constructor(connection: mongoose.Connection) {
     this.connection = connection;
@@ -25,14 +37,10 @@ export class MongoShellParser {
   /**
    * Execute a MongoDB shell command
    */
-  async executeCommand(command: string): Promise<unknown> {
-    // Clean and normalize the command
+  async executeCommand(command: string): Promise<MongoShellExecutionResult> {
     const cleanCommand = this.cleanCommand(command);
-
-    // Parse the command
     const parsed = this.parseCommand(cleanCommand);
 
-    // Execute the parsed command
     return this.executeOperation(parsed);
   }
 
@@ -40,49 +48,48 @@ export class MongoShellParser {
    * Clean and normalize the command string
    */
   private cleanCommand(command: string): string {
-    return command
-      .trim()
-      .replace(/;\s*$/, '') // Remove trailing semicolon
-      .replace(/\s+/g, ' '); // Normalize whitespace
+    return command.trim().replace(/;\s*$/, '');
   }
 
   /**
    * Parse MongoDB shell command into structured format
    */
   private parseCommand(command: string): ParsedCommand {
-    // Handle different command patterns
-
-    // Database operations: use mydb
-    if (command.match(/^use\s+\w+/)) {
-      const dbName = command.replace(/^use\s+/, '');
-      return this.parseUseCommand(dbName);
+    if (/^use\s+.+/i.test(command)) {
+      const dbNameRaw = command.replace(/^use\s+/i, '').trim();
+      return this.parseUseCommand(dbNameRaw);
     }
 
-    // Show commands: show dbs, show collections, show users
-    if (command.startsWith('show ')) {
+    if (/^show\s+/i.test(command)) {
       return this.parseShowCommand(command);
     }
 
-    // Database admin commands: db.createUser(), db.dropUser(), etc.
-    if (command.startsWith('db.') && !command.includes('.')) {
-      return this.parseDbAdminCommand(command);
+    const getCollectionMatch = command.match(/^db\.getCollection\((.+)\)\.(.+)$/i);
+    if (getCollectionMatch) {
+      const [, rawCollection, operationsString] = getCollectionMatch;
+      const collection = this.parseCollectionName(rawCollection);
+      return this.parseChainedOperations(collection, operationsString);
     }
 
-    const collectionMatch = command.match(/^db\.([^.]+)\.(.+)$/);
+    const bracketCollectionMatch = command.match(/^db\[['"](.+?)['"]\]\.(.+)$/);
+    if (bracketCollectionMatch) {
+      const [, collection, operationsString] = bracketCollectionMatch;
+      return this.parseChainedOperations(collection, operationsString);
+    }
+
+    const collectionMatch = command.match(/^db\.([a-zA-Z_$][a-zA-Z0-9_$]*)\.(.+)$/);
     if (collectionMatch) {
       const [, collection, operationsString] = collectionMatch;
       return this.parseChainedOperations(collection, operationsString);
     }
 
-    // Database-level operations: db.stats(), db.serverStatus(), etc.
-    const dbMatch = command.match(/^db\.(\w+)\((.*)$/);
+    const dbMatch = command.match(/^db\.(\w+)\((.*)\)$/);
     if (dbMatch) {
       const [, operation, argsString] = dbMatch;
-      const args = this.parseArguments(argsString);
       return {
-        collection: '', // No collection for db-level operations
+        collection: '',
         operation,
-        args,
+        args: this.parseArguments(argsString),
       };
     }
 
@@ -92,7 +99,9 @@ export class MongoShellParser {
   /**
    * Parse use commands
    */
-  private parseUseCommand(dbName: string): ParsedCommand {
+  private parseUseCommand(dbNameRaw: string): ParsedCommand {
+    const dbName = this.parseCollectionName(dbNameRaw);
+
     return {
       collection: '',
       operation: 'use',
@@ -104,7 +113,11 @@ export class MongoShellParser {
    * Parse show commands
    */
   private parseShowCommand(command: string): ParsedCommand {
-    const showType = command.replace(/^show\s+/, '').trim();
+    const showType = command
+      .replace(/^show\s+/i, '')
+      .trim()
+      .toLowerCase();
+
     return {
       collection: '',
       operation: 'show',
@@ -113,35 +126,17 @@ export class MongoShellParser {
   }
 
   /**
-   * Parse database admin commands
-   */
-  private parseDbAdminCommand(command: string): ParsedCommand {
-    const operation = command.replace(/^db\./, '').trim();
-    const argsString = command.match(/$$(.*)$$$/) ? command.match(/$$(.*)$$$/)![1] : '';
-    const args = this.parseArguments(argsString);
-
-    return {
-      collection: '',
-      operation,
-      args,
-    };
-  }
-  /**
    * Parse chained operations like find().limit(10).sort({name: 1})
    */
   private parseChainedOperations(collection: string, operationsString: string): ParsedCommand {
-    // Split by method calls while preserving parentheses content
     const methods = this.splitChainedMethods(operationsString);
 
     if (methods.length === 0) {
       throw new Error(`No operations found in: ${operationsString}`);
     }
 
-    // First method is the main operation
     const firstMethod = methods[0];
     const mainOperation = this.parseMethodCall(firstMethod);
-
-    // Remaining methods are chained operations
     const chainedOperations: ChainedOperation[] = methods
       .slice(1)
       .map(method => this.parseMethodCall(method));
@@ -163,44 +158,61 @@ export class MongoShellParser {
     let depth = 0;
     let inString = false;
     let stringChar = '';
+    let escaped = false;
 
     for (let i = 0; i < operationsString.length; i++) {
       const char = operationsString[i];
-      const prevChar = i > 0 ? operationsString[i - 1] : '';
 
-      if (!inString && (char === '"' || char === "'")) {
-        inString = true;
-        stringChar = char;
-      } else if (inString && char === stringChar && prevChar !== '\\') {
-        inString = false;
-        stringChar = '';
+      if (inString) {
+        current += char;
+
+        if (escaped) {
+          escaped = false;
+          continue;
+        }
+
+        if (char === '\\') {
+          escaped = true;
+          continue;
+        }
+
+        if (char === stringChar) {
+          inString = false;
+          stringChar = '';
+        }
+        continue;
       }
 
-      if (!inString) {
-        if (char === '(') {
-          depth++;
-        } else if (char === ')') {
-          depth--;
+      if (char === '"' || char === "'") {
+        inString = true;
+        stringChar = char;
+        current += char;
+        continue;
+      }
 
-          // End of a method call
-          if (depth === 0) {
-            current += char;
-            methods.push(current.trim());
-            current = '';
+      if (char === '(') {
+        depth++;
+        current += char;
+        continue;
+      }
 
-            // Skip the dot if it exists
-            if (i + 1 < operationsString.length && operationsString[i + 1] === '.') {
-              i++;
-            }
-            continue;
+      if (char === ')') {
+        depth--;
+        current += char;
+
+        if (depth === 0) {
+          methods.push(current.trim());
+          current = '';
+          if (i + 1 < operationsString.length && operationsString[i + 1] === '.') {
+            i++;
           }
         }
+        continue;
       }
 
       current += char;
     }
 
-    // Handle case where there's remaining content (shouldn't happen with proper syntax)
     if (current.trim()) {
       methods.push(current.trim());
     }
@@ -212,7 +224,7 @@ export class MongoShellParser {
    * Parse a single method call like "find({name: 'John'})"
    */
   private parseMethodCall(methodString: string): ChainedOperation {
-    const match = methodString.match(/^(\w+)\((.*)$/);
+    const match = methodString.match(/^(\w+)\((.*)\)$/);
     if (!match) {
       throw new Error(`Invalid method call format: ${methodString}`);
     }
@@ -224,71 +236,247 @@ export class MongoShellParser {
   }
 
   /**
-   * Parse function arguments, handling JavaScript object syntax
+   * Parse function arguments, handling JavaScript-like object syntax
    */
   private parseArguments(argsString: string): any[] {
-    const cleanArgs = argsString.replace(/\)$/, '').trim();
-
+    const cleanArgs = argsString.trim();
     if (!cleanArgs) {
       return [];
     }
 
     try {
-      const normalizedArgs = this.normalizeJavaScriptObjects(cleanArgs);
-
-      // Split arguments by commas, but respect nested objects and arrays
-      const args = this.splitArguments(normalizedArgs);
-
-      return args.map(arg => {
-        const trimmed = arg.trim();
-
-        // Handle different argument types
-        if (trimmed === 'true' || trimmed === 'false') {
-          return trimmed === 'true';
-        }
-
-        if (trimmed === 'null') {
-          return null;
-        }
-
-        if (trimmed === 'undefined') {
-          return undefined;
-        }
-
-        // Numbers
-        if (/^-?\d+(\.\d+)?$/.test(trimmed)) {
-          return Number.parseFloat(trimmed);
-        }
-
-        // Strings (quoted)
-        if (
-          (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
-          (trimmed.startsWith("'") && trimmed.endsWith("'"))
-        ) {
-          return trimmed.slice(1, -1);
-        }
-
-        // Objects and arrays
-        if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
-          return JSON.parse(trimmed);
-        }
-
-        // Unquoted strings (field names, etc.)
-        return trimmed;
-      });
+      const args = this.splitArguments(cleanArgs);
+      return args.map(arg => this.parseValue(arg));
     } catch (error) {
       throw new Error(`Failed to parse arguments: ${cleanArgs}. Error: ${error}`);
     }
   }
 
+  private parseCollectionName(raw: string): string {
+    const parsed = this.parseValue(raw.trim());
+
+    if (typeof parsed !== 'string') {
+      throw new Error(`Collection/Database name must be a string: ${raw}`);
+    }
+
+    const value = parsed.trim();
+    if (!value) {
+      throw new Error('Collection/Database name cannot be empty');
+    }
+
+    return value;
+  }
+
+  private parseValue(raw: string): unknown {
+    const trimmed = raw.trim();
+
+    if (!trimmed) {
+      return '';
+    }
+
+    if (trimmed === 'true' || trimmed === 'false') {
+      return trimmed === 'true';
+    }
+
+    if (trimmed === 'null') {
+      return null;
+    }
+
+    if (trimmed === 'undefined') {
+      return undefined;
+    }
+
+    if (/^-?\d+(\.\d+)?$/.test(trimmed)) {
+      return Number.parseFloat(trimmed);
+    }
+
+    if (
+      (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+      (trimmed.startsWith("'") && trimmed.endsWith("'"))
+    ) {
+      return this.parseQuotedString(trimmed);
+    }
+
+    if (
+      (trimmed.startsWith('{') && trimmed.endsWith('}')) ||
+      (trimmed.startsWith('[') && trimmed.endsWith(']'))
+    ) {
+      return this.parseMongoLiteral(trimmed);
+    }
+
+    return trimmed;
+  }
+
+  private parseQuotedString(input: string): string {
+    const { value, endIndex } = this.readQuotedString(input, 0);
+    if (endIndex !== input.length - 1) {
+      throw new Error(`Invalid quoted string: ${input}`);
+    }
+    return value;
+  }
+
+  private parseMongoLiteral(input: string): unknown {
+    const constructorNormalized = this.normalizeMongoConstructors(input);
+    const normalizedJsonLike = this.normalizeJsonLikeLiteral(constructorNormalized);
+    const parsed = JSON.parse(normalizedJsonLike);
+
+    return reviveMongoSpecialTypes(parsed);
+  }
+
+  private normalizeMongoConstructors(input: string): string {
+    return input
+      .replace(/\bObjectId\s*\(\s*(['"])([a-fA-F0-9]{24})\1\s*\)/g, '{"$oid":"$2"}')
+      .replace(/\bISODate\s*\(\s*(['"])([^'"]+)\1\s*\)/g, '{"$date":"$2"}')
+      .replace(/\bnew\s+Date\s*\(\s*(['"])([^'"]+)\1\s*\)/g, '{"$date":"$2"}')
+      .replace(/\bNumberLong\s*\(\s*(['"]?)(-?\d+)\1\s*\)/g, '$2')
+      .replace(/\bNumberInt\s*\(\s*(['"]?)(-?\d+)\1\s*\)/g, '$2');
+  }
+
   /**
-   * Normalize JavaScript objects to valid JSON
+   * Convert JavaScript-like object literals into valid JSON:
+   * - Single quotes => double quotes
+   * - Unquoted keys => quoted keys
    */
-  private normalizeJavaScriptObjects(input: string): string {
-    return input.replace(/\{[^}]*\}/g, match => {
-      // Add quotes to unquoted property names
-      return match.replace(/([{,]\s*)([a-zA-Z_$][a-zA-Z0-9_$]*)\s*:/g, '$1"$2":');
-    });
+  private normalizeJsonLikeLiteral(input: string): string {
+    const stateStack: ParseStateFrame[] = [];
+    let output = '';
+    let cursor = 0;
+
+    while (cursor < input.length) {
+      const char = input[cursor];
+      const frame = stateStack[stateStack.length - 1];
+
+      if (char === '"' || char === "'") {
+        const { value, endIndex } = this.readQuotedString(input, cursor);
+        output += JSON.stringify(value);
+        cursor = endIndex + 1;
+        continue;
+      }
+
+      if (frame?.type === 'object' && frame.expectingKey && this.isIdentifierStart(char)) {
+        let keyEnd = cursor + 1;
+        while (keyEnd < input.length && this.isIdentifierPart(input[keyEnd])) {
+          keyEnd++;
+        }
+
+        let lookAhead = keyEnd;
+        while (lookAhead < input.length && /\s/.test(input[lookAhead])) {
+          lookAhead++;
+        }
+
+        if (input[lookAhead] === ':') {
+          output += JSON.stringify(input.slice(cursor, keyEnd));
+          cursor = keyEnd;
+          continue;
+        }
+      }
+
+      switch (char) {
+        case '{':
+          stateStack.push({ type: 'object', expectingKey: true });
+          output += char;
+          cursor++;
+          continue;
+        case '[':
+          stateStack.push({ type: 'array', expectingKey: false });
+          output += char;
+          cursor++;
+          continue;
+        case '}':
+        case ']':
+          stateStack.pop();
+          output += char;
+          cursor++;
+          continue;
+        case ':':
+          if (frame?.type === 'object') {
+            frame.expectingKey = false;
+          }
+          output += char;
+          cursor++;
+          continue;
+        case ',':
+          if (frame?.type === 'object') {
+            frame.expectingKey = true;
+          }
+          output += char;
+          cursor++;
+          continue;
+        default:
+          output += char;
+          cursor++;
+      }
+    }
+
+    return output;
+  }
+
+  private isIdentifierStart(char: string): boolean {
+    return /[A-Za-z_$]/.test(char);
+  }
+
+  private isIdentifierPart(char: string): boolean {
+    return /[A-Za-z0-9_$]/.test(char);
+  }
+
+  private readQuotedString(input: string, startIndex: number): { value: string; endIndex: number } {
+    const quote = input[startIndex];
+    let cursor = startIndex + 1;
+    let value = '';
+    let escaped = false;
+
+    while (cursor < input.length) {
+      const char = input[cursor];
+
+      if (escaped) {
+        switch (char) {
+          case 'n':
+            value += '\n';
+            break;
+          case 'r':
+            value += '\r';
+            break;
+          case 't':
+            value += '\t';
+            break;
+          case 'b':
+            value += '\b';
+            break;
+          case 'f':
+            value += '\f';
+            break;
+          case '\\':
+            value += '\\';
+            break;
+          case '"':
+            value += '"';
+            break;
+          case "'":
+            value += "'";
+            break;
+          default:
+            value += char;
+        }
+        escaped = false;
+        cursor++;
+        continue;
+      }
+
+      if (char === '\\') {
+        escaped = true;
+        cursor++;
+        continue;
+      }
+
+      if (char === quote) {
+        return { value, endIndex: cursor };
+      }
+
+      value += char;
+      cursor++;
+    }
+
+    throw new Error(`Unterminated string literal: ${input.slice(startIndex)}`);
   }
 
   /**
@@ -297,32 +485,78 @@ export class MongoShellParser {
   private splitArguments(argsString: string): string[] {
     const args: string[] = [];
     let current = '';
-    let depth = 0;
+    let objectDepth = 0;
+    let arrayDepth = 0;
+    let parenDepth = 0;
     let inString = false;
     let stringChar = '';
+    let escaped = false;
 
     for (let i = 0; i < argsString.length; i++) {
       const char = argsString[i];
-      const prevChar = i > 0 ? argsString[i - 1] : '';
 
-      if (!inString && (char === '"' || char === "'")) {
-        inString = true;
-        stringChar = char;
-      } else if (inString && char === stringChar && prevChar !== '\\') {
-        inString = false;
-        stringChar = '';
-      }
+      if (inString) {
+        current += char;
 
-      if (!inString) {
-        if (char === '{' || char === '[') {
-          depth++;
-        } else if (char === '}' || char === ']') {
-          depth--;
-        } else if (char === ',' && depth === 0) {
-          args.push(current.trim());
-          current = '';
+        if (escaped) {
+          escaped = false;
           continue;
         }
+
+        if (char === '\\') {
+          escaped = true;
+          continue;
+        }
+
+        if (char === stringChar) {
+          inString = false;
+          stringChar = '';
+        }
+        continue;
+      }
+
+      if (char === '"' || char === "'") {
+        inString = true;
+        stringChar = char;
+        current += char;
+        continue;
+      }
+
+      if (char === '{') {
+        objectDepth++;
+        current += char;
+        continue;
+      }
+      if (char === '}') {
+        objectDepth--;
+        current += char;
+        continue;
+      }
+      if (char === '[') {
+        arrayDepth++;
+        current += char;
+        continue;
+      }
+      if (char === ']') {
+        arrayDepth--;
+        current += char;
+        continue;
+      }
+      if (char === '(') {
+        parenDepth++;
+        current += char;
+        continue;
+      }
+      if (char === ')') {
+        parenDepth--;
+        current += char;
+        continue;
+      }
+
+      if (char === ',' && objectDepth === 0 && arrayDepth === 0 && parenDepth === 0) {
+        args.push(current.trim());
+        current = '';
+        continue;
       }
 
       current += char;
@@ -338,31 +572,30 @@ export class MongoShellParser {
   /**
    * Execute the parsed operation
    */
-  private async executeOperation(parsed: ParsedCommand): Promise<any> {
+  private async executeOperation(parsed: ParsedCommand): Promise<MongoShellExecutionResult> {
     const { collection, operation, args, chainedOperations } = parsed;
 
-    // Handle show commands
     if (operation === 'use') {
-      return this.executeUseCommand(args[0]);
+      const dbName = String(args[0] || '');
+      return {
+        result: `switched to db ${dbName}`,
+        changeDatabase: dbName,
+      };
     }
 
-    // Handle show commands
     if (operation === 'show') {
-      return this.executeShowCommand(args[0]);
+      const result = await this.executeShowCommand(args[0]);
+      return { result: normalizeMongoValue(result) };
     }
 
-    // Handle database-level operations
     if (!collection) {
-      return this.executeDbOperation(operation, args);
+      const result = await this.executeDbOperation(operation, args);
+      return { result: normalizeMongoValue(result) };
     }
 
-    // Handle collection operations
     const model = this.getModel(collection);
-    return this.executeCollectionOperation(model, operation, args, chainedOperations);
-  }
-
-  private async executeUseCommand(dbName: string) {
-    return `switched to db ${dbName}`;
+    const result = await this.executeCollectionOperation(model, operation, args, chainedOperations);
+    return { result: normalizeMongoValue(result) };
   }
 
   /**
@@ -422,7 +655,6 @@ export class MongoShellParser {
       case 'dropUser':
         if (args.length < 1) throw new Error('dropUser requires username');
         return await db.admin().removeUser(args[0]);
-      // return await db.admin().command({ dropUser: args[0] })
 
       case 'createCollection':
         if (args.length < 1) throw new Error('createCollection requires collection name');
@@ -451,9 +683,7 @@ export class MongoShellParser {
   ): Promise<any> {
     let query: any;
 
-    // Execute the main operation
     switch (operation) {
-      // Query operations that return a query object for chaining
       case 'find': {
         const findQuery = args[0] || {};
         const projection = args[1] || {};
@@ -470,7 +700,6 @@ export class MongoShellParser {
         query = model.findById(args[0], args[1] || {});
         break;
 
-      // Operations that don't support chaining - execute immediately
       case 'insertOne': {
         if (args.length < 1) throw new Error('insertOne requires a document');
         const insertResult = await model.create(args[0]);
@@ -521,7 +750,6 @@ export class MongoShellParser {
         if (args.length < 1) throw new Error('distinct requires field name');
         return await model.distinct(args[0], args[1] || {});
 
-      // Index operations
       case 'createIndex':
         if (args.length < 1) throw new Error('createIndex requires index specification');
         return await model.collection.createIndex(args[0], args[1] || {});
@@ -540,7 +768,6 @@ export class MongoShellParser {
       case 'getIndexes':
         return await model.collection.indexes();
 
-      // Collection management
       case 'drop':
         return await model.collection.drop();
 
@@ -560,9 +787,7 @@ export class MongoShellParser {
       }
     }
 
-    // Execute the final query
     if (query) {
-      // Add .lean() for better performance on find operations
       if (
         typeof query.lean === 'function' &&
         (operation === 'find' || operation === 'findOne' || operation === 'findById')
@@ -607,7 +832,6 @@ export class MongoShellParser {
         return query.lean();
 
       case 'exec':
-        // exec() doesn't modify the query, just returns it for execution
         return query;
 
       case 'count':
@@ -623,15 +847,39 @@ export class MongoShellParser {
   }
 
   /**
-   * Get or create a mongoose model for the collection
+   * Get or create a mongoose model for the collection.
+   * Keep an explicit map to avoid name normalization/pluralization side effects.
    */
   private getModel(collectionName: string): mongoose.Model<any> {
-    try {
-      return this.connection.model(collectionName);
-    } catch {
-      // Create a dynamic model if it doesn't exist
-      const schema = new mongoose.Schema({}, { strict: false, collection: collectionName });
-      return this.connection.model(collectionName, schema);
+    const modelName = this.getModelName(collectionName);
+    const existingModel = this.connection.models[modelName];
+    if (existingModel) {
+      return existingModel as mongoose.Model<any>;
     }
+
+    const schema = new mongoose.Schema({}, { strict: false, collection: collectionName });
+    return this.connection.model(modelName, schema, collectionName);
+  }
+
+  private getModelName(collectionName: string): string {
+    const cached = this.modelNameMap.get(collectionName);
+    if (cached) {
+      return cached;
+    }
+
+    const safeName = collectionName.replace(/[^a-zA-Z0-9_]/g, '_') || 'collection';
+    let candidate = `shell_${safeName}`;
+    let suffix = 1;
+
+    while (
+      this.connection.models[candidate] &&
+      this.connection.models[candidate].collection.collectionName !== collectionName
+    ) {
+      candidate = `shell_${safeName}_${suffix}`;
+      suffix++;
+    }
+
+    this.modelNameMap.set(collectionName, candidate);
+    return candidate;
   }
 }

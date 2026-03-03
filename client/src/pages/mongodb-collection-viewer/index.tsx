@@ -1,7 +1,7 @@
 import React from 'react';
 
 import TableSwitcher from '@/components/table-switcher';
-import Viewer from './viewer';
+import Viewer from './components/viewer';
 
 const MongodbCollectionViewer: React.FC = () => {
   return (

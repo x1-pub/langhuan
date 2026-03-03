@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Card, Popconfirm, Table, TableProps, Tooltip } from 'antd';
+import { Button, Popconfirm, Table, TableProps, Tooltip } from 'antd';
 import { HolderOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import type { DragEndEvent } from '@dnd-kit/core';
@@ -16,11 +16,11 @@ import { useMutation } from '@tanstack/react-query';
 
 import FieldEditor from '../field-editor';
 import styles from '../../index.module.less';
-import useDatabaseWindows from '@/hooks/use-database-windows';
+import useDatabaseWindows from '@/domain/workbench/state/database-window-state';
 import { IMySQLColumn, IMySQLTableIndex } from '@packages/types/mysql';
 import PrimaryIcon from '../primary-icon';
-import { trpc } from '@/utils/trpc';
-import { getMySQLPureType } from '@/utils/mysql-generator';
+import { trpc } from '@/infra/api/trpc';
+import { getMySQLPureType } from '@/domain/mysql/model/mysql-value';
 
 interface RowProps extends React.HTMLAttributes<HTMLTableRowElement> {
   'data-row-key': string;
@@ -103,7 +103,19 @@ const ColumnsManager: React.FC<ColumnsManagerProps> = props => {
       dataIndex: 'Comment',
     },
     {
-      title: t('table.operation'),
+      title: (
+        <>
+          {t('table.operation')}
+          <Button
+            className={styles.columnActionBtn}
+            color="cyan"
+            variant="link"
+            onClick={() => setVisible(true)}
+          >
+            {t('button.add')}
+          </Button>
+        </>
+      ),
       dataIndex: '',
       render: (_, record) => (
         <>
@@ -182,36 +194,28 @@ const ColumnsManager: React.FC<ColumnsManagerProps> = props => {
 
   return (
     <>
-      <Card
-        className={styles.card}
-        title={t('table.field')}
-        extra={
-          <Button color="cyan" variant="link" onClick={() => setVisible(true)}>
-            {t('button.add')}
-          </Button>
-        }
-      >
-        <DndContext sensors={sensors} modifiers={[restrictToVerticalAxis]} onDragEnd={onDragEnd}>
-          <SortableContext
-            // rowKey array
-            items={dataOrder.map(i => i.Field)}
-            strategy={verticalListSortingStrategy}
-          >
-            <Table
-              rowKey="Field"
-              dataSource={dataOrder}
-              columns={tableColumns}
-              pagination={false}
-              onRow={record => ({
-                onDoubleClick: () => handleEdit(record),
-              })}
-              components={{
-                body: { row: Row },
-              }}
-            />
-          </SortableContext>
-        </DndContext>
-      </Card>
+      <DndContext sensors={sensors} modifiers={[restrictToVerticalAxis]} onDragEnd={onDragEnd}>
+        <SortableContext
+          // rowKey array
+          items={dataOrder.map(i => i.Field)}
+          strategy={verticalListSortingStrategy}
+        >
+          <Table
+            className={styles.dataTable}
+            rowKey="Field"
+            dataSource={dataOrder}
+            columns={tableColumns}
+            pagination={false}
+            scroll={{ x: 'max-content', y: '100%' }}
+            onRow={record => ({
+              onDoubleClick: () => handleEdit(record),
+            })}
+            components={{
+              body: { row: Row },
+            }}
+          />
+        </SortableContext>
+      </DndContext>
       <FieldEditor
         visible={visible}
         onSubmit={handleSubmit}

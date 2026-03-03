@@ -1,7 +1,7 @@
 import mongoose, { Connection } from 'mongoose';
 
 import { IConnectionPoolConfig } from '@packages/types/connection';
-import { removeNullAndUndefined } from '../lib/utils';
+import { removeNullAndUndefined } from '../shared/object/remove-nullish';
 import { TRPCError } from '@trpc/server';
 
 interface MongooseInstanceWithTimestamp {
@@ -45,7 +45,7 @@ class MongoDBManager {
   }
 
   changeInstance(config: IConnectionPoolConfig, connection: Connection) {
-    const key = JSON.stringify(config);
+    const key = JSON.stringify(removeNullAndUndefined(config));
     const instance = this.mongooseInstances.get(key);
     if (!instance) {
       return;

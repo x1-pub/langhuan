@@ -7,9 +7,9 @@ import { useTranslation } from 'react-i18next';
 import styles from './index.module.less';
 import EditableText from '@/components/editable-text';
 import { TRedisValue } from '@packages/types/redis';
-import { trpc } from '@/utils/trpc';
+import { trpc } from '@/infra/api/trpc';
 import { useMutation } from '@tanstack/react-query';
-import useDatabaseWindows from '@/hooks/use-database-windows';
+import useDatabaseWindows from '@/domain/workbench/state/database-window-state';
 
 interface ListEditorProps {
   mode: 'add' | 'edit';

@@ -3,7 +3,6 @@ import {
   Button,
   Table,
   TableProps,
-  Card,
   Modal,
   Popconfirm,
   Form,
@@ -17,7 +16,7 @@ import { useTranslation } from 'react-i18next';
 import { useMutation } from '@tanstack/react-query';
 
 import styles from '../../index.module.less';
-import useDatabaseWindows from '@/hooks/use-database-windows';
+import useDatabaseWindows from '@/domain/workbench/state/database-window-state';
 import EllipsisText from '@/components/ellipsis-text';
 import { dealIndexData, getTypeFromIndexData } from '../../utils';
 import {
@@ -26,7 +25,7 @@ import {
   IMySQLColumn,
   IMySQLTableIndex,
 } from '@packages/types/mysql';
-import { trpc } from '@/utils/trpc';
+import { trpc } from '@/infra/api/trpc';
 
 interface IndexManagerProps {
   data: IMySQLTableIndex[];
@@ -55,6 +54,9 @@ const indexTypeOptions = [
   { label: EMySQLIndexType.INDEX, value: EMySQLIndexType.INDEX },
   { label: EMySQLIndexType.SPATIAL, value: EMySQLIndexType.SPATIAL },
 ];
+const INDEX_EDITOR_MODAL_WIDTH = 'var(--layout-modal-width-xs)';
+const INDEX_FIELD_ROW_GUTTER = 8;
+const INDEX_FIELD_ROW_MARGIN_BOTTOM = 'var(--spacing-4)';
 
 const IndexManager: React.FC<IndexManagerProps> = props => {
   const { data, columns, onOk } = props;
@@ -91,7 +93,19 @@ const IndexManager: React.FC<IndexManagerProps> = props => {
       dataIndex: 'Index_comment',
     },
     {
-      title: t('table.operation'),
+      title: (
+        <>
+          {t('table.operation')}
+          <Button
+            className={styles.columnActionBtn}
+            color="cyan"
+            variant="link"
+            onClick={() => setOpen(true)}
+          >
+            {t('button.add')}
+          </Button>
+        </>
+      ),
       dataIndex: '',
       render: (_, record) => (
         <>
@@ -207,31 +221,23 @@ const IndexManager: React.FC<IndexManagerProps> = props => {
 
   return (
     <>
-      <Card
-        className={styles.card}
-        title={t('table.index')}
-        extra={
-          <Button color="cyan" variant="link" onClick={() => setOpen(true)}>
-            {t('button.add')}
-          </Button>
+      <Table
+        className={styles.dataTable}
+        rowKey={record =>
+          record.Key_name + record.Column_name + record.Index_type + record.Seq_in_index
         }
-      >
-        <Table
-          rowKey={record =>
-            record.Key_name + record.Column_name + record.Index_type + record.Seq_in_index
-          }
-          dataSource={dataAfter}
-          columns={tableColumns}
-          pagination={false}
-          onRow={record => {
-            return {
-              onDoubleClick: () => handleEdit(record),
-            };
-          }}
-        />
-      </Card>
+        dataSource={dataAfter}
+        columns={tableColumns}
+        pagination={false}
+        scroll={{ x: 'max-content', y: '100%' }}
+        onRow={record => {
+          return {
+            onDoubleClick: () => handleEdit(record),
+          };
+        }}
+      />
       <Modal
-        width={600}
+        width={INDEX_EDITOR_MODAL_WIDTH}
         destroyOnHidden={true}
         title={t(`button.${editIndex ? 'update' : 'add'}`)}
         open={open}
@@ -247,7 +253,7 @@ const IndexManager: React.FC<IndexManagerProps> = props => {
         ]}
       >
         <Form
-          style={{ paddingTop: '10px' }}
+          style={{ paddingTop: 'var(--spacing-3)' }}
           form={form}
           labelCol={{ span: 4 }}
           wrapperCol={{ span: 20 }}
@@ -275,7 +281,11 @@ const IndexManager: React.FC<IndexManagerProps> = props => {
           {/* 扩展 */}
           {formFieldValue?.map(field => {
             return (
-              <Row key={field} gutter={5} style={{ marginBottom: '25px' }}>
+              <Row
+                key={field}
+                gutter={INDEX_FIELD_ROW_GUTTER}
+                style={{ marginBottom: INDEX_FIELD_ROW_MARGIN_BOTTOM }}
+              >
                 <Col span={4}></Col>
                 <Col span={8}>
                   <EllipsisText text={field} />

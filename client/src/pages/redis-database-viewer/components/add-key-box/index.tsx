@@ -4,11 +4,11 @@ import { Button, Col, Divider, Form, Input, InputNumber, Row, Select, Tooltip } 
 
 import KeyTypeIcon from '../key-type-icon';
 import ValueEditor from '../value-editor';
-import useDatabaseWindows from '@/hooks/use-database-windows';
+import useDatabaseWindows from '@/domain/workbench/state/database-window-state';
 import styles from './index.module.less';
 import { useTranslation } from 'react-i18next';
 import { ERedisDataType, TRedisValue } from '@packages/types/redis';
-import { trpc } from '@/utils/trpc';
+import { trpc } from '@/infra/api/trpc';
 import { useMutation } from '@tanstack/react-query';
 
 type FieldType = {
@@ -83,7 +83,7 @@ const AddKeyBox: React.FC<AddKeyBoxProps> = ({ onAddSuccess, onCancel }) => {
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item<FieldType> label="TTL" name="ttl">
+              <Form.Item<FieldType> label={t('redis.ttl')} name="ttl">
                 <InputNumber style={{ width: '100%' }} />
               </Form.Item>
             </Col>
@@ -92,7 +92,7 @@ const AddKeyBox: React.FC<AddKeyBoxProps> = ({ onAddSuccess, onCancel }) => {
             <Input />
           </Form.Item>
           <Divider className={styles.divider} />
-          <Form.Item<FieldType> label="" name="value">
+          <Form.Item<FieldType> name="value">
             <ValueEditor mode="add" type={typeValue} />
           </Form.Item>
         </Form>

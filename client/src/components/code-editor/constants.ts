@@ -1,4 +1,3 @@
-// SQL关键字
 export const SQL_KEYWORDS = [
   'SELECT',
   'FROM',
@@ -96,66 +95,72 @@ export const SQL_KEYWORDS = [
   'ALIAS',
 ];
 
-// SQL函数
-export const SQL_FUNTIONS = [
+export interface SQLFunctionSnippet {
+  name: string;
+  insertText: string;
+  detailKey: string;
+  documentationKey: string;
+}
+
+export const SQL_FUNCTIONS: SQLFunctionSnippet[] = [
   {
     name: 'COUNT',
     insertText: 'COUNT(${1:*})',
-    detail: '聚合函数',
-    documentation: '返回行数',
+    detailKey: 'codeEditor.detail.aggregateFunction',
+    documentationKey: 'codeEditor.docs.countRows',
   },
   {
     name: 'SUM',
     insertText: 'SUM(${1:column})',
-    detail: '聚合函数',
-    documentation: '返回数值列的总和',
+    detailKey: 'codeEditor.detail.aggregateFunction',
+    documentationKey: 'codeEditor.docs.sumColumn',
   },
   {
     name: 'AVG',
     insertText: 'AVG(${1:column})',
-    detail: '聚合函数',
-    documentation: '返回数值列的平均值',
+    detailKey: 'codeEditor.detail.aggregateFunction',
+    documentationKey: 'codeEditor.docs.avgColumn',
   },
   {
     name: 'MAX',
     insertText: 'MAX(${1:column})',
-    detail: '聚合函数',
-    documentation: '返回列的最大值',
+    detailKey: 'codeEditor.detail.aggregateFunction',
+    documentationKey: 'codeEditor.docs.maxColumn',
   },
   {
     name: 'MIN',
     insertText: 'MIN(${1:column})',
-    detail: '聚合函数',
-    documentation: '返回列的最小值',
+    detailKey: 'codeEditor.detail.aggregateFunction',
+    documentationKey: 'codeEditor.docs.minColumn',
   },
   {
     name: 'CONCAT',
     insertText: 'CONCAT(${1:str1}, ${2:str2})',
-    detail: '字符串函数',
-    documentation: '连接两个或多个字符串',
+    detailKey: 'codeEditor.detail.stringFunction',
+    documentationKey: 'codeEditor.docs.concatStrings',
   },
   {
     name: 'SUBSTRING',
     insertText: 'SUBSTRING(${1:string}, ${2:start}, ${3:length})',
-    detail: '字符串函数',
-    documentation: '提取字符串的子串',
+    detailKey: 'codeEditor.detail.stringFunction',
+    documentationKey: 'codeEditor.docs.substring',
   },
   {
     name: 'UPPER',
     insertText: 'UPPER(${1:string})',
-    detail: '字符串函数',
-    documentation: '将字符串转换为大写',
+    detailKey: 'codeEditor.detail.stringFunction',
+    documentationKey: 'codeEditor.docs.upper',
   },
   {
     name: 'LOWER',
     insertText: 'LOWER(${1:string})',
-    detail: '字符串函数',
-    documentation: '将字符串转换为小写',
+    detailKey: 'codeEditor.detail.stringFunction',
+    documentationKey: 'codeEditor.docs.lower',
   },
   {
     name: 'NOW',
     insertText: 'NOW()',
-    detail: '日期函数',
-    documentation: '返回当前日期和时间',
+    detailKey: 'codeEditor.detail.dateFunction',
+    documentationKey: 'codeEditor.docs.now',
   },
 ];

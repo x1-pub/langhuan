@@ -1,29 +1,29 @@
 .batchModalWrap {
   :global {
     .langhuan-modal {
-      width: 830px !important;
-      min-width: 830px !important;
+      min-width: var(--layout-modal-width-md) !important;
+      width: var(--layout-modal-width-md) !important;
     }
   }
 }
 
 .tableWrap {
-  max-height: calc(100vh - 310px);
-  overflow-y: scroll;
+  max-height: var(--layout-dialog-content-max-height);
+  overflow-y: auto;
 }
 
 .row {
   display: flex;
   align-items: center;
-  gap: 15px;
-  margin: 10px 0;
+  gap: var(--spacing-4);
+  margin: var(--spacing-2) 0;
 
   .selecter {
-    width: 150px;
+    width: var(--layout-field-width-md);
   }
 
   .enter {
-    width: 300px;
+    width: var(--layout-field-width-xl);
   }
 
   .update {

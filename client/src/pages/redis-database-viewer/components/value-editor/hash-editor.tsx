@@ -6,9 +6,9 @@ import { useMutation } from '@tanstack/react-query';
 
 import EditableText from '@/components/editable-text';
 import styles from './index.module.less';
-import { trpc } from '@/utils/trpc';
+import { trpc } from '@/infra/api/trpc';
 import { TRedisValue } from '@packages/types/redis';
-import useDatabaseWindows from '@/hooks/use-database-windows';
+import useDatabaseWindows from '@/domain/workbench/state/database-window-state';
 
 interface HashEditorProps {
   mode: 'add' | 'edit';

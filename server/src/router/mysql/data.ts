@@ -8,7 +8,7 @@ import {
   GeTMySQLProcessedDatasSchema,
 } from '@packages/zod/mysql';
 import { protectedProcedure, router } from '../../trpc';
-import { escapedMySQLName } from '../../lib/utils';
+import { escapedMySQLName } from '../../shared/mysql/quote-identifier';
 import { EMySQLDataExportType, IMySQLColumn, TMySQLRawData } from '@packages/types/mysql';
 import { generateExcel, generateJSON, generateSQL } from '../../lib/mysql-export-parser';
 import { generateMysqlValuesClause, generateMysqlWhereClause } from '../../lib/mysql-sql-generator';

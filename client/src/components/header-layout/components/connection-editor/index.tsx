@@ -2,61 +2,68 @@ import React, { useEffect } from 'react';
 import { Modal, Form, Input, Select, Row, Col, Button, InputNumber } from 'antd';
 import { useTranslation } from 'react-i18next';
 import z from 'zod';
-
-import { showSuccess } from '@/utils/global-notification';
-import { CreateConnectionSchema } from '@packages/zod/connection';
-import { trpc } from '@/utils/trpc';
 import { useQuery, useMutation } from '@tanstack/react-query';
+
+import { showSuccess } from '@/shared/ui/notifications';
+import { CreateConnectionSchema } from '@packages/zod/connection';
+import { trpc } from '@/infra/api/trpc';
 import { EConnectionType } from '@packages/types/connection';
 
 const connectionTypeOptions = [
-  {
-    label: 'MySQL',
-    value: EConnectionType.MYSQL,
-  },
-  {
-    label: 'Redis',
-    value: EConnectionType.REDIS,
-  },
-  {
-    label: 'MongoDB',
-    value: EConnectionType.MONGODB,
-  },
+  { label: 'MySQL', value: EConnectionType.MYSQL },
+  { label: 'MariaDB', value: EConnectionType.MARIADB },
+  { label: 'Redis', value: EConnectionType.REDIS },
+  { label: 'MongoDB', value: EConnectionType.MONGODB },
+  { label: 'PostgreSQL', value: EConnectionType.PGSQL },
 ];
 
-type ICreateConnection = z.infer<typeof CreateConnectionSchema>;
+type ConnectionFormValue = z.infer<typeof CreateConnectionSchema>;
 
-interface IConnectionModal {
+interface ConnectionModalProps {
   open: boolean;
   id?: number;
   onCancel?: () => void;
   onOk?: () => void;
 }
 
-const ConnectionModal: React.FC<IConnectionModal> = props => {
-  const { open, id, onOk, onCancel } = props;
-  const isEditMode = !!id;
+const buildUpdatePayload = (values: ConnectionFormValue, id: number) => {
+  return {
+    name: values.name,
+    host: values.host,
+    port: values.port,
+    username: values.username,
+    database: values.database,
+    id,
+  };
+};
+
+const ConnectionModal: React.FC<ConnectionModalProps> = ({ open, id, onOk, onCancel }) => {
+  const isEditMode = Boolean(id);
 
   const { t } = useTranslation();
-  const [form] = Form.useForm<ICreateConnection>();
+  const [form] = Form.useForm<ConnectionFormValue>();
   const connectionType = Form.useWatch('type', form);
-  const title = t(`button.${id ? 'update' : 'add'}`);
+  const shouldShowDatabaseField =
+    connectionType === EConnectionType.MONGODB || connectionType === EConnectionType.PGSQL;
 
   const detailQuery = useQuery(
-    trpc.connection.getDetailById.queryOptions({ id: Number(id) }, { enabled: isEditMode }),
+    trpc.connection.getDetailById.queryOptions({ id: Number(id) }, { enabled: isEditMode && open }),
   );
   const pingMutation = useMutation(trpc.connection.ping.mutationOptions());
   const createMutation = useMutation(trpc.connection.create.mutationOptions());
   const updateMutation = useMutation(trpc.connection.update.mutationOptions());
 
-  const handleOk = async () => {
+  const modalTitle = t(`button.${isEditMode ? 'update' : 'add'}`);
+
+  const handleSave = async () => {
     const values = await form.validateFields();
 
-    if (isEditMode) {
-      await updateMutation.mutateAsync({ ...values, id });
+    if (isEditMode && id) {
+      await updateMutation.mutateAsync(buildUpdatePayload(values, id));
     } else {
       await createMutation.mutateAsync(values);
     }
+
     showSuccess(t('connection.success'));
     onOk?.();
   };
@@ -72,26 +79,33 @@ const ConnectionModal: React.FC<IConnectionModal> = props => {
     onCancel?.();
   };
 
-  const clearForm = () => {
-    form.resetFields();
-  };
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    if (!isEditMode) {
+      form.resetFields();
+    }
+  }, [form, isEditMode, open]);
 
   useEffect(() => {
-    if (detailQuery.data) {
-      form.setFieldsValue(detailQuery.data);
+    if (!open || !isEditMode || !detailQuery.data) {
+      return;
     }
-  }, [detailQuery.data]);
+
+    form.setFieldsValue(detailQuery.data);
+  }, [detailQuery.data, form, isEditMode, open]);
 
   return (
     <Modal
       width={800}
-      title={title}
+      title={modalTitle}
       open={open}
-      onOk={handleOk}
+      onOk={handleSave}
       onCancel={handleCancel}
       maskClosable={false}
       keyboard={false}
-      afterClose={clearForm}
       loading={detailQuery.isLoading}
       footer={(_, { CancelBtn }) => (
         <>
@@ -108,7 +122,7 @@ const ConnectionModal: React.FC<IConnectionModal> = props => {
             key="submit"
             type="primary"
             loading={updateMutation.isPending || createMutation.isPending}
-            onClick={handleOk}
+            onClick={handleSave}
           >
             OK
           </Button>
@@ -142,7 +156,7 @@ const ConnectionModal: React.FC<IConnectionModal> = props => {
         </Row>
         <Row gutter={16}>
           <Col span={12}>
-            <Form.Item label={t('connection.username')} name="username" rules={[]}>
+            <Form.Item label={t('connection.username')} name="username">
               <Input autoComplete="off" />
             </Form.Item>
           </Col>
@@ -150,15 +164,21 @@ const ConnectionModal: React.FC<IConnectionModal> = props => {
             <Form.Item
               label={t('connection.password')}
               name="password"
-              rules={[]}
               tooltip={t('connection.passwordTip')}
             >
               <Input.Password autoComplete="off" disabled={isEditMode} />
             </Form.Item>
           </Col>
         </Row>
-        {connectionType === 'mongodb' && (
-          <Form.Item label={t('connection.authDB')} name="database" rules={[]}>
+        {shouldShowDatabaseField && (
+          <Form.Item
+            label={
+              connectionType === EConnectionType.MONGODB
+                ? t('connection.authDB')
+                : t('connection.defaultDB')
+            }
+            name="database"
+          >
             <Input autoComplete="off" />
           </Form.Item>
         )}

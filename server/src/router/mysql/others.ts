@@ -2,7 +2,7 @@ import { QueryTypes } from 'sequelize';
 
 import { protectedProcedure, router } from '../../trpc';
 import { MySQLBaseSchema } from '@packages/zod/mysql';
-import { escapedMySQLName } from '../../lib/utils';
+import { escapedMySQLName } from '../../shared/mysql/quote-identifier';
 
 interface ITableStatus {
   TABLE_CATALOG: string;

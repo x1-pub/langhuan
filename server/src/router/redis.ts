@@ -24,20 +24,53 @@ interface IRedisKey {
   size: number;
 }
 
+const isRedisUnsupportedFeatureError = (error: unknown) => {
+  const message = String(error || '').toLowerCase();
+  return (
+    message.includes('unknown command') ||
+    message.includes('wrong number of arguments') ||
+    message.includes('syntax error')
+  );
+};
+
 export const redisRouter = router({
   getKeys: protectedProcedure.input(GetRedisKeysSchema).query(async ({ ctx, input }) => {
     const { connectionId, type, count, match, dbName, cursor } = input;
-    const instance = await ctx.pool.getRedislInstance(connectionId, dbName);
+    const instance = await ctx.pool.getRedisInstance(connectionId, dbName);
 
     let scanned = 0;
     let nextCursor = cursor || 0;
     const keys: string[] = [];
+    let supportsScanTypeFilter = !!type;
+    const scanWithBaseArgs = (next: number) => instance.scan(next, 'MATCH', match, 'COUNT', count);
 
     while (scanned < 10000 && keys.length < Number(count)) {
-      const args = [nextCursor, 'MATCH', match, 'COUNT', count, ...(type ? ['TYPE', type] : [])];
-      const [newCuruor, keyList] = await instance.scan(
-        ...(args as Parameters<typeof instance.scan>),
-      );
+      let newCuruor: string;
+      let keyList: string[];
+
+      if (type && supportsScanTypeFilter) {
+        try {
+          [newCuruor, keyList] = await instance.scan(
+            nextCursor,
+            'MATCH',
+            match,
+            'COUNT',
+            count,
+            'TYPE',
+            type,
+          );
+        } catch (error) {
+          if (!isRedisUnsupportedFeatureError(error)) {
+            throw error;
+          }
+
+          supportsScanTypeFilter = false;
+          [newCuruor, keyList] = await scanWithBaseArgs(nextCursor);
+        }
+      } else {
+        [newCuruor, keyList] = await scanWithBaseArgs(nextCursor);
+      }
+
       nextCursor = Number(newCuruor);
       scanned += Number(count);
       keys.push(...keyList);
@@ -66,20 +99,29 @@ export const redisRouter = router({
       if (error) {
         throw new TRPCError({ code: 'BAD_REQUEST', message: String(error) });
       }
+      const [sizeError, size] = res[i + 2];
+      const fallbackSize = sizeError && isRedisUnsupportedFeatureError(sizeError) ? -1 : size;
+      if (sizeError && !isRedisUnsupportedFeatureError(sizeError)) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: String(sizeError) });
+      }
 
       items.push({
         key: keys[i / 3],
         type: res[i][1] as ERedisDataType,
         ttl: res[i + 1][1] as number,
-        size: res[i + 2][1] as number,
+        size: fallbackSize as number,
       });
     }
 
+    const normalizedItems =
+      type && !supportsScanTypeFilter
+        ? items.filter(item => item.type === type).slice(0, Number(count))
+        : items;
     const total = await instance.dbsize();
 
     return {
       nextCursor,
-      items,
+      items: normalizedItems,
       total,
       scanned,
     };
@@ -88,7 +130,7 @@ export const redisRouter = router({
   getValue: protectedProcedure.input(GetRedisValueSchema).query(async ({ ctx, input }) => {
     const { connectionId, type, key, dbName } = input;
 
-    const instance = await ctx.pool.getRedislInstance(connectionId, dbName);
+    const instance = await ctx.pool.getRedisInstance(connectionId, dbName);
     const pipe = instance.pipeline();
     switch (type) {
       case ERedisDataType.STRING:
@@ -122,7 +164,8 @@ export const redisRouter = router({
     }
 
     const [[valueError, value], [ttlError, ttl], [sizeError, size]] = res;
-    if (valueError || ttlError || sizeError) {
+    const isMemoryUnsupported = sizeError && isRedisUnsupportedFeatureError(sizeError);
+    if (valueError || ttlError || (sizeError && !isMemoryUnsupported)) {
       throw new TRPCError({
         code: 'BAD_REQUEST',
         message: String(valueError || ttlError || sizeError),
@@ -132,7 +175,7 @@ export const redisRouter = router({
     return {
       type,
       ttl: ttl as number,
-      size: size as number,
+      size: isMemoryUnsupported ? -1 : (size as number),
       key,
       value: transformRedisDataToUnified(type, value),
     };
@@ -140,7 +183,7 @@ export const redisRouter = router({
 
   addValue: protectedProcedure.input(AddRedisValueSchema).mutation(async ({ ctx, input }) => {
     const { connectionId, type, ttl, value, key, dbName } = input;
-    const instance = await ctx.pool.getRedislInstance(connectionId, dbName);
+    const instance = await ctx.pool.getRedisInstance(connectionId, dbName);
     const pipe = instance.pipeline();
 
     switch (type) {
@@ -176,7 +219,7 @@ export const redisRouter = router({
     .input(UpdateHashValueSchema)
     .mutation(async ({ ctx, input }) => {
       const { connectionId, field, value, key, dbName, isRemove } = input;
-      const instance = await ctx.pool.getRedislInstance(connectionId, dbName);
+      const instance = await ctx.pool.getRedisInstance(connectionId, dbName);
 
       if (isRemove) {
         await instance.hdel(key, field);
@@ -191,7 +234,7 @@ export const redisRouter = router({
     .input(UpdateStringValueSchema)
     .mutation(async ({ ctx, input }) => {
       const { connectionId, value, key, dbName } = input;
-      const instance = await ctx.pool.getRedislInstance(connectionId, dbName);
+      const instance = await ctx.pool.getRedisInstance(connectionId, dbName);
 
       await instance.set(key, value);
       return null;
@@ -210,7 +253,7 @@ export const redisRouter = router({
         isModify,
         isPushToHead,
       } = input;
-      const instance = await ctx.pool.getRedislInstance(connectionId, dbName);
+      const instance = await ctx.pool.getRedisInstance(connectionId, dbName);
 
       if (isModify) {
         await instance.lset(key, index, element);
@@ -235,7 +278,7 @@ export const redisRouter = router({
     .input(UpdateSetValueSchema)
     .mutation(async ({ ctx, input }) => {
       const { connectionId, member, key, dbName, isRemove } = input;
-      const instance = await ctx.pool.getRedislInstance(connectionId, dbName);
+      const instance = await ctx.pool.getRedisInstance(connectionId, dbName);
 
       if (isRemove) {
         await instance.srem(key, member);
@@ -250,7 +293,7 @@ export const redisRouter = router({
     .input(UpdateZsetValueSchema)
     .mutation(async ({ ctx, input }) => {
       const { connectionId, member, key, dbName, isRemove, score = 0 } = input;
-      const instance = await ctx.pool.getRedislInstance(connectionId, dbName);
+      const instance = await ctx.pool.getRedisInstance(connectionId, dbName);
 
       if (isRemove) {
         await instance.zrem(key, member);
@@ -265,7 +308,7 @@ export const redisRouter = router({
     .input(UpdateStreamValueSchema)
     .mutation(async ({ ctx, input }) => {
       const { connectionId, key, dbName, isRemove, entry } = input;
-      const instance = await ctx.pool.getRedislInstance(connectionId, dbName);
+      const instance = await ctx.pool.getRedisInstance(connectionId, dbName);
 
       if (isRemove) {
         await instance.xdel(key, entry[0][0]);
@@ -278,7 +321,7 @@ export const redisRouter = router({
 
   deleteKey: protectedProcedure.input(DeleteRedisKey).mutation(async ({ ctx, input }) => {
     const { connectionId, key, dbName } = input;
-    const instance = await ctx.pool.getRedislInstance(connectionId, dbName);
+    const instance = await ctx.pool.getRedisInstance(connectionId, dbName);
 
     await instance.del(key);
     return null;
@@ -286,7 +329,7 @@ export const redisRouter = router({
 
   modifyTTL: protectedProcedure.input(ModifyRedisTTL).mutation(async ({ ctx, input }) => {
     const { connectionId, key, ttl, dbName } = input;
-    const instance = await ctx.pool.getRedislInstance(connectionId, dbName);
+    const instance = await ctx.pool.getRedisInstance(connectionId, dbName);
 
     if (ttl >= 0) {
       await instance.expire(key, ttl);
@@ -298,7 +341,7 @@ export const redisRouter = router({
 
   modifyKey: protectedProcedure.input(ModifyRedisKey).mutation(async ({ ctx, input }) => {
     const { connectionId, key, newKey, dbName } = input;
-    const instance = await ctx.pool.getRedislInstance(connectionId, dbName);
+    const instance = await ctx.pool.getRedisInstance(connectionId, dbName);
 
     await instance.renamenx(key, newKey);
     return null;

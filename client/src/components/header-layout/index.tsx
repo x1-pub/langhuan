@@ -19,7 +19,7 @@ const HeaderLayout: React.FC = () => {
   const isWelcomePage = location.pathname === '/';
 
   const linkToGithub = () => {
-    window.open('https://github.com/x1-pub/langhuan');
+    window.open('https://github.com/x1-pub/langhuan', '_blank', 'noopener,noreferrer');
   };
 
   const handleAfterCreate = () => {
@@ -31,7 +31,7 @@ const HeaderLayout: React.FC = () => {
   };
 
   return (
-    <>
+    <div className={styles.layout}>
       <header className={styles.headerWrap}>
         <div className={styles.header}>
           <div className={styles.left}>
@@ -53,8 +53,10 @@ const HeaderLayout: React.FC = () => {
           </div>
         </div>
       </header>
-      <Outlet />
-    </>
+      <main className={styles.body}>
+        <Outlet />
+      </main>
+    </div>
   );
 };
 

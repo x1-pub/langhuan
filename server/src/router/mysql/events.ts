@@ -8,7 +8,7 @@ import {
 } from '@packages/zod/mysql';
 import { EMySQLEventStatus } from '@packages/types/mysql';
 import { protectedProcedure, router } from '../../trpc';
-import { escapedMySQLName } from '../../lib/utils';
+import { escapedMySQLName } from '../../shared/mysql/quote-identifier';
 
 interface IOriginEvent {
   name: string;
@@ -27,9 +27,19 @@ interface IOriginEvent {
 const formatDateTime = (value: Date | string | null) => {
   if (!value) return '';
   if (value instanceof Date) {
-    return value.toISOString().replace('T', ' ').split('.')[0];
+    const year = value.getUTCFullYear();
+    const month = String(value.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(value.getUTCDate()).padStart(2, '0');
+    const hour = String(value.getUTCHours()).padStart(2, '0');
+    const minute = String(value.getUTCMinutes()).padStart(2, '0');
+    const second = String(value.getUTCSeconds()).padStart(2, '0');
+    return `${year}-${month}-${day} ${hour}:${minute}:${second}`;
   }
-  return `${value}`.replace('T', ' ').split('.')[0];
+  return `${value}`
+    .replace('T', ' ')
+    .replace(/\.\d+$/, '')
+    .replace(/(Z|[+-]\d{2}:?\d{2})$/, '')
+    .trim();
 };
 
 const buildSchedule = (event: IOriginEvent) => {

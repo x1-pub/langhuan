@@ -5,6 +5,17 @@ import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
 import { globalIgnores } from 'eslint/config';
 
+const UNUSED_VARS_RULE = [
+  'error',
+  {
+    argsIgnorePattern: '^_',
+    varsIgnorePattern: '^_',
+    caughtErrorsIgnorePattern: '^_',
+    destructuredArrayIgnorePattern: '^_',
+    ignoreRestSiblings: true,
+  },
+];
+
 export default tseslint.config([
   globalIgnores(['**/dist/**']),
   {
@@ -26,6 +37,8 @@ export default tseslint.config([
     },
     rules: {
       'react-hooks/exhaustive-deps': 'off',
+      'no-unused-vars': 'off',
+      '@typescript-eslint/no-unused-vars': UNUSED_VARS_RULE,
     },
   },
   {
@@ -42,6 +55,8 @@ export default tseslint.config([
     },
     rules: {
       '@typescript-eslint/no-namespace': 'off',
+      'no-unused-vars': 'off',
+      '@typescript-eslint/no-unused-vars': UNUSED_VARS_RULE,
     },
   },
   {
@@ -55,6 +70,10 @@ export default tseslint.config([
       globals: {
         ...globals.node,
       },
+    },
+    rules: {
+      'no-unused-vars': 'off',
+      '@typescript-eslint/no-unused-vars': UNUSED_VARS_RULE,
     },
   },
 ]);

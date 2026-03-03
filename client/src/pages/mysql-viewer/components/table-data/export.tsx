@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Modal, Form, Select, Checkbox } from 'antd';
 import { useMutation } from '@tanstack/react-query';
 import { Buffer } from 'buffer';
+import { useTranslation } from 'react-i18next';
 
-import useDatabaseWindows from '@/hooks/use-database-windows';
+import useDatabaseWindows from '@/domain/workbench/state/database-window-state';
 import type { TMySQLCondition } from '@packages/types/mysql';
 import { EMySQLDataExportType } from '@packages/types/mysql';
-import { trpc } from '@/utils/trpc';
+import { trpc } from '@/infra/api/trpc';
 
 interface ExportModalProps {
   visible: boolean;
@@ -21,17 +22,17 @@ interface ExportFormValues {
   selectedFields: string[];
 }
 
-const formatOptions = [
-  { label: 'SQL脚本文件(*.sql)', value: EMySQLDataExportType.SQL },
-  { label: 'Excel文件(*.xlsx)', value: EMySQLDataExportType.EXCEL },
-  { label: 'JSON文件(*.json)', value: EMySQLDataExportType.JSON },
-];
-
 const ExportDataModal: React.FC<ExportModalProps> = props => {
+  const { t } = useTranslation();
   const { connectionId, dbName, tableName } = useDatabaseWindows();
   const { visible, condition, fields, onCancel, onOk } = props;
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm<ExportFormValues>();
+  const formatOptions = [
+    { label: t('mysql.exportFormatSql'), value: EMySQLDataExportType.SQL },
+    { label: t('mysql.exportFormatExcel'), value: EMySQLDataExportType.EXCEL },
+    { label: t('mysql.exportFormatJson'), value: EMySQLDataExportType.JSON },
+  ];
 
   const exportDataMutation = useMutation(trpc.mysql.exportData.mutationOptions());
 
@@ -69,16 +70,16 @@ const ExportDataModal: React.FC<ExportModalProps> = props => {
     if (visible) {
       form?.resetFields();
     }
-  }, [visible]);
+  }, [form, visible]);
 
   return (
     <Modal
-      title="数据导出"
+      title={t('mysql.exportData')}
       open={visible}
       confirmLoading={loading}
       onCancel={onCancel}
       onOk={handleExport}
-      okText={loading ? '生成中' : '导出'}
+      okText={loading ? t('mysql.exportGenerating') : t('button.export')}
       width={600}
       destroyOnHidden
     >
@@ -91,17 +92,17 @@ const ExportDataModal: React.FC<ExportModalProps> = props => {
         }}
       >
         <Form.Item
-          label="导出格式"
+          label={t('mysql.exportFormat')}
           name="format"
-          rules={[{ required: true, message: '请选择导出格式' }]}
+          rules={[{ required: true, message: t('mysql.exportFormatRequired') }]}
         >
           <Select options={formatOptions} />
         </Form.Item>
 
         <Form.Item
-          label="选择字段"
+          label={t('mysql.exportSelectFields')}
           name="selectedFields"
-          rules={[{ required: true, message: '请选择导出格式' }]}
+          rules={[{ required: true, message: t('mysql.exportFieldsRequired') }]}
         >
           <Checkbox.Group options={fields.map(f => ({ label: f, value: f }))} />
         </Form.Item>

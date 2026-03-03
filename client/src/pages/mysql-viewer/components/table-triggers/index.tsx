@@ -4,8 +4,8 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
 import { EMySQLTriggerEvent, EMySQLTriggerTiming, TMySQLTrigger } from '@packages/types/mysql';
-import useDatabaseWindows from '@/hooks/use-database-windows';
-import { trpc } from '@/utils/trpc';
+import useDatabaseWindows from '@/domain/workbench/state/database-window-state';
+import { trpc } from '@/infra/api/trpc';
 import TriggerModal from './modal';
 import styles from '../../index.module.less';
 
@@ -143,6 +143,7 @@ const TableTriggers: React.FC = () => {
   return (
     <div className={styles.wrapper}>
       <Table
+        className={styles.dataTable}
         columns={columns}
         dataSource={getTriggersQuery.data}
         rowKey="name"
@@ -151,7 +152,7 @@ const TableTriggers: React.FC = () => {
         onRow={record => ({
           onDoubleClick: () => handleEdit(record),
         })}
-        scroll={{ y: 'calc(100vh - 195px)' }}
+        scroll={{ y: '100%' }}
       />
 
       <TriggerModal
