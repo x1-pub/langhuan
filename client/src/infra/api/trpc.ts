@@ -8,6 +8,9 @@ import { showError } from '@/shared/ui/notifications';
 
 const DEFAULT_ERROR_TITLE = 'UNEXPECTED_ERROR';
 const DEFAULT_ERROR_MESSAGE = "I'm sorry, an unexpected error occurred on the server.";
+const LOGIN_URL_HEADER = 'x-login-url';
+
+let hasRedirectedToLogin = false;
 
 const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
@@ -38,8 +41,21 @@ const extractError = (error: unknown) => {
   showError({ title, message, sql });
 };
 
+const trpcFetch: typeof fetch = async (input, init) => {
+  const response = await fetch(input, init);
+  if (!hasRedirectedToLogin && response.status === 401) {
+    const loginUrl = response.headers.get(LOGIN_URL_HEADER);
+    if (typeof window !== 'undefined' && loginUrl) {
+      hasRedirectedToLogin = true;
+      window.location.assign(loginUrl);
+    }
+  }
+
+  return response;
+};
+
 export const trpcClient = createTRPCClient<AppRouter>({
-  links: [httpBatchLink({ url: '/api/trpc' })],
+  links: [httpBatchLink({ url: '/api/trpc', fetch: trpcFetch })],
 });
 
 export type RouterOutput = inferRouterOutputs<AppRouter>;
