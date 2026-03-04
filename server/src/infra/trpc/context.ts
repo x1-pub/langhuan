@@ -29,7 +29,7 @@ const createNotFoundError = (databaseTypeName: string, connectionId: number) =>
   });
 
 const createContext = async ({ req, res }: CreateFastifyContextOptions) => {
-  const uid = Number(req.headers['sso-uid-id']) || Number(process.env.DEV_USER_ID);
+  const uid = Number(req.headers['x-sso-uid']) || Number(process.env.DEV_USER_ID);
 
   const getConnectionByTypes = async (
     connectionId: number,
