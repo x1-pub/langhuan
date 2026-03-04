@@ -1,0 +1,44 @@
+name: Sync main into prod
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: sync-main-to-prod
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  sync-main-to-prod:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.PROD_SYNC_TOKEN != '' && secrets.PROD_SYNC_TOKEN || github.token }}
+
+      - name: Configure Git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Merge main into prod
+        run: |
+          set -euo pipefail
+
+          git fetch origin main prod
+          git checkout -B prod origin/prod
+
+          if git merge-base --is-ancestor origin/main HEAD; then
+            echo "prod already contains latest main. Nothing to sync."
+            exit 0
+          fi
+
+          git merge --no-ff --no-edit origin/main
+          git push origin HEAD:prod
