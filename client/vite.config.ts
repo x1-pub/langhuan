@@ -5,51 +5,6 @@ import svgr from 'vite-plugin-svgr';
 
 // 统一不同操作系统下的路径分隔符，避免匹配规则失效。
 const normalizePath = (id: string) => id.replace(/\\/g, '/');
-// 生成稳定且可用于 URL 的 chunk 名称片段。
-const toChunkNamePart = (value: string) =>
-  value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-
-// Monaco：editor/common 按能力分组。
-// 目标是在“单包过大”和“碎片过多”之间取得平衡。
-const MONACO_EDITOR_COMMON_GROUPS: Record<string, string> = {
-  model: 'model',
-  cursor: 'model',
-  viewModel: 'model',
-  core: 'runtime',
-  config: 'runtime',
-  services: 'runtime',
-  standalone: 'runtime',
-  languages: 'language',
-  diff: 'language',
-  viewLayout: 'language',
-  tokens: 'language',
-  commands: 'language',
-};
-
-// Monaco：browser 层按渲染/交互职责分组。
-const MONACO_EDITOR_BROWSER_GROUPS: Record<string, string> = {
-  widget: 'render',
-  viewParts: 'render',
-  gpu: 'render',
-  view: 'render',
-  controller: 'interaction',
-  services: 'interaction',
-  config: 'interaction',
-};
-
-// Monaco：platform 服务按用途分组。
-const MONACO_PLATFORM_GROUPS: Record<string, string> = {
-  quickinput: 'ui',
-  theme: 'ui',
-  actions: 'ui',
-  contextview: 'ui',
-  keybinding: 'command',
-  contextkey: 'command',
-  configuration: 'command',
-};
 
 // 从模块 id 中提取 npm 包名。
 const getPackageName = (id: string) => {
@@ -70,49 +25,6 @@ const getPackageName = (id: string) => {
   }
 
   return scopeOrName;
-};
-
-// Monaco 专用拆包策略。
-// Monaco 通常是最重依赖，因此拆分粒度比其他 vendor 更细。
-const getMonacoChunkName = (id: string) => {
-  if (id.includes('/basic-languages/sql/')) {
-    return 'vendor-monaco-sql';
-  }
-
-  const monacoRootIndex = id.indexOf('/monaco-editor/esm/vs/');
-  if (monacoRootIndex !== -1) {
-    const subPath = id.slice(monacoRootIndex + '/monaco-editor/esm/vs/'.length);
-    const [scope, group, area] = subPath.split('/');
-    if (scope === 'base' && group) {
-      return `vendor-monaco-base-${toChunkNamePart(group)}`;
-    }
-    if (scope === 'editor' && group === 'common') {
-      const bucket = (area && MONACO_EDITOR_COMMON_GROUPS[area]) || 'runtime';
-      return `vendor-monaco-editor-common-${toChunkNamePart(bucket)}`;
-    }
-    if (scope === 'editor' && group === 'browser') {
-      const bucket = (area && MONACO_EDITOR_BROWSER_GROUPS[area]) || 'core';
-      return `vendor-monaco-editor-browser-${toChunkNamePart(bucket)}`;
-    }
-    if (scope === 'editor' && group === 'contrib') {
-      return 'vendor-monaco-editor-contrib';
-    }
-    if (scope === 'editor' && group === 'standalone') {
-      return 'vendor-monaco-editor-standalone';
-    }
-    if (scope === 'platform' && group) {
-      const bucket = MONACO_PLATFORM_GROUPS[group] || 'core';
-      return `vendor-monaco-platform-${toChunkNamePart(bucket)}`;
-    }
-    if (scope === 'language') {
-      return 'vendor-monaco-language';
-    }
-    if (scope && group) {
-      return `vendor-monaco-${toChunkNamePart(scope)}-${toChunkNamePart(group)}`;
-    }
-  }
-
-  return 'vendor-monaco-core';
 };
 
 export default defineConfig({
@@ -161,16 +73,14 @@ export default defineConfig({
             return undefined;
           }
 
-          // 3) 先匹配重依赖（Monaco），再匹配框架/UI/数据层依赖。
-          if (normalized.includes('/node_modules/monaco-editor/')) {
-            return getMonacoChunkName(normalized);
-          }
-
+          // 3) Monaco 存在较多平台层循环依赖，拆得过细会触发初始化顺序问题。
+          // 统一收敛到单 chunk，优先保证生产环境稳定性。
           if (
+            normalized.includes('/node_modules/monaco-editor/') ||
             normalized.includes('/node_modules/@monaco-editor/react/') ||
             normalized.includes('/node_modules/@monaco-editor/loader/')
           ) {
-            return 'vendor-monaco-react';
+            return 'vendor-monaco';
           }
 
           const packageName = getPackageName(normalized);
