@@ -51,83 +51,6 @@ const MONACO_PLATFORM_GROUPS: Record<string, string> = {
   configuration: 'command',
 };
 
-// Antd 组件按功能域分组，平衡请求数量与 chunk 体积。
-const ANTD_COMPONENT_GROUPS: Record<string, string> = {
-  table: 'data',
-  tree: 'data',
-  descriptions: 'data',
-  typography: 'data',
-  list: 'data',
-  card: 'data',
-  skeleton: 'data',
-  badge: 'data',
-  tag: 'data',
-  tabs: 'navigation',
-  menu: 'navigation',
-  dropdown: 'navigation',
-  pagination: 'navigation',
-  breadcrumb: 'navigation',
-  steps: 'navigation',
-  form: 'form',
-  input: 'form',
-  'input-number': 'form',
-  select: 'form',
-  checkbox: 'form',
-  radio: 'form',
-  switch: 'form',
-  'date-picker': 'form',
-  'time-picker': 'form',
-  cascader: 'form',
-  'tree-select': 'form',
-  mentions: 'form',
-  'auto-complete': 'form',
-  modal: 'feedback',
-  notification: 'feedback',
-  message: 'feedback',
-  result: 'feedback',
-  popconfirm: 'feedback',
-  tooltip: 'feedback',
-  popover: 'feedback',
-  empty: 'feedback',
-  spin: 'feedback',
-  layout: 'layout',
-  grid: 'layout',
-  space: 'layout',
-  splitter: 'layout',
-  divider: 'layout',
-  anchor: 'layout',
-  theme: 'foundation',
-  locale: 'foundation',
-  'config-provider': 'foundation',
-};
-
-// rc-* 生态按与 Antd 一致的功能域分组。
-const RC_PACKAGE_GROUPS: Record<string, string> = {
-  picker: 'form',
-  select: 'form',
-  form: 'form',
-  'async-validator': 'form',
-  input: 'form',
-  textarea: 'form',
-  'input-number': 'form',
-  table: 'data',
-  tree: 'data',
-  'virtual-list': 'data',
-  pagination: 'data',
-  menu: 'navigation',
-  tabs: 'navigation',
-  dropdown: 'overlay',
-  trigger: 'overlay',
-  dialog: 'overlay',
-  notification: 'overlay',
-  motion: 'overlay',
-  overflow: 'overlay',
-  collapse: 'overlay',
-  portal: 'overlay',
-  tooltip: 'overlay',
-  util: 'core',
-};
-
 // 从模块 id 中提取 npm 包名。
 const getPackageName = (id: string) => {
   const normalized = normalizePath(id);
@@ -192,45 +115,6 @@ const getMonacoChunkName = (id: string) => {
   return 'vendor-monaco-core';
 };
 
-// Antd / rc 专用拆包策略。
-// 未识别的组件回退到 core chunk，保证依赖小版本变化时也稳定。
-const getAntdChunkName = (id: string, packageName: string) => {
-  if (packageName === 'antd') {
-    const componentMatch = id.match(/\/antd\/es\/([^/]+)\//);
-    const componentName = componentMatch?.[1];
-    if (!componentName || componentName === '_util' || componentName === 'style') {
-      return 'vendor-antd-core';
-    }
-    const group = ANTD_COMPONENT_GROUPS[componentName];
-    if (!group) {
-      return 'vendor-antd-core';
-    }
-    return `vendor-antd-${toChunkNamePart(group)}`;
-  }
-
-  if (packageName === 'antd-style') {
-    return 'vendor-antd-style';
-  }
-
-  if (packageName.startsWith('@rc-component/')) {
-    const rcName = packageName.split('/')[1];
-    const group = RC_PACKAGE_GROUPS[rcName] || 'core';
-    return `vendor-rc-${toChunkNamePart(group)}`;
-  }
-
-  if (packageName.startsWith('rc-')) {
-    const rcName = packageName.replace(/^rc-/, '');
-    const group = RC_PACKAGE_GROUPS[rcName] || 'core';
-    return `vendor-rc-${toChunkNamePart(group)}`;
-  }
-
-  if (packageName.startsWith('@ant-design/')) {
-    return 'vendor-antd-style';
-  }
-
-  return 'vendor-antd-core';
-};
-
 export default defineConfig({
   plugins: [
     react(),
@@ -255,6 +139,10 @@ export default defineConfig({
   build: {
     target: 'es2020',
     cssCodeSplit: true,
+    commonjsOptions: {
+      // 尽量避免跨 chunk 提取 interop helper，减少初始化环依赖。
+      requireReturnsDefault: 'preferred',
+    },
     // 预加载由应用层（home-entry）手动调度，这里关闭 Vite 默认 modulepreload。
     modulePreload: false,
     rollupOptions: {
@@ -290,15 +178,6 @@ export default defineConfig({
             return 'vendor-misc';
           }
 
-          if (
-            packageName === 'react' ||
-            packageName === 'react-dom' ||
-            packageName === 'react-router' ||
-            packageName === 'scheduler'
-          ) {
-            return 'vendor-react';
-          }
-
           if (packageName.startsWith('@tanstack/') || packageName.startsWith('@trpc/')) {
             return 'vendor-trpc-query';
           }
@@ -307,18 +186,25 @@ export default defineConfig({
             return 'vendor-i18n';
           }
 
-          if (packageName === '@ant-design/icons' || packageName === '@ant-design/icons-svg') {
-            return 'vendor-antd-icons';
-          }
-
+          // React + Router + Antd 生态聚合到同一 vendor，避免初始化环依赖。
           if (
+            packageName === 'react' ||
+            packageName === 'react-dom' ||
+            packageName === 'scheduler' ||
+            packageName === 'react-router' ||
+            packageName === '@remix-run/router' ||
             packageName === 'antd' ||
             packageName === 'antd-style' ||
             packageName.startsWith('@ant-design/') ||
             packageName.startsWith('@rc-component/') ||
-            packageName.startsWith('rc-')
+            packageName.startsWith('rc-') ||
+            packageName.startsWith('@emotion/') ||
+            packageName === 'hoist-non-react-statics' ||
+            packageName === 'react-is' ||
+            packageName === 'is-mobile' ||
+            packageName.startsWith('@babel/runtime')
           ) {
-            return getAntdChunkName(normalized, packageName);
+            return 'vendor-framework';
           }
 
           if (packageName.startsWith('@dnd-kit/')) {
