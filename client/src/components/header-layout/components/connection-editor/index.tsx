@@ -19,6 +19,15 @@ const connectionTypeOptions = [
 
 type ConnectionFormValue = z.infer<typeof CreateConnectionSchema>;
 
+const normalizeOptionalPassword = (value: string | null | undefined) => {
+  if (typeof value !== 'string') {
+    return value;
+  }
+
+  const trimmed = value.trim();
+  return trimmed ? trimmed : undefined;
+};
+
 interface ConnectionModalProps {
   open: boolean;
   id?: number;
@@ -33,6 +42,7 @@ const buildUpdatePayload = (values: ConnectionFormValue, id: number) => {
     port: values.port,
     username: values.username,
     database: values.database,
+    password: normalizeOptionalPassword(values.password),
     id,
   };
 };
@@ -57,11 +67,15 @@ const ConnectionModal: React.FC<ConnectionModalProps> = ({ open, id, onOk, onCan
 
   const handleSave = async () => {
     const values = await form.validateFields();
+    const normalizedValues = {
+      ...values,
+      password: normalizeOptionalPassword(values.password),
+    };
 
     if (isEditMode && id) {
-      await updateMutation.mutateAsync(buildUpdatePayload(values, id));
+      await updateMutation.mutateAsync(buildUpdatePayload(normalizedValues, id));
     } else {
-      await createMutation.mutateAsync(values);
+      await createMutation.mutateAsync(normalizedValues);
     }
 
     showSuccess(t('connection.success'));
@@ -70,7 +84,11 @@ const ConnectionModal: React.FC<ConnectionModalProps> = ({ open, id, onOk, onCan
 
   const handleTest = async () => {
     const values = await form.validateFields();
-    await pingMutation.mutateAsync({ ...values, id });
+    await pingMutation.mutateAsync({
+      ...values,
+      password: normalizeOptionalPassword(values.password),
+      id,
+    });
     showSuccess(t('connection.pingSuccess'));
   };
 
@@ -94,7 +112,7 @@ const ConnectionModal: React.FC<ConnectionModalProps> = ({ open, id, onOk, onCan
       return;
     }
 
-    form.setFieldsValue(detailQuery.data);
+    form.setFieldsValue({ ...detailQuery.data, password: undefined });
   }, [detailQuery.data, form, isEditMode, open]);
 
   return (
@@ -124,7 +142,7 @@ const ConnectionModal: React.FC<ConnectionModalProps> = ({ open, id, onOk, onCan
             loading={updateMutation.isPending || createMutation.isPending}
             onClick={handleSave}
           >
-            OK
+            {t('button.save')}
           </Button>
         </>
       )}
@@ -164,9 +182,14 @@ const ConnectionModal: React.FC<ConnectionModalProps> = ({ open, id, onOk, onCan
             <Form.Item
               label={t('connection.password')}
               name="password"
-              tooltip={t('connection.passwordTip')}
+              tooltip={
+                isEditMode ? t('connection.passwordTipEdit') : t('connection.passwordTipCreate')
+              }
             >
-              <Input.Password autoComplete="off" disabled={isEditMode} />
+              <Input.Password
+                autoComplete="off"
+                placeholder={isEditMode ? t('connection.passwordEditPlaceholder') : undefined}
+              />
             </Form.Item>
           </Col>
         </Row>

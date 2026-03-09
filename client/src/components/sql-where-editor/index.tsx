@@ -8,8 +8,8 @@ const LazyCodeEditor = React.lazy(() => import('@/components/code-editor'));
 
 interface SqlWhereEditorProps {
   value: string;
-  fields: string[];
-  keywords?: string[];
+  fields: readonly string[];
+  keywords?: readonly string[];
   tips: React.ReactNode;
   onChange: (value?: string) => void;
 }

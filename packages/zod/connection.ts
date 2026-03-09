@@ -22,6 +22,7 @@ export const UpdateConnectionSchema = CreateConnectionSchema.pick({
   port: true,
   username: true,
   database: true,
+  password: true,
 })
   .partial()
   .extend({

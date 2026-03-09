@@ -67,7 +67,7 @@ const TableData: React.FC = () => {
       <SqlWhereEditor
         value={whereDraft}
         fields={fields}
-        keywords={[...MYSQL_WHERE_KEYWORDS]}
+        keywords={MYSQL_WHERE_KEYWORDS}
         onChange={changeWhereDraft}
         tips={
           <>

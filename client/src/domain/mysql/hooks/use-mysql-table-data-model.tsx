@@ -141,6 +141,8 @@ const useMySQLTableDataModel = (): UseMySQLTableDataModelResult => {
     [columns],
   );
 
+  const fields = useMemo(() => columns.map(column => column.Field), [columns]);
+
   const getRowsCondition = (keys = selectedRowKeys) =>
     buildMySQLConditionFromRows({
       columns,
@@ -289,7 +291,7 @@ const useMySQLTableDataModel = (): UseMySQLTableDataModelResult => {
   return {
     whereDraft,
     columns,
-    fields: columns.map(column => column.Field),
+    fields,
     total: tableDataQuery.data?.count || 0,
     loading: tableDataQuery.isLoading,
     pagination,

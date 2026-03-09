@@ -1,17 +1,99 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router';
+import { useTranslation } from 'react-i18next';
 
-import ArrowRightIcon from '@/assets/svg/arrow-right.svg?react';
-import GithubIcon from '@/assets/svg/github.svg?react';
-import { getHomeCopy } from './home-copy';
 import styles from './index.module.less';
+import {
+  CtaSection,
+  EnginesSection,
+  HeroSection,
+  StorySection,
+  type WelcomeEngineCard,
+  type WelcomeHomeCopy,
+} from './components';
 
 const Welcome: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
-  const copy = useMemo(() => getHomeCopy(), []);
-  const { home } = copy;
   const repoURL = 'https://github.com/x1-pub/langhuan';
   const issueURL = `${repoURL}/issues/new`;
+
+  const home: WelcomeHomeCopy = useMemo(
+    () => ({
+      start: t('home.start'),
+      question: t('home.question'),
+      text1: t('home.text1'),
+      text2: t('home.text2'),
+      text3: t('home.text3'),
+      d2: t('home.d2'),
+      story1: t('home.story1'),
+      story2: t('home.story2'),
+      support: t('home.support'),
+      ready: t('home.ready'),
+      startNow: t('home.startNow'),
+      freeNow: t('home.freeNow'),
+      github: t('home.github'),
+      meta: {
+        license: t('home.meta.license'),
+        engines: t('home.meta.engines'),
+        availability: t('home.meta.availability'),
+      },
+      shell: {
+        title: t('home.shell.title'),
+        tabWorkspace: t('home.shell.tabWorkspace'),
+        tabAgent: t('home.shell.tabAgent'),
+        tabDeploy: t('home.shell.tabDeploy'),
+        hint: t('home.shell.hint'),
+        assistant: t('home.shell.assistant'),
+        you: t('home.shell.you'),
+        message1: t('home.shell.message1'),
+        message2: t('home.shell.message2'),
+        status: t('home.shell.status'),
+      },
+    }),
+    [t],
+  );
+
+  const engines = useMemo<WelcomeEngineCard[]>(
+    () => [
+      {
+        key: 'mysql',
+        name: 'MySQL',
+        description: t('home.engines.mysqlDesc'),
+        tags: [t('home.engines.mysqlTag1'), t('home.engines.mysqlTag2')],
+        className: styles.engineCardScatterA,
+      },
+      {
+        key: 'mariadb',
+        name: 'MariaDB',
+        description: t('home.engines.mariadbDesc'),
+        tags: [t('home.engines.mariadbTag1'), t('home.engines.mariadbTag2')],
+        className: styles.engineCardScatterB,
+      },
+      {
+        key: 'redis',
+        name: 'Redis',
+        description: t('home.engines.redisDesc'),
+        tags: [t('home.engines.redisTag1'), t('home.engines.redisTag2')],
+        className: styles.engineCardScatterC,
+      },
+      {
+        key: 'mongo',
+        name: 'MongoDB',
+        description: t('home.engines.mongoDesc'),
+        tags: [t('home.engines.mongoTag1'), t('home.engines.mongoTag2')],
+        className: styles.engineCardScatterD,
+      },
+      {
+        key: 'pgsql',
+        name: 'PostgreSQL',
+        description: t('home.engines.pgsqlDesc'),
+        tags: [t('home.engines.pgsqlTag1'), t('home.engines.pgsqlTag2')],
+        className: styles.engineCardScatterE,
+      },
+    ],
+    [t],
+  );
 
   const openExternal = (url: string) => {
     window.open(url, '_blank', 'noopener,noreferrer');
@@ -20,47 +102,6 @@ const Welcome: React.FC = () => {
   const handleStart = () => {
     navigate('/notselected');
   };
-
-  const engineLayoutClasses = [
-    styles.engineCardScatterA,
-    styles.engineCardScatterB,
-    styles.engineCardScatterC,
-    styles.engineCardScatterD,
-    styles.engineCardScatterE,
-  ];
-
-  const engines = [
-    {
-      key: 'mysql',
-      name: 'MySQL',
-      description: home.engines.mysqlDesc,
-      tags: [home.engines.mysqlTag1, home.engines.mysqlTag2],
-    },
-    {
-      key: 'mariadb',
-      name: 'MariaDB',
-      description: home.engines.mariadbDesc,
-      tags: [home.engines.mariadbTag1, home.engines.mariadbTag2],
-    },
-    {
-      key: 'redis',
-      name: 'Redis',
-      description: home.engines.redisDesc,
-      tags: [home.engines.redisTag1, home.engines.redisTag2],
-    },
-    {
-      key: 'mongo',
-      name: 'MongoDB',
-      description: home.engines.mongoDesc,
-      tags: [home.engines.mongoTag1, home.engines.mongoTag2],
-    },
-    {
-      key: 'pgsql',
-      name: 'PostgreSQL',
-      description: home.engines.pgsqlDesc,
-      tags: [home.engines.pgsqlTag1, home.engines.pgsqlTag2],
-    },
-  ];
 
   return (
     <main className={styles.page}>
@@ -71,175 +112,23 @@ const Welcome: React.FC = () => {
       </div>
 
       <div className={styles.container}>
-        <section className={styles.hero}>
-          <div className={styles.heroLeft}>
-            <h1 className={styles.title}>
-              <span>{home.text1}</span>
-              <span className={styles.titleAccent}>{home.text2}</span>
-            </h1>
-            <p className={styles.subtitle}>{home.text3}</p>
-
-            <div className={styles.actionRow}>
-              <button type="button" className={styles.primaryButton} onClick={handleStart}>
-                {home.start}
-                <span className={styles.buttonIcon} aria-hidden>
-                  <ArrowRightIcon />
-                </span>
-              </button>
-              <button
-                type="button"
-                className={styles.secondaryButton}
-                onClick={() => openExternal(repoURL)}
-              >
-                <span className={styles.buttonIcon} aria-hidden>
-                  <GithubIcon />
-                </span>
-                {home.github}
-              </button>
-            </div>
-            <button
-              type="button"
-              className={styles.linkButton}
-              onClick={() => openExternal(issueURL)}
-            >
-              {home.question}
-            </button>
-
-            <div className={styles.metaRow}>
-              <article className={styles.metaCard}>
-                <strong>MIT</strong>
-                <span>{home.meta.license}</span>
-              </article>
-              <article className={styles.metaCard}>
-                <strong>{engines.length}</strong>
-                <span>{home.meta.engines}</span>
-              </article>
-              <article className={styles.metaCard}>
-                <strong>24/7</strong>
-                <span>{home.meta.availability}</span>
-              </article>
-            </div>
-          </div>
-
-          <div className={styles.heroRight}>
-            <div className={styles.shellCard}>
-              <div className={styles.shellHeader}>
-                <span className={styles.shellDot} />
-                <span className={styles.shellDot} />
-                <span className={styles.shellDot} />
-                <span className={styles.shellTitle}>{home.shell.title}</span>
-              </div>
-              <div className={styles.shellTabs}>
-                <span className={styles.shellTabActive}>{home.shell.tabWorkspace}</span>
-                <span className={styles.shellTab}>{home.shell.tabAgent}</span>
-                <span className={styles.shellTab}>{home.shell.tabDeploy}</span>
-              </div>
-              <div className={styles.shellHint}>{home.shell.hint}</div>
-
-              <div className={styles.shellBody}>
-                <div className={styles.shellLine}>
-                  <span className={styles.shellPrompt}>$</span>
-                  <code className={styles.shellCode}>inspect schema --db mysql_prod</code>
-                  <span className={`${styles.shellTag} ${styles.mysqlTone}`}>MySQL</span>
-                </div>
-                <div className={styles.shellLine}>
-                  <span className={styles.shellPrompt}>{'>'}</span>
-                  <code className={styles.shellCode}>SHOW VARIABLES LIKE 'version_comment';</code>
-                  <span className={`${styles.shellTag} ${styles.mysqlTone}`}>MariaDB</span>
-                </div>
-                <div className={styles.shellLine}>
-                  <span className={styles.shellPrompt}>{'>'}</span>
-                  <code className={styles.shellCode}>HGETALL cache:user:2048</code>
-                  <span className={`${styles.shellTag} ${styles.redisTone}`}>Redis</span>
-                </div>
-                <div className={styles.shellLine}>
-                  <span className={styles.shellPrompt}>{'>'}</span>
-                  <code className={styles.shellCode}>db.orders.aggregate([...])</code>
-                  <span className={`${styles.shellTag} ${styles.mongoTone}`}>MongoDB</span>
-                </div>
-                <div className={styles.shellLine}>
-                  <span className={styles.shellPrompt}>{'>'}</span>
-                  <code className={styles.shellCode}>SELECT * FROM audit_log LIMIT 50;</code>
-                  <span className={`${styles.shellTag} ${styles.pgsqlTone}`}>PostgreSQL</span>
-                </div>
-              </div>
-
-              <div className={styles.messageList}>
-                <article className={styles.messageItem}>
-                  <h4>{home.shell.assistant}</h4>
-                  <p>{home.shell.message1}</p>
-                </article>
-                <article className={`${styles.messageItem} ${styles.messageUser}`}>
-                  <h4>{home.shell.you}</h4>
-                  <p>{home.shell.message2}</p>
-                </article>
-              </div>
-              <div className={styles.shellStatus}>
-                <span className={styles.shellPulse} />
-                <span>{home.shell.status}</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className={styles.storySection}>
-          <article className={styles.storyCard}>
-            <h2>{copy.siteName}</h2>
-            <p>{home.story1}</p>
-            <p>{home.story2}</p>
-          </article>
-        </section>
-
-        <section className={styles.section}>
-          <div className={styles.sectionHead}>
-            <h2>{home.support}</h2>
-            <p>{home.d2}</p>
-          </div>
-          <div className={styles.engineGrid}>
-            {engines.map((engine, index) => (
-              <article
-                key={engine.key}
-                className={`${styles.engineCard} ${engineLayoutClasses[index % engineLayoutClasses.length]}`}
-              >
-                <h3>{engine.name}</h3>
-                <p>{engine.description}</p>
-                <div className={styles.engineMeta}>
-                  {engine.tags.map(tag => (
-                    <span key={tag} className={styles.engineTag}>
-                      {tag}
-                    </span>
-                  ))}
-                  <span className={styles.engineSignal} aria-hidden />
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section className={styles.ctaSection}>
-          <article className={styles.ctaCard}>
-            <h2>{home.ready}</h2>
-            <p>{home.startNow}</p>
-            <div className={styles.ctaActions}>
-              <button type="button" className={styles.primaryButton} onClick={handleStart}>
-                {home.freeNow}
-                <span className={styles.buttonIcon} aria-hidden>
-                  <ArrowRightIcon />
-                </span>
-              </button>
-              <button
-                type="button"
-                className={styles.secondaryButton}
-                onClick={() => openExternal(repoURL)}
-              >
-                <span className={styles.buttonIcon} aria-hidden>
-                  <GithubIcon />
-                </span>
-                {home.github}
-              </button>
-            </div>
-          </article>
-        </section>
+        <HeroSection
+          home={home}
+          enginesCount={engines.length}
+          onStart={handleStart}
+          onOpenGithub={() => openExternal(repoURL)}
+          onOpenIssue={() => openExternal(issueURL)}
+        />
+        <StorySection title={t('siteName')} story1={home.story1} story2={home.story2} />
+        <EnginesSection title={home.support} description={home.d2} engines={engines} />
+        <CtaSection
+          title={home.ready}
+          description={home.startNow}
+          startLabel={home.freeNow}
+          githubLabel={home.github}
+          onStart={handleStart}
+          onOpenGithub={() => openExternal(repoURL)}
+        />
       </div>
     </main>
   );

@@ -64,7 +64,7 @@ const DataPanel: React.FC<DataPanelProps> = ({
       <SqlWhereEditor
         value={whereDraft}
         fields={fields}
-        keywords={[...PGSQL_WHERE_KEYWORDS]}
+        keywords={PGSQL_WHERE_KEYWORDS}
         onChange={onChangeWhereDraft}
         tips={
           <>

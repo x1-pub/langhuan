@@ -1,14 +1,32 @@
 .dbTitle {
   display: flex;
   align-items: center;
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: hidden;
   fill: var(--theme-text-color);
   height: 22px;
 }
 
+.textEllipsis {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  display: block;
+}
+
 .tableWrap {
+  --table-handler-width: 52px;
+  --handler-gap: 8px;
+  position: relative;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
   padding: 7px 16px;
   cursor: pointer;
   line-height: 22px;
@@ -16,12 +34,28 @@
   .tableTitle {
     display: flex;
     align-items: center;
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
     padding-left: 18px;
+    padding-right: 0;
     fill: var(--theme-text-color);
+    transition: padding-right 0.16s ease;
   }
 
-  &:hover .handler {
-    display: flex;
+  &:hover .tableTitle,
+  &:focus-within .tableTitle {
+    padding-right: calc(var(--handler-width, var(--table-handler-width)) + var(--handler-gap));
+  }
+
+  &:hover .handler,
+  &:focus-within .handler {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(-50%) translateX(0);
+    pointer-events: auto;
   }
 
   &:first-of-type {
@@ -36,26 +70,90 @@
 .handler {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 10px;
   cursor: pointer;
-  justify-content: space-between;
-  display: none;
+  min-width: 0;
+  box-sizing: border-box;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 0.16s ease,
+    transform 0.16s ease;
 
   .icon:hover {
     color: var(--theme-main-color);
   }
 }
 
+.tableWrap .handler {
+  position: absolute;
+  top: 50%;
+  right: 16px;
+  padding-left: var(--handler-gap, 8px);
+  transform: translateY(-50%) translateX(4px);
+}
+
+.tableHandler {
+  --handler-width: var(--table-handler-width);
+}
+
+.dbHandler {
+  --handler-width: 52px;
+}
+
 .collapseItem {
   :global {
     .langhuan-collapse-header {
+      --handler-gap: 8px;
+      position: relative;
       display: flex !important;
       align-items: center !important;
+      width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+      overflow: hidden;
       padding: 7px 16px !important;
     }
 
-    .langhuan-collapse-header:hover .langhuan-collapse-extra > div {
-      display: flex;
+    .langhuan-collapse-title {
+      display: block;
+      flex: 1;
+      min-width: 0;
+      box-sizing: border-box;
+      overflow: hidden;
+      padding-right: 0;
+      transition: padding-right 0.16s ease;
+    }
+
+    .langhuan-collapse-header:hover .langhuan-collapse-title,
+    .langhuan-collapse-header:focus-within .langhuan-collapse-title {
+      padding-right: calc(var(--handler-width, 52px) + var(--handler-gap));
+    }
+
+    .langhuan-collapse-extra {
+      position: absolute;
+      top: 50%;
+      right: 16px;
+      margin-inline-start: 0 !important;
+      min-width: 0;
+      z-index: 1;
+      transform: translateY(-50%);
+    }
+
+    .langhuan-collapse-extra > div {
+      padding-left: var(--handler-gap);
+      transform: translateX(4px);
+    }
+
+    .langhuan-collapse-header:hover .langhuan-collapse-extra > div,
+    .langhuan-collapse-header:focus-within .langhuan-collapse-extra > div {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(0);
+      pointer-events: auto;
     }
 
     .langhuan-collapse-body {
@@ -67,12 +165,14 @@
 .databaseIcon {
   width: 12px;
   padding-right: 8px;
+  flex-shrink: 0;
 }
 
 .tableIcon {
   width: 14px;
   height: 14px;
   padding-right: 8px;
+  flex-shrink: 0;
 }
 
 .active {

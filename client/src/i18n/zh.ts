@@ -83,7 +83,9 @@ const zh = {
     mandatory: '该项为必填。',
     fail: '数据库连接失败',
     create: '新建一个连接',
-    passwordTip: '密码设置后不可修改，如需修改请删除连接后重新创建。',
+    passwordTipCreate: '仅用于本地连接使用，建议避免使用高权限账号。',
+    passwordTipEdit: '留空则保持当前密码不变；输入新密码将更新为新值。',
+    passwordEditPlaceholder: '留空则不修改',
     test: '测试连接',
     success: '连接保存成功',
     pingSuccess: '测试连接成功',
@@ -361,6 +363,12 @@ const zh = {
         line4: '⚠️ 如遇兼容问题，请联系：\x1b[96;4mx1_mailer@163.com\x1b[0m',
       },
     },
+  },
+  notFound: {
+    title: '页面不存在',
+    subtitle: '你访问的页面不存在，或当前路由参数无效。',
+    backHome: '返回首页',
+    backWorkspace: '返回工作区',
   },
   mongodb: {
     documents: '文档',

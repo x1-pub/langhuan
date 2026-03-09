@@ -9,6 +9,7 @@ import { trpc } from '@/infra/api/trpc';
 import ConnectionModal from '../connection-editor';
 import DatabaseIcon from '../database-icon';
 import EllipsisText from '@/components/ellipsis-text';
+import { buildConnectionRoutePath } from '@/shared/router/connection-route';
 import styles from './index.module.less';
 import { useTranslation } from 'react-i18next';
 
@@ -46,7 +47,10 @@ const ConnectionSelector = React.forwardRef<RefHandler>(function ConnectionSelec
       return;
     }
 
-    const nextPath = `/${connection.type}/${connection.id}`;
+    const nextPath = buildConnectionRoutePath({
+      connectionType: connection.type,
+      connectionId: connection.id,
+    });
     if (nextPath !== location.pathname) {
       // Keep full-page navigation to avoid stale route params in long-lived layout state.
       window.location.assign(nextPath);
@@ -100,7 +104,10 @@ const ConnectionSelector = React.forwardRef<RefHandler>(function ConnectionSelec
       return;
     }
 
-    const nextPath = `/${connection.type}/${connection.id}`;
+    const nextPath = buildConnectionRoutePath({
+      connectionType: connection.type,
+      connectionId: connection.id,
+    });
     if (nextPath !== location.pathname) {
       window.location.assign(nextPath);
     }

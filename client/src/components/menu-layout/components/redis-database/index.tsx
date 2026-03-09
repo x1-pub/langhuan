@@ -5,6 +5,7 @@ import classNames from 'classnames';
 import DatabaseIcon from '@/assets/svg/db.svg?react';
 import { RouterOutput } from '@/infra/api/trpc';
 import { generateActiveId } from '@/domain/workbench/state/database-window-state';
+import EllipsisText from '@/components/ellipsis-text';
 import styles from './index.module.less';
 
 type TTableList = RouterOutput['table']['getList'];
@@ -33,15 +34,15 @@ const RedisDatabase: React.FC<IRedisDatabaseProps> = ({
       className={className}
       renderItem={item => (
         <List.Item>
-          <span
+          <div
             className={classNames(styles.redis, {
               [styles.active]: activeId === generateActiveId({ dbName: item.name }),
             })}
             onClick={() => onClick?.(item.name)}
           >
             <DatabaseIcon className={styles.databaseIcon} />
-            <span title={item.name}>{item.name}</span>
-          </span>
+            <EllipsisText text={item.name} className={styles.redisText} />
+          </div>
         </List.Item>
       )}
     />
