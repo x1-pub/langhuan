@@ -122,7 +122,6 @@ jobs:
 
           aws s3 sync client/dist "${COS_WEB_PREFIX}/" \
             --endpoint-url "$COS_ENDPOINT" \
-            --exclude "index.html" \
             --exclude "assets/*" \
             --cache-control "public,max-age=600"
 
