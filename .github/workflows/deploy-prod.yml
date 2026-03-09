@@ -77,11 +77,11 @@ jobs:
 
       - name: Build client for CDN
         env:
-          # 可在仓库变量中配置；未配置时默认使用你的 CDN 域名
+          # 可在仓库变量中配置；未配置时默认使用你的 CDN 域名下的 /web/ 路径
           CDN_BASE_URL: ${{ vars.CDN_BASE_URL }}
         run: |
           set -euo pipefail
-          CDN_BASE_URL="${CDN_BASE_URL:-https://cdn.x1.pub/}"
+          CDN_BASE_URL="${CDN_BASE_URL:-https://cdn.x1.pub/web/}"
           case "$CDN_BASE_URL" in
             */) ;;
             *) CDN_BASE_URL="${CDN_BASE_URL}/" ;;
@@ -114,15 +114,14 @@ jobs:
           aws configure set default.s3.signature_version s3v4
 
           COS_ENDPOINT="https://cos.${COS_REGION}.myqcloud.com"
+          COS_WEB_PREFIX="s3://${COS_BUCKET}/web"
 
-          aws s3 sync client/dist/assets "s3://${COS_BUCKET}/assets" \
+          aws s3 sync client/dist/assets "${COS_WEB_PREFIX}/assets" \
             --endpoint-url "$COS_ENDPOINT" \
-            --delete \
             --cache-control "public,max-age=31536000,immutable"
 
-          aws s3 sync client/dist "s3://${COS_BUCKET}/" \
+          aws s3 sync client/dist "${COS_WEB_PREFIX}/" \
             --endpoint-url "$COS_ENDPOINT" \
-            --delete \
             --exclude "index.html" \
             --exclude "assets/*" \
             --cache-control "public,max-age=600"
