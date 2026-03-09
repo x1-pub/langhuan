@@ -297,6 +297,11 @@ const usePgsqlViewerModel = (): UsePgsqlViewerModelResult => {
     }));
   }, [tableColumnsData, tableData?.columns]);
 
+  const dataPanelFields = useMemo(
+    () => (tableData?.columns || tableColumnsData).map(column => column.name),
+    [tableColumnsData, tableData?.columns],
+  );
+
   const applyQuery = () => {
     const nextWhere = normalizeWhereClause(whereDraft);
 
@@ -716,7 +721,7 @@ const usePgsqlViewerModel = (): UsePgsqlViewerModelResult => {
     setActiveTab,
     dataPanelProps: {
       whereDraft,
-      fields: (tableData?.columns || tableColumnsData).map(column => column.name),
+      fields: dataPanelFields,
       pageSize: pagination.pageSize,
       current: pagination.current,
       total: tableData?.count || 0,

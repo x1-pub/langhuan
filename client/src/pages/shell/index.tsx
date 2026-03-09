@@ -7,11 +7,8 @@ import { useTranslation } from 'react-i18next';
 import TerminalV2 from './terminal-v2';
 import { trpc } from '@/infra/api/trpc';
 import { EConnectionType } from '@packages/types/connection';
+import { parseConnectionRouteParams } from '@/shared/router/connection-route';
 import styles from './index.module.less';
-
-const isConnectionType = (value?: string): value is EConnectionType => {
-  return Object.values(EConnectionType).includes(value as EConnectionType);
-};
 
 const buildPromptByType = (type: EConnectionType, database?: string | null) => {
   switch (type) {
@@ -33,10 +30,11 @@ const buildPromptByType = (type: EConnectionType, database?: string | null) => {
 const Shell: React.FC = () => {
   const { t } = useTranslation();
   const { connectionType: routeConnectionType, connectionId: routeConnectionId } = useParams();
-  const connectionId = Number(routeConnectionId);
+  const routeParams = parseConnectionRouteParams(routeConnectionType, routeConnectionId);
+  const connectionId = routeParams?.connectionId || 0;
   const pageIdRef = useRef(`shell_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`);
   const [activeDatabase, setActiveDatabase] = useState<string | null | undefined>();
-  const isValidRoute = isConnectionType(routeConnectionType) && Number.isFinite(connectionId);
+  const isValidRoute = Boolean(routeParams);
 
   const connectionDetailQuery = useQuery(
     trpc.connection.getDetailById.queryOptions(
@@ -105,7 +103,7 @@ const Shell: React.FC = () => {
     return <Result status="warning" title={t('terminal.databaseDisconnected')} />;
   }
 
-  if (connectionDetailQuery.data.type !== routeConnectionType) {
+  if (connectionDetailQuery.data.type !== routeParams?.connectionType) {
     return <Result status="warning" title={t('terminal.connectionTypeMismatch')} />;
   }
 

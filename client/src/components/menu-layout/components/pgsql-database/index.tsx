@@ -73,15 +73,15 @@ const PgsqlDatabase: React.FC<IPgsqlDatabaseProps> = props => {
       items={database?.map((db: { name: string }) => ({
         key: db.name,
         label: (
-          <span className={styles.dbTitle}>
+          <div className={styles.dbTitle}>
             <DatabaseIcon className={styles.databaseIcon} />
-            <EllipsisText text={db.name} width={150} />
-          </span>
+            <EllipsisText text={db.name} className={styles.textEllipsis} />
+          </div>
         ),
         children: (
           <>
             <li className={styles.tableWrap}>
-              <span
+              <div
                 className={classNames(styles.tableTitle, {
                   [styles.active]:
                     activeId ===
@@ -91,10 +91,10 @@ const PgsqlDatabase: React.FC<IPgsqlDatabaseProps> = props => {
               >
                 <FunctionIcon className={styles.tableIcon} />
                 {t('pgsql.function')}
-              </span>
+              </div>
             </li>
             <li className={styles.tableWrap}>
-              <span
+              <div
                 className={classNames(styles.tableTitle, {
                   [styles.active]:
                     activeId ===
@@ -104,10 +104,10 @@ const PgsqlDatabase: React.FC<IPgsqlDatabaseProps> = props => {
               >
                 <GlassesIcon className={styles.tableIcon} />
                 {t('pgsql.view')}
-              </span>
+              </div>
             </li>
             <li className={styles.tableWrap}>
-              <span
+              <div
                 className={classNames(styles.tableTitle, {
                   [styles.active]:
                     activeId ===
@@ -117,11 +117,11 @@ const PgsqlDatabase: React.FC<IPgsqlDatabaseProps> = props => {
               >
                 <ClockIcon className={styles.tableIcon} />
                 {t('pgsql.event')}
-              </span>
+              </div>
             </li>
             {(tableMap?.[db.name] || []).map((table: { name: string; comment?: string }) => (
               <li key={table.name} className={styles.tableWrap}>
-                <span
+                <div
                   className={classNames(styles.tableTitle, {
                     [styles.active]:
                       activeId === generateActiveId({ dbName: db.name, tableName: table.name }),
@@ -129,9 +129,9 @@ const PgsqlDatabase: React.FC<IPgsqlDatabaseProps> = props => {
                   onClick={() => onClickTable?.(db.name, table.name)}
                 >
                   <TableIcon className={styles.tableIcon} />
-                  <EllipsisText text={table.name} width={140} />
-                </span>
-                <span className={styles.handler}>
+                  <EllipsisText text={table.name} className={styles.textEllipsis} />
+                </div>
+                <span className={classNames(styles.handler, styles.tableHandler)}>
                   <EditOutlined
                     className={styles.icon}
                     onClick={() => handleEditTable(db.name, table.name, table.comment)}
@@ -147,7 +147,7 @@ const PgsqlDatabase: React.FC<IPgsqlDatabaseProps> = props => {
           </>
         ),
         extra: (
-          <div className={styles.handler}>
+          <div className={classNames(styles.handler, styles.dbHandler)}>
             <PlusOutlined className={styles.icon} onClick={e => handleCreateTable(e, db.name)} />
             <DestructiveActionConfirm
               matchText={db.name}

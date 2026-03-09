@@ -6,6 +6,8 @@
   "scripts": {
     "build": "rimraf dist && tsc && tsc-alias && copyfiles .env* dist/server",
     "dev": "tsx watch src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "pnpm exec eslint src --ext .ts --max-warnings=0",
     "start": "pm2 start dist/server/src/index.js --name langhuan_server -i max",
     "db:generate": "pnpm drizzle-kit generate",
     "db:migrate": "pnpm drizzle-kit migrate"

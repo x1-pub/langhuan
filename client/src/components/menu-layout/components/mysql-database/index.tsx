@@ -88,15 +88,15 @@ const MysqlDatabase: React.FC<IMysqlDatabaseProps> = props => {
       items={database?.map((db: { name: string; charset?: string; collation?: string }) => ({
         key: db.name,
         label: (
-          <span className={styles.dbTitle}>
+          <div className={styles.dbTitle}>
             <DatabaseIcon className={styles.databaseIcon} />
-            <EllipsisText text={db.name} width={150} />
-          </span>
+            <EllipsisText text={db.name} className={styles.textEllipsis} />
+          </div>
         ),
         children: (
           <>
             <li className={styles.tableWrap}>
-              <span
+              <div
                 className={classNames(styles.tableTitle, {
                   [styles.active]:
                     activeId ===
@@ -106,10 +106,10 @@ const MysqlDatabase: React.FC<IMysqlDatabaseProps> = props => {
               >
                 <FunctionIcon className={styles.tableIcon} />
                 {t('mysql.function')}
-              </span>
+              </div>
             </li>
             <li className={styles.tableWrap}>
-              <span
+              <div
                 className={classNames(styles.tableTitle, {
                   [styles.active]:
                     activeId ===
@@ -119,10 +119,10 @@ const MysqlDatabase: React.FC<IMysqlDatabaseProps> = props => {
               >
                 <GlassesIcon className={styles.tableIcon} />
                 {t('mysql.view')}
-              </span>
+              </div>
             </li>
             <li className={styles.tableWrap}>
-              <span
+              <div
                 className={classNames(styles.tableTitle, {
                   [styles.active]:
                     activeId ===
@@ -132,11 +132,11 @@ const MysqlDatabase: React.FC<IMysqlDatabaseProps> = props => {
               >
                 <ClockIcon className={styles.tableIcon} />
                 {t('mysql.event')}
-              </span>
+              </div>
             </li>
             {(tableMap?.[db.name] || []).map((table: { name: string; comment?: string }) => (
               <li key={table.name} className={styles.tableWrap}>
-                <span
+                <div
                   className={classNames(styles.tableTitle, {
                     [styles.active]:
                       activeId === generateActiveId({ dbName: db.name, tableName: table.name }),
@@ -144,9 +144,9 @@ const MysqlDatabase: React.FC<IMysqlDatabaseProps> = props => {
                   onClick={() => onClickTable?.(db.name, table.name)}
                 >
                   <TableIcon className={styles.tableIcon} />
-                  <EllipsisText text={table.name} width={140} />
-                </span>
-                <span className={styles.handler}>
+                  <EllipsisText text={table.name} className={styles.textEllipsis} />
+                </div>
+                <span className={classNames(styles.handler, styles.tableHandler)}>
                   <EditOutlined
                     className={styles.icon}
                     onClick={() => handleEditTable(db.name, table.name, table.comment)}
@@ -162,7 +162,7 @@ const MysqlDatabase: React.FC<IMysqlDatabaseProps> = props => {
           </>
         ),
         extra: (
-          <div className={styles.handler}>
+          <div className={classNames(styles.handler, styles.dbHandler)}>
             <PlusOutlined className={styles.icon} onClick={e => handleCreateTable(e, db.name)} />
             <EditOutlined className={styles.icon} onClick={e => handleEditDatabase(e, db.name)} />
             <DestructiveActionConfirm

@@ -1,37 +1,33 @@
-import React, { useMemo, useState } from 'react';
-import {
-  Button,
-  Card,
-  Col,
-  Form,
-  Input,
-  Modal,
-  Popconfirm,
-  Row,
-  Select,
-  Switch,
-  Table,
-  Tag,
-} from 'antd';
+import React from 'react';
+import { Button, Card, Col, Form, Input, Modal, Row, Select, Switch, Table, Tag } from 'antd';
 import type { TableColumnsType } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation } from '@tanstack/react-query';
 
-import { trpc, RouterInput } from '@/infra/api/trpc';
+import { trpc, RouterInput, RouterOutput } from '@/infra/api/trpc';
 import useDatabaseWindows from '@/domain/workbench/state/database-window-state';
 import { EMysqlFunctionDataAccess, EMysqlFunctionSecurity } from '@packages/types/mysql';
 import MySQLColumnTypeSelector from '@/components/mysql-column-type-selector';
+import useNamedEntityModal from '../shared/use-named-entity-modal';
+import { CrudActionButtons, CrudActionColumnTitle } from '../shared/crud-action-column';
 import styles from './index.module.less';
 
 const FUNCTION_MODAL_WIDTH = 'var(--layout-modal-width-base)';
 
 type TFormValue = Omit<RouterInput['mysql']['createFunction'], 'connectionId' | 'dbName'>;
+type TFunctionItem = RouterOutput['mysql']['getFunctions'][number];
 
 const MysqlFunction: React.FC = () => {
   const { t } = useTranslation();
   const { connectionId, dbName } = useDatabaseWindows();
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editing, setEditing] = useState<TFormValue | null>(null);
+  const {
+    modalOpen,
+    editingEntity,
+    openCreateModal,
+    openEditModal,
+    closeModal,
+    closeIfEditingTarget,
+  } = useNamedEntityModal<TFunctionItem>();
   const [form] = Form.useForm<TFormValue>();
 
   const getFunctionsQuery = useQuery(
@@ -60,102 +56,71 @@ const MysqlFunction: React.FC = () => {
   );
 
   const handleCreateClick = () => {
-    setEditing(null);
+    openCreateModal();
     form.resetFields();
     form.setFieldsValue({
       deterministic: true,
       params: [],
     });
-    setModalOpen(true);
   };
 
-  const columns: TableColumnsType<TFormValue> = useMemo(
-    () => [
-      {
-        title: t('mysql.functionName'),
-        dataIndex: 'name',
-      },
-      {
-        title: t('mysql.functionReturns'),
-        dataIndex: 'returns',
-      },
-      {
-        title: t('mysql.functionDeterministic'),
-        dataIndex: 'deterministic',
-        width: 140,
-        render: value => (
-          <Tag color={value === false ? 'default' : 'success'}>
-            {value === false ? 'NO' : 'YES'}
-          </Tag>
-        ),
-      },
-      {
-        title: t('mysql.functionSqlDataAccess'),
-        dataIndex: 'sqlDataAccess',
-      },
-      {
-        title: t('mysql.functionSecurity'),
-        dataIndex: 'security',
-      },
-      {
-        title: t('table.comment'),
-        dataIndex: 'comment',
-        maxWidth: 200,
-        ellipsis: true,
-      },
-      {
-        title: (
-          <>
-            {t('table.operation')}
-            <Button color="cyan" variant="link" onClick={handleCreateClick}>
-              {t('button.add')}
-            </Button>
-          </>
-        ),
-        key: 'action',
-        width: 170,
-        render: (_: unknown, record) => (
-          <>
-            <Button
-              className={styles.columnActionBtn}
-              color="cyan"
-              variant="link"
-              onClick={() => handleEdit(record)}
-            >
-              {t('button.edit')}
-            </Button>
-            <Popconfirm
-              title={t('delete.title')}
-              description={t('delete.desc')}
-              onConfirm={() => handleDelete(record.name)}
-            >
-              <Button className={styles.columnActionBtn} color="danger" variant="link">
-                {t('button.delete')}
-              </Button>
-            </Popconfirm>
-          </>
-        ),
-      },
-    ],
-    [t],
-  );
+  const columns: TableColumnsType<TFunctionItem> = [
+    {
+      title: t('mysql.functionName'),
+      dataIndex: 'name',
+    },
+    {
+      title: t('mysql.functionReturns'),
+      dataIndex: 'returns',
+    },
+    {
+      title: t('mysql.functionDeterministic'),
+      dataIndex: 'deterministic',
+      width: 140,
+      render: value => (
+        <Tag color={value === false ? 'default' : 'success'}>{value === false ? 'NO' : 'YES'}</Tag>
+      ),
+    },
+    {
+      title: t('mysql.functionSqlDataAccess'),
+      dataIndex: 'sqlDataAccess',
+    },
+    {
+      title: t('mysql.functionSecurity'),
+      dataIndex: 'security',
+    },
+    {
+      title: t('table.comment'),
+      dataIndex: 'comment',
+      width: 220,
+      ellipsis: true,
+    },
+    {
+      title: <CrudActionColumnTitle onAdd={handleCreateClick} />,
+      key: 'action',
+      width: 170,
+      render: (_: unknown, record) => (
+        <CrudActionButtons
+          className={styles.columnActionBtn}
+          onEdit={() => handleEdit(record)}
+          onDelete={() => handleDelete(record.name)}
+        />
+      ),
+    },
+  ];
 
   const handleDelete = async (name: string) => {
     await deleteFunctionMutation.mutateAsync({ connectionId, dbName, name });
-    if (editing?.name === name) {
-      setEditing(null);
-      form.resetFields();
-      setModalOpen(false);
-    }
+    closeIfEditingTarget(name);
+    form.resetFields();
   };
 
-  const handleEdit = (record: TFormValue) => {
-    setEditing(record);
+  const handleEdit = (record: TFunctionItem) => {
+    openEditModal(record);
     form.setFieldsValue({
       ...record,
       deterministic: record.deterministic !== false,
     });
-    setModalOpen(true);
   };
 
   const handleSave = async () => {
@@ -167,20 +132,19 @@ const MysqlFunction: React.FC = () => {
       deterministic: values.deterministic !== false,
     };
 
-    if (editing) {
-      await updateFunctionMutation.mutateAsync({ ...payload, oldName: editing.name });
+    if (editingEntity) {
+      await updateFunctionMutation.mutateAsync({ ...payload, oldName: editingEntity.name });
     } else {
       await createFunctionMutation.mutateAsync(payload);
     }
 
-    setModalOpen(false);
-    setEditing(null);
+    closeModal();
     form.resetFields();
   };
 
   return (
     <div className={styles.wrapper}>
-      <Table<TFormValue>
+      <Table<TFunctionItem>
         className={styles.dataTable}
         rowKey={record => record.name}
         columns={columns}
@@ -194,20 +158,15 @@ const MysqlFunction: React.FC = () => {
       />
 
       <Modal
-        title={editing ? t('mysql.editFunction') : t('mysql.createFunction')}
+        title={editingEntity ? t('mysql.editFunction') : t('mysql.createFunction')}
         open={modalOpen}
         onCancel={() => {
-          setModalOpen(false);
-          setEditing(null);
+          closeModal();
           form.resetFields();
         }}
         onOk={handleSave}
         width={FUNCTION_MODAL_WIDTH}
-        confirmLoading={
-          createFunctionMutation.isPending ||
-          updateFunctionMutation.isPending ||
-          deleteFunctionMutation.isPending
-        }
+        confirmLoading={createFunctionMutation.isPending || updateFunctionMutation.isPending}
       >
         <Form<TFormValue> layout="vertical" form={form}>
           <Row gutter={16}>

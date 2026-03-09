@@ -1,31 +1,28 @@
 import { Spin } from 'antd';
 import { Outlet, useParams } from 'react-router';
+import classNames from 'classnames';
 
 import { EConnectionType } from '@packages/types/connection';
 import { DatabaseWindowsContext } from '@/domain/workbench/state/database-window-state';
 import useWorkbenchModel from '@/domain/workbench/hooks/use-workbench-model';
+import {
+  ParsedConnectionRouteParams,
+  parseConnectionRouteParams,
+} from '@/shared/router/connection-route';
 import Editor from './components/editor';
 import RedisDatabase from './components/redis-database';
 import MysqlDatabase from './components/mysql-database';
 import Actions from './components/actions';
 import MongoDBDatabase from './components/mongodb-database';
 import PgsqlDatabase from './components/pgsql-database';
+import NotFound from '@/pages/not-found';
 import styles from './index.module.less';
 
-const resolveConnectionType = (value: string | undefined) => {
-  if (!value) {
-    return EConnectionType.MYSQL;
-  }
-
-  const isKnownType = Object.values(EConnectionType).includes(value as EConnectionType);
-  return isKnownType ? (value as EConnectionType) : EConnectionType.MYSQL;
-};
-
-const MenuLayout: React.FC = () => {
-  const { connectionId: connectionIdString, connectionType: connectionTypeString } = useParams();
-  const connectionId = Number(connectionIdString) || 0;
-  const connectionType = resolveConnectionType(connectionTypeString);
-
+const MenuLayoutContent: React.FC<ParsedConnectionRouteParams> = ({
+  connectionId,
+  connectionType,
+}) => {
+  const isRedisConnection = connectionType === EConnectionType.REDIS;
   const {
     databaseWindowsContextValue,
     isMysqlCompatible,
@@ -48,13 +45,13 @@ const MenuLayout: React.FC = () => {
     <div className={styles.menuWrapper}>
       <DatabaseWindowsContext.Provider value={databaseWindowsContextValue}>
         <Spin style={{ height: '100%' }} spinning={isSidebarLoading}>
-          <aside className={styles.menu}>
+          <aside className={classNames(styles.menu, isRedisConnection && styles.menuCompact)}>
             <Actions
               connectionId={connectionId}
               connectionType={connectionType}
               onCreateDatabase={handleCreateDatabase}
             />
-            {connectionType === EConnectionType.REDIS && (
+            {isRedisConnection && (
               <RedisDatabase
                 database={databaseList}
                 activeId={activeWindowId}
@@ -116,6 +113,17 @@ const MenuLayout: React.FC = () => {
       </DatabaseWindowsContext.Provider>
     </div>
   );
+};
+
+const MenuLayout: React.FC = () => {
+  const { connectionId, connectionType } = useParams();
+  const resolvedParams = parseConnectionRouteParams(connectionType, connectionId);
+
+  if (!resolvedParams) {
+    return <NotFound />;
+  }
+
+  return <MenuLayoutContent {...resolvedParams} />;
 };
 
 export default MenuLayout;

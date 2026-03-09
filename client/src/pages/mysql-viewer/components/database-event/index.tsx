@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import { Button, Col, Form, Input, Modal, Popconfirm, Row, Switch, Table, Tag } from 'antd';
+import React from 'react';
+import { Col, Form, Input, Modal, Row, Switch, Table, Tag } from 'antd';
 import type { TableColumnsType } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation } from '@tanstack/react-query';
@@ -7,6 +7,8 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { trpc, RouterInput, RouterOutput } from '@/infra/api/trpc';
 import useDatabaseWindows from '@/domain/workbench/state/database-window-state';
 import { EMySQLEventStatus } from '@packages/types/mysql';
+import useNamedEntityModal from '../shared/use-named-entity-modal';
+import { CrudActionButtons, CrudActionColumnTitle } from '../shared/crud-action-column';
 import styles from './index.module.less';
 
 const EVENT_MODAL_WIDTH = 'var(--layout-modal-width-base)';
@@ -23,8 +25,14 @@ type TEventItem = RouterOutput['mysql']['getEvents'][number];
 const MysqlEvent: React.FC = () => {
   const { t } = useTranslation();
   const { connectionId, dbName } = useDatabaseWindows();
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editing, setEditing] = useState<TEventItem | null>(null);
+  const {
+    modalOpen,
+    editingEntity,
+    openCreateModal,
+    openEditModal,
+    closeModal,
+    closeIfEditingTarget,
+  } = useNamedEntityModal<TEventItem>();
   const [form] = Form.useForm<TFormValue>();
 
   const getEventsQuery = useQuery(
@@ -53,96 +61,67 @@ const MysqlEvent: React.FC = () => {
   );
 
   const handleCreateClick = () => {
-    setEditing(null);
+    openCreateModal();
     form.resetFields();
     form.setFieldsValue({
       status: true,
       definer: 'root@%',
     });
-    setModalOpen(true);
   };
 
-  const columns: TableColumnsType<TEventItem> = useMemo(
-    () => [
-      {
-        title: t('mysql.eventName'),
-        dataIndex: 'name',
-      },
-      {
-        title: t('mysql.eventSchedule'),
-        dataIndex: 'schedule',
-      },
-      {
-        title: t('mysql.eventStatus'),
-        dataIndex: 'status',
-        width: 120,
-        render: value => (
-          <Tag color={value === EMySQLEventStatus.ENABLED ? 'success' : 'default'}>{value}</Tag>
-        ),
-      },
-      {
-        title: t('mysql.viewDefiner'),
-        dataIndex: 'definer',
-        width: 160,
-      },
-      {
-        title: t('table.comment'),
-        dataIndex: 'comment',
-        ellipsis: true,
-      },
-      {
-        title: (
-          <>
-            {t('table.operation')}
-            <Button color="cyan" variant="link" onClick={handleCreateClick}>
-              {t('button.add')}
-            </Button>
-          </>
-        ),
-        key: 'action',
-        width: 170,
-        render: (_: unknown, record) => (
-          <>
-            <Button
-              className={styles.columnActionBtn}
-              color="cyan"
-              variant="link"
-              onClick={() => handleEdit(record)}
-            >
-              {t('button.edit')}
-            </Button>
-            <Popconfirm
-              title={t('delete.title')}
-              description={t('delete.desc')}
-              onConfirm={() => handleDelete(record.name)}
-            >
-              <Button className={styles.columnActionBtn} color="danger" variant="link">
-                {t('button.delete')}
-              </Button>
-            </Popconfirm>
-          </>
-        ),
-      },
-    ],
-    [t],
-  );
+  const columns: TableColumnsType<TEventItem> = [
+    {
+      title: t('mysql.eventName'),
+      dataIndex: 'name',
+    },
+    {
+      title: t('mysql.eventSchedule'),
+      dataIndex: 'schedule',
+    },
+    {
+      title: t('mysql.eventStatus'),
+      dataIndex: 'status',
+      width: 120,
+      render: value => (
+        <Tag color={value === EMySQLEventStatus.ENABLED ? 'success' : 'default'}>{value}</Tag>
+      ),
+    },
+    {
+      title: t('mysql.viewDefiner'),
+      dataIndex: 'definer',
+      width: 160,
+    },
+    {
+      title: t('table.comment'),
+      dataIndex: 'comment',
+      ellipsis: true,
+    },
+    {
+      title: <CrudActionColumnTitle onAdd={handleCreateClick} />,
+      key: 'action',
+      width: 170,
+      render: (_: unknown, record) => (
+        <CrudActionButtons
+          className={styles.columnActionBtn}
+          onEdit={() => handleEdit(record)}
+          onDelete={() => handleDelete(record.name)}
+        />
+      ),
+    },
+  ];
 
   const handleDelete = async (name: string) => {
     await deleteEventMutation.mutateAsync({ connectionId, dbName, name });
-    if (editing?.name === name) {
-      setEditing(null);
-      form.resetFields();
-      setModalOpen(false);
-    }
+    closeIfEditingTarget(name);
+    form.resetFields();
   };
 
   const handleEdit = (record: TEventItem) => {
-    setEditing(record);
+    openEditModal(record);
     form.setFieldsValue({
       ...record,
       status: record.status !== EMySQLEventStatus.DISABLED,
     });
-    setModalOpen(true);
   };
 
   const handleSave = async () => {
@@ -154,14 +133,13 @@ const MysqlEvent: React.FC = () => {
       status: values.status ? EMySQLEventStatus.ENABLED : EMySQLEventStatus.DISABLED,
     };
 
-    if (editing) {
-      await updateEventMutation.mutateAsync({ ...payload, oldName: editing.name });
+    if (editingEntity) {
+      await updateEventMutation.mutateAsync({ ...payload, oldName: editingEntity.name });
     } else {
       await createEventMutation.mutateAsync(payload);
     }
 
-    setModalOpen(false);
-    setEditing(null);
+    closeModal();
     form.resetFields();
   };
 
@@ -181,20 +159,15 @@ const MysqlEvent: React.FC = () => {
       />
 
       <Modal
-        title={editing ? t('mysql.editEvent') : t('mysql.createEvent')}
+        title={editingEntity ? t('mysql.editEvent') : t('mysql.createEvent')}
         open={modalOpen}
         onCancel={() => {
-          setModalOpen(false);
-          setEditing(null);
+          closeModal();
           form.resetFields();
         }}
         onOk={handleSave}
         width={EVENT_MODAL_WIDTH}
-        confirmLoading={
-          createEventMutation.isPending ||
-          updateEventMutation.isPending ||
-          deleteEventMutation.isPending
-        }
+        confirmLoading={createEventMutation.isPending || updateEventMutation.isPending}
       >
         <Form<TFormValue>
           layout="vertical"

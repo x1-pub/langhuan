@@ -83,8 +83,10 @@ const ja = {
     mandatory: '必須項目です。',
     fail: 'データベースへの接続に失敗しました',
     create: '新しい接続を作成',
-    passwordTip:
-      '一度設定したパスワードは変更できません。変更するには接続を削除して再作成してください。',
+    passwordTipCreate: 'ローカル利用向けです。可能な限り高権限アカウントの利用は避けてください。',
+    passwordTipEdit:
+      '空欄のまま保存すると現在のパスワードを維持します。入力すると新しいパスワードに更新されます。',
+    passwordEditPlaceholder: '空欄で変更なし',
     test: '接続テスト',
     success: '接続を保存しました',
     pingSuccess: '接続テスト成功',
@@ -381,6 +383,12 @@ const ja = {
         line4: '⚠️ 互換性に問題がある場合は \x1b[96;4mx1_mailer@163.com\x1b[0m までご連絡ください',
       },
     },
+  },
+  notFound: {
+    title: 'ページが見つかりません',
+    subtitle: '指定したページが存在しないか、ルートパラメータが無効です。',
+    backHome: 'ホームへ戻る',
+    backWorkspace: 'ワークスペースへ戻る',
   },
   mongodb: {
     ...en.mongodb,

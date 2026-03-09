@@ -22,7 +22,14 @@ const DBCreator: React.FC<DBCreatorProps> = ({ onOk }) => {
   return (
     <>
       <Tooltip placement="bottom" title={t('connection.create')}>
-        <AppstoreAddOutlined className={styles.iconColor} onClick={() => setOpen(true)} />
+        <button
+          type="button"
+          className={styles.iconButton}
+          onClick={() => setOpen(true)}
+          aria-label={t('connection.create')}
+        >
+          <AppstoreAddOutlined className={styles.iconColor} />
+        </button>
       </Tooltip>
       <ConnectionModal open={open} onOk={handleOk} onCancel={() => setOpen(false)} />
     </>

@@ -29,6 +29,19 @@ import { formatPgsqlCommandResult } from '../lib/pgsql-query-formatter';
 
 const pgsqlShellDatabaseMap = new Map<string, string>();
 
+const normalizeOptionalPassword = (value: string | null | undefined) => {
+  if (value === null) {
+    return null;
+  }
+
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+
+  const trimmed = value.trim();
+  return trimmed ? value : undefined;
+};
+
 export const connectionRouter = router({
   getList: protectedProcedure.query(async ({ ctx }) => {
     const list = await ctx.db.query.connectionsTable.findMany({
@@ -77,9 +90,22 @@ export const connectionRouter = router({
   }),
 
   update: protectedProcedure.input(UpdateConnectionSchema).mutation(async ({ ctx, input }) => {
+    const updatePayload: Partial<typeof connectionsTable.$inferInsert> = {
+      name: input.name,
+      host: input.host,
+      port: input.port,
+      username: input.username,
+      database: input.database,
+    };
+    const normalizedPassword = normalizeOptionalPassword(input.password);
+
+    if (normalizedPassword !== undefined) {
+      updatePayload.password = normalizedPassword;
+    }
+
     await ctx.db
       .update(connectionsTable)
-      .set(input)
+      .set(updatePayload)
       .where(
         and(
           eq(connectionsTable.id, input.id),
@@ -93,13 +119,30 @@ export const connectionRouter = router({
   ping: protectedProcedure.input(PingConnectionSchema).mutation(async ({ ctx, input }) => {
     const uid = ctx.user.id;
     const { id, type, host, port, username, database, password } = input;
-    const dbConfig: IConnectionPoolConfig = { host, port, username, database, password, uid };
+    const normalizedInputPassword = normalizeOptionalPassword(password);
+    const dbConfig: IConnectionPoolConfig = {
+      host,
+      port,
+      username,
+      database,
+      password: normalizedInputPassword === null ? null : normalizedInputPassword,
+      uid,
+    };
 
     if (id) {
       const data = await ctx.db.query.connectionsTable.findFirst({
         where: table => and(eq(table.creator, uid), eq(table.id, id), isNull(table.deletedAt)),
       });
-      dbConfig.password = data?.password;
+      if (!data) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: `The accessed connection (ID: ${id}) does not exist or permission is denied.`,
+        });
+      }
+
+      if (normalizedInputPassword === undefined) {
+        dbConfig.password = data.password;
+      }
     }
 
     if (type === EConnectionType.MYSQL || type === EConnectionType.MARIADB) {

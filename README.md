@@ -67,6 +67,13 @@ pnpm install
 cp server/.env.example server/.env
 ```
 
+Key server environment variables:
+
+- `DATABASE_URL`: metadata database for storing connection records.
+- `SERVER_HOST`: server bind host (default `0.0.0.0`).
+- `SERVER_PORT`: server bind port (default `7209`).
+- `CORS_ORIGINS`: comma-separated origin whitelist. Use `*` only for local development.
+
 ### 3. Run database migrations
 
 ```bash
@@ -82,7 +89,8 @@ pnpm dev
 Default runtime:
 
 - Client: `http://localhost:5173` (Vite default)
-- Server: `http://localhost:7209`
+- Server: `http://localhost:7209` (or your configured `SERVER_PORT`)
+- Health check: `GET /health`
 
 ## Scripts
 
@@ -94,6 +102,7 @@ pnpm dev:client     # run frontend only
 pnpm dev:server     # run backend only
 pnpm build          # build client + server
 pnpm lint           # lint and auto-fix
+pnpm lint:check     # lint check without write
 pnpm format         # format all files
 ```
 
@@ -103,6 +112,9 @@ Client-focused checks:
 pnpm --filter client typecheck
 pnpm --filter client lint
 pnpm --filter client build
+pnpm --filter server typecheck
+pnpm --filter server lint
+pnpm --filter server build
 ```
 
 ## Engineering Standards

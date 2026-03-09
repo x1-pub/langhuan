@@ -67,6 +67,13 @@ pnpm install
 cp server/.env.example server/.env
 ```
 
+关键服务端环境变量：
+
+- `DATABASE_URL`：用于存储连接信息的元数据库。
+- `SERVER_HOST`：服务监听地址（默认 `0.0.0.0`）。
+- `SERVER_PORT`：服务监听端口（默认 `7209`）。
+- `CORS_ORIGINS`：CORS 白名单，多个来源以英文逗号分隔，本地开发可使用 `*`。
+
 ### 3. 执行数据库迁移
 
 ```bash
@@ -82,7 +89,8 @@ pnpm dev
 默认地址：
 
 - Client：`http://localhost:5173`（Vite 默认）
-- Server：`http://localhost:7209`
+- Server：`http://localhost:7209`（或你配置的 `SERVER_PORT`）
+- 健康检查：`GET /health`
 
 ## 常用脚本
 
@@ -94,6 +102,7 @@ pnpm dev:client     # 仅启动前端
 pnpm dev:server     # 仅启动后端
 pnpm build          # 构建 client + server
 pnpm lint           # 代码检查并自动修复
+pnpm lint:check     # 仅检查，不写入修复
 pnpm format         # 格式化全仓库
 ```
 
@@ -103,6 +112,9 @@ pnpm format         # 格式化全仓库
 pnpm --filter client typecheck
 pnpm --filter client lint
 pnpm --filter client build
+pnpm --filter server typecheck
+pnpm --filter server lint
+pnpm --filter server build
 ```
 
 ## 开发规范

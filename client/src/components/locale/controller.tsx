@@ -19,7 +19,7 @@ const getLanguageByDayjsLocale = (language: TLanguage): string => {
 };
 
 const LocaleSwitcher: React.FC = () => {
-  const { i18n: i18next } = useTranslation();
+  const { t, i18n: i18next } = useTranslation();
   const { setLocale } = useContext(LocaleContext);
   const activeLanguage = normalizeLanguage(i18next.resolvedLanguage) || 'en';
   const [open, setOpen] = useState(false);
@@ -70,7 +70,9 @@ const LocaleSwitcher: React.FC = () => {
       open={open}
       onOpenChange={setOpen}
     >
-      <TranslationOutlined className={styles.icon} />
+      <button type="button" className={styles.iconButton} aria-label={t('lang')}>
+        <TranslationOutlined className={styles.icon} />
+      </button>
     </Popover>
   );
 };

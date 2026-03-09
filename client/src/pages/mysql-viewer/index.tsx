@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Tabs } from 'antd';
 import { useTranslation } from 'react-i18next';
 
@@ -18,38 +18,41 @@ import TablePartition from './components/table-partition';
 const MysqlViewer: React.FC = () => {
   const { t } = useTranslation();
 
-  const tabsItem = [
-    {
-      label: t('mysql.data'),
-      key: 'table-data',
-      children: <TableData />,
-    },
-    {
-      label: t('mysql.design'),
-      key: 'table-design',
-      children: <TableDesign />,
-    },
-    {
-      label: t('mysql.trigger'),
-      key: 'table-trigger',
-      children: <TableTriggers />,
-    },
-    {
-      label: t('mysql.partition'),
-      key: 'table-partition',
-      children: <TablePartition />,
-    },
-    {
-      label: t('mysql.ddl'),
-      key: 'table-ddl',
-      children: <TableDDL />,
-    },
-    {
-      label: t('mysql.status'),
-      key: 'table-status',
-      children: <TableStatus />,
-    },
-  ];
+  const tabsItem = useMemo(
+    () => [
+      {
+        label: t('mysql.data'),
+        key: 'table-data',
+        children: <TableData />,
+      },
+      {
+        label: t('mysql.design'),
+        key: 'table-design',
+        children: <TableDesign />,
+      },
+      {
+        label: t('mysql.trigger'),
+        key: 'table-trigger',
+        children: <TableTriggers />,
+      },
+      {
+        label: t('mysql.partition'),
+        key: 'table-partition',
+        children: <TablePartition />,
+      },
+      {
+        label: t('mysql.ddl'),
+        key: 'table-ddl',
+        children: <TableDDL />,
+      },
+      {
+        label: t('mysql.status'),
+        key: 'table-status',
+        children: <TableStatus />,
+      },
+    ],
+    [t],
+  );
 
   const renderWind = (wind: IWind) => {
     switch (wind.specialWind) {
