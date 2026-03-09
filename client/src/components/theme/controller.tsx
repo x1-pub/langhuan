@@ -122,7 +122,9 @@ const ThemeToggle: React.FC = () => {
       open={open}
       onOpenChange={setOpen}
     >
-      <SunOutlined className={styles.icon} />
+      <button type="button" className={styles.iconButton} aria-label={t('themeAuto')}>
+        <SunOutlined className={styles.icon} />
+      </button>
     </Popover>
   );
 };

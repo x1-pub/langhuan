@@ -12,6 +12,7 @@
     "build:zod": "pnpm --filter server packages/zod",
     "build": "run-s build:*",
     "lint": "eslint . --fix",
+    "lint:check": "eslint . --max-warnings=0",
     "format": "prettier --write .",
     "lint-staged": "lint-staged",
     "prepare": "husky"

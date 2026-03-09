@@ -13,20 +13,24 @@ const EllipsisText: React.FC<EllipsisTextProps> = ({
   text,
   style,
 }) => {
+  const resolvedWidth = typeof width === 'number' ? `${width}px` : width;
+  const shouldFillWidth = resolvedWidth === '100%';
   const styles: CSSProperties = {
-    maxWidth: typeof width === 'number' ? `${width}px` : width,
+    width: shouldFillWidth ? resolvedWidth : undefined,
+    maxWidth: resolvedWidth,
+    minWidth: 0,
     whiteSpace: 'nowrap',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
-    display: 'inline-block',
-    verticalAlign: 'middle',
+    display: shouldFillWidth ? 'block' : 'inline-block',
+    verticalAlign: shouldFillWidth ? undefined : 'middle',
     ...style,
   };
 
   return (
-    <div style={styles} className={className} title={typeof text == 'string' ? text : undefined}>
+    <span style={styles} className={className} title={typeof text == 'string' ? text : undefined}>
       {text}
-    </div>
+    </span>
   );
 };
 

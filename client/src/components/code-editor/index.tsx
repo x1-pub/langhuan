@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import Editor, { loader } from '@monaco-editor/react';
 import type * as Monaco from 'monaco-editor/esm/vs/editor/editor.api';
 import { useTranslation } from 'react-i18next';
@@ -10,14 +10,20 @@ loader.config({
   monaco,
 });
 
+const SQL_LANGUAGE = 'sql';
+const SUGGESTION_TRIGGER_CHARACTERS = Array.from(
+  'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.',
+);
+const EMPTY_SUGGESTIONS: readonly string[] = [];
+
 interface CodeEditorProps {
   theme?: 'vs' | 'vs-dark' | 'hc-black' | 'hc-light';
   language?: string;
   value?: string;
   readOnly?: boolean;
   showLineNumbers?: boolean;
-  fields?: string[];
-  keywords?: string[];
+  fields?: readonly string[];
+  keywords?: readonly string[];
   onChange?: (value?: string) => void;
 }
 
@@ -25,62 +31,87 @@ const CodeEditor: React.FC<CodeEditorProps> = props => {
   const { t, i18n } = useTranslation();
   const {
     theme = 'vs',
-    language = 'sql',
+    language = SQL_LANGUAGE,
     value = '',
     readOnly = false,
     showLineNumbers = true,
-    fields = [],
-    keywords = [],
+    fields = EMPTY_SUGGESTIONS,
+    keywords = EMPTY_SUGGESTIONS,
     onChange,
   } = props;
 
   const editorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null);
   const completionProviderRef = useRef<Monaco.IDisposable | null>(null);
+  const focusListenerRef = useRef<Monaco.IDisposable | null>(null);
+
+  const keywordSuggestions = useMemo(
+    () => Array.from(new Set([...SQL_KEYWORDS, ...keywords])),
+    [keywords],
+  );
+  const functionSuggestions = useMemo(
+    () =>
+      SQL_FUNCTIONS.map(func => ({
+        ...func,
+        detail: t(func.detailKey),
+        documentation: t(func.documentationKey),
+      })),
+    [t, i18n.language],
+  );
 
   const registerCompletionProvider = (monacoInstance: typeof Monaco) => {
     if (completionProviderRef.current) {
       completionProviderRef.current.dispose();
+      completionProviderRef.current = null;
     }
 
-    completionProviderRef.current = monacoInstance.languages.registerCompletionItemProvider('sql', {
-      provideCompletionItems: (model, position) => {
-        const word = model.getWordUntilPosition(position);
-        const range = {
-          startLineNumber: position.lineNumber,
-          endLineNumber: position.lineNumber,
-          startColumn: word.startColumn,
-          endColumn: word.endColumn,
-        };
+    if (readOnly || language !== SQL_LANGUAGE) {
+      return;
+    }
 
-        const suggestions: Monaco.languages.CompletionItem[] = [
-          ...Array.from(new Set([...SQL_KEYWORDS, ...keywords])).map(keyword => ({
-            label: keyword,
-            kind: monacoInstance.languages.CompletionItemKind.Keyword,
-            insertText: keyword,
-            range: range,
-            detail: t('codeEditor.detail.sqlKeyword'),
-          })),
-          ...SQL_FUNCTIONS.map(func => ({
-            label: func.name,
-            kind: monacoInstance.languages.CompletionItemKind.Function,
-            insertText: func.insertText,
-            range: range,
-            detail: t(func.detailKey),
-            documentation: t(func.documentationKey),
-            insertTextRules: monacoInstance.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-          })),
-          ...fields.map(field => ({
-            label: field,
-            kind: monacoInstance.languages.CompletionItemKind.Field,
-            insertText: field,
-            range: range,
-            detail: t('codeEditor.detail.tableField'),
-          })),
-        ];
+    completionProviderRef.current = monacoInstance.languages.registerCompletionItemProvider(
+      SQL_LANGUAGE,
+      {
+        triggerCharacters: SUGGESTION_TRIGGER_CHARACTERS,
+        provideCompletionItems: (model, position) => {
+          const word = model.getWordUntilPosition(position);
+          const range = {
+            startLineNumber: position.lineNumber,
+            endLineNumber: position.lineNumber,
+            startColumn: word.startColumn,
+            endColumn: word.endColumn,
+          };
 
-        return { suggestions };
+          const suggestions: Monaco.languages.CompletionItem[] = [
+            ...keywordSuggestions.map(keyword => ({
+              label: keyword,
+              kind: monacoInstance.languages.CompletionItemKind.Keyword,
+              insertText: keyword,
+              range,
+              detail: t('codeEditor.detail.sqlKeyword'),
+            })),
+            ...functionSuggestions.map(func => ({
+              label: func.name,
+              kind: monacoInstance.languages.CompletionItemKind.Function,
+              insertText: func.insertText,
+              range,
+              detail: func.detail,
+              documentation: func.documentation,
+              insertTextRules:
+                monacoInstance.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+            })),
+            ...fields.map(field => ({
+              label: field,
+              kind: monacoInstance.languages.CompletionItemKind.Field,
+              insertText: field,
+              range,
+              detail: t('codeEditor.detail.tableField'),
+            })),
+          ];
+
+          return { suggestions };
+        },
       },
-    });
+    );
   };
 
   const handleEditorDidMount = (
@@ -88,31 +119,54 @@ const CodeEditor: React.FC<CodeEditorProps> = props => {
     monacoInstance: typeof Monaco,
   ) => {
     editorRef.current = editor;
-
     registerCompletionProvider(monacoInstance);
 
-    monacoInstance.languages.setLanguageConfiguration('sql', {
-      comments: {
-        lineComment: '--',
-        blockComment: ['/*', '*/'],
-      },
-      brackets: [
-        ['(', ')'],
-        ['[', ']'],
-      ],
-      autoClosingPairs: [
-        { open: '(', close: ')' },
-        { open: '[', close: ']' },
-        { open: "'", close: "'" },
-        { open: '"', close: '"' },
-      ],
-      surroundingPairs: [
-        { open: '(', close: ')' },
-        { open: '[', close: ']' },
-        { open: "'", close: "'" },
-        { open: '"', close: '"' },
-      ],
-    });
+    if (language === SQL_LANGUAGE) {
+      monacoInstance.languages.setLanguageConfiguration(SQL_LANGUAGE, {
+        comments: {
+          lineComment: '--',
+          blockComment: ['/*', '*/'],
+        },
+        brackets: [
+          ['(', ')'],
+          ['[', ']'],
+        ],
+        autoClosingPairs: [
+          { open: '(', close: ')' },
+          { open: '[', close: ']' },
+          { open: "'", close: "'" },
+          { open: '"', close: '"' },
+        ],
+        surroundingPairs: [
+          { open: '(', close: ')' },
+          { open: '[', close: ']' },
+          { open: "'", close: "'" },
+          { open: '"', close: '"' },
+        ],
+      });
+    }
+
+    if (!readOnly) {
+      const triggerSuggest = () => {
+        const suggestAction = editor.getAction('editor.action.triggerSuggest');
+        if (!suggestAction) {
+          return;
+        }
+
+        void suggestAction.run().catch(() => undefined);
+      };
+
+      editor.addCommand(monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.Space, () => {
+        triggerSuggest();
+      });
+
+      if (focusListenerRef.current) {
+        focusListenerRef.current.dispose();
+      }
+      focusListenerRef.current = editor.onDidFocusEditorText(() => {
+        triggerSuggest();
+      });
+    }
   };
 
   useEffect(() => {
@@ -120,22 +174,16 @@ const CodeEditor: React.FC<CodeEditorProps> = props => {
       return;
     }
 
-    let disposed = false;
-    void loader.init().then(monacoInstance => {
-      if (!disposed) {
-        registerCompletionProvider(monacoInstance);
-      }
-    });
-
-    return () => {
-      disposed = true;
-    };
-  }, [fields, i18n.language, keywords]);
+    registerCompletionProvider(monaco);
+  }, [fields, i18n.language, keywordSuggestions, functionSuggestions, language, readOnly]);
 
   useEffect(() => {
     return () => {
       if (completionProviderRef.current) {
         completionProviderRef.current.dispose();
+      }
+      if (focusListenerRef.current) {
+        focusListenerRef.current.dispose();
       }
     };
   }, []);
@@ -164,6 +212,12 @@ const CodeEditor: React.FC<CodeEditorProps> = props => {
         formatOnType: true,
         tabSize: 2,
         insertSpaces: true,
+        quickSuggestions: {
+          other: true,
+          comments: false,
+          strings: false,
+        },
+        suggestOnTriggerCharacters: true,
       }}
     />
   );

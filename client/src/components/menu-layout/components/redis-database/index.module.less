@@ -1,16 +1,26 @@
 .redis {
   display: flex;
   align-items: center;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   padding-left: 40px;
+  padding-right: 16px;
   color: var(--theme-text-color);
   fill: var(--theme-text-color);
   cursor: pointer;
   height: 22px;
 }
 
+.redisText {
+  flex: 1;
+  min-width: 0;
+}
+
 .databaseIcon {
   width: 12px;
   padding-right: 8px;
+  flex-shrink: 0;
 }
 
 .active {

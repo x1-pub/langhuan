@@ -35,10 +35,15 @@ const HeaderLayout: React.FC = () => {
       <header className={styles.headerWrap}>
         <div className={styles.header}>
           <div className={styles.left}>
-            <div className={styles.logoWrap} onClick={navToWelcome}>
-              <img className={styles.logo} src={LogoImg} alt="" />
+            <button
+              type="button"
+              className={styles.logoWrap}
+              onClick={navToWelcome}
+              title={t('siteName')}
+            >
+              <img className={styles.logo} src={LogoImg} alt={t('siteName')} />
               <Typography.Text className={styles.title}>{t('siteName')}</Typography.Text>
-            </div>
+            </button>
             {!isWelcomePage && (
               <div className={styles.db}>
                 <ConnectionSelector ref={selectorRef} />
@@ -49,7 +54,14 @@ const HeaderLayout: React.FC = () => {
           <div className={styles.right}>
             <ThemeToggle />
             <LocaleSwitcher />
-            <GithubOutlined className={styles.github} onClick={linkToGithub} />
+            <button
+              type="button"
+              className={styles.github}
+              onClick={linkToGithub}
+              title={t('home.github')}
+            >
+              <GithubOutlined />
+            </button>
           </div>
         </div>
       </header>

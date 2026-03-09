@@ -35,7 +35,7 @@ const RouterRender: React.FC = () => (
   <Routes>
     <Route element={<HeaderLayout />}>
       <Route path="/:connectionType/:connectionId" element={<MenuLayout />}>
-        <Route path="/:connectionType/:connectionId" element={<DatabaseViewer />} />
+        <Route index element={<DatabaseViewer />} />
       </Route>
       <Route path="/notselected" element={<NotSelected />} />
     </Route>

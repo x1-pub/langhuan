@@ -83,8 +83,10 @@ const ko = {
     mandatory: '필수 항목입니다.',
     fail: '데이터베이스 연결에 실패했습니다',
     create: '새 연결 만들기',
-    passwordTip:
-      '비밀번호는 설정 후 변경할 수 없습니다. 변경하려면 연결을 삭제하고 다시 생성하세요.',
+    passwordTipCreate: '로컬 사용 목적의 연결에만 권장되며, 고권한 계정 사용은 피하세요.',
+    passwordTipEdit:
+      '비워두면 현재 비밀번호를 유지합니다. 새 비밀번호를 입력하면 해당 값으로 변경됩니다.',
+    passwordEditPlaceholder: '비워두면 변경 안 함',
     test: '연결 테스트',
     success: '연결이 저장되었습니다',
     pingSuccess: '연결 테스트 성공',
@@ -380,6 +382,12 @@ const ko = {
         line4: '⚠️ 호환성 문제가 있으면 \x1b[96;4mx1_mailer@163.com\x1b[0m 으로 문의해 주세요',
       },
     },
+  },
+  notFound: {
+    title: '페이지를 찾을 수 없습니다',
+    subtitle: '요청한 페이지가 없거나 라우트 파라미터가 올바르지 않습니다.',
+    backHome: '홈으로 이동',
+    backWorkspace: '워크스페이스로 이동',
   },
   mongodb: {
     ...en.mongodb,

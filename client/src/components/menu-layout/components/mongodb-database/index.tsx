@@ -67,16 +67,16 @@ const MongoDBDatabase: React.FC<IMongoDBDatabaseProps> = props => {
       items={database?.map((db: { name: string }) => ({
         key: db.name,
         label: (
-          <span className={styles.dbTitle}>
+          <div className={styles.dbTitle}>
             <DatabaseIcon className={styles.databaseIcon} />
-            <EllipsisText text={db.name} width={150} />
-          </span>
+            <EllipsisText text={db.name} className={styles.textEllipsis} />
+          </div>
         ),
         children: (
           <>
             {(tableMap?.[db.name] || []).map((table: { name: string; comment?: string }) => (
               <li key={table.name} className={styles.tableWrap}>
-                <span
+                <div
                   className={classNames(styles.tableTitle, {
                     [styles.active]:
                       activeId === generateActiveId({ dbName: db.name, tableName: table.name }),
@@ -84,9 +84,9 @@ const MongoDBDatabase: React.FC<IMongoDBDatabaseProps> = props => {
                   onClick={() => onClickTable?.(db.name, table.name)}
                 >
                   <TableIcon className={styles.tableIcon} />
-                  <EllipsisText text={table.name} width={140} />
-                </span>
-                <span className={styles.handler}>
+                  <EllipsisText text={table.name} className={styles.textEllipsis} />
+                </div>
+                <span className={classNames(styles.handler, styles.tableHandler)}>
                   <EditOutlined
                     className={styles.icon}
                     onClick={() => handleEditTable(db.name, table.name, table.comment)}
@@ -102,7 +102,7 @@ const MongoDBDatabase: React.FC<IMongoDBDatabaseProps> = props => {
           </>
         ),
         extra: (
-          <div className={styles.handler}>
+          <div className={classNames(styles.handler, styles.dbHandler)}>
             <PlusOutlined className={styles.icon} onClick={e => handleCreateTable(e, db.name)} />
             <DestructiveActionConfirm
               matchText={db.name}

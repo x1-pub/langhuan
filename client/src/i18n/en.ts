@@ -83,8 +83,9 @@ const en = {
     mandatory: 'This item is mandatory.',
     fail: 'Failed to connect to the database',
     create: 'Create a new connection',
-    passwordTip:
-      'Password cannot be changed once set. To modify, delete and recreate the connection.',
+    passwordTipCreate: 'For local usage only. Avoid using root/superuser credentials.',
+    passwordTipEdit: 'Leave empty to keep the current password. Enter a new password to rotate it.',
+    passwordEditPlaceholder: 'Leave empty to keep unchanged',
     test: 'Test the connection',
     success: 'Connection saved successfully',
     pingSuccess: 'Test connection successful',
@@ -368,6 +369,12 @@ const en = {
           '⚠️ If there are compatibility issues, please contact: \x1b[96;4mx1_mailer@163.com\x1b[0m',
       },
     },
+  },
+  notFound: {
+    title: 'Page not found',
+    subtitle: 'The page you are trying to access does not exist or the route is invalid.',
+    backHome: 'Back to Home',
+    backWorkspace: 'Back to Workspace',
   },
   mongodb: {
     documents: 'Documents',
